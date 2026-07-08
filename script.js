@@ -422,12 +422,105 @@
     }
   });
 
+  /* ══ ESCENAS PINNEADAS ══════════════════════
+     La pantalla se fija y el contenido se arma frente a ti,
+     al ritmo del scroll — toda la página funciona como el viaje. */
+  var consumed = [];
+  function consume(nodeList) {
+    Array.prototype.forEach.call(nodeList, function (n) { consumed.push(n); });
+  }
+
+  /* Escena: Soluciones — las 3 tarjetas llegan una por una (desktop) */
+  if (!isMobile) {
+    (function solucionesScene() {
+      var sec = document.getElementById("soluciones");
+      if (!sec) return;
+      var head = sec.querySelectorAll(".eyebrow, .h2");
+      var cards = sec.querySelectorAll(".biz-card");
+      consume(head); consume(cards);
+      var tl = gsap.timeline({
+        scrollTrigger: { trigger: sec, start: "top top", end: "+=2400", scrub: 0.5, pin: true, refreshPriority: 5 }
+      });
+      tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, immediateRender: true }, 0);
+      cards.forEach(function (card, i) {
+        tl.fromTo(card,
+          { opacity: 0, y: "60vh", scale: 0.5, rotateX: 26, transformPerspective: 1000 },
+          { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.8, ease: "power2.out", immediateRender: true },
+          0.45 + i * 0.75);
+      });
+      tl.to({}, { duration: 0.5 }); // respiro antes de soltar el pin
+    })();
+
+    /* Escena: Seguridad — el muro se construye tarjeta por tarjeta (desktop) */
+    (function seguridadScene() {
+      var sec = document.getElementById("seguridad");
+      if (!sec) return;
+      var head = sec.querySelectorAll(".eyebrow, .h2");
+      var cards = sec.querySelectorAll(".sec-card");
+      consume(head); consume(cards);
+      var tl = gsap.timeline({
+        scrollTrigger: { trigger: sec, start: "top top", end: "+=2200", scrub: 0.5, pin: true, refreshPriority: 1 }
+      });
+      tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, immediateRender: true }, 0);
+      cards.forEach(function (card, i) {
+        tl.fromTo(card,
+          { opacity: 0, y: 140, scale: 0.55, rotateX: 30, transformPerspective: 1000 },
+          { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.5, ease: "back.out(1.4)", immediateRender: true },
+          0.4 + i * 0.35);
+      });
+      tl.to({}, { duration: 0.5 });
+    })();
+  }
+
+  /* Escena: Capacidades — galería que viaja en horizontal (todos los dispositivos) */
+  (function capacidadesScene() {
+    var sec = document.getElementById("capacidades");
+    var grid = sec && sec.querySelector(".cap-grid");
+    if (!grid) return;
+    var head = sec.querySelectorAll(".eyebrow, .h2");
+    var cards = sec.querySelectorAll(".cap-card");
+    consume(head); consume(cards);
+    gsap.set(cards, { opacity: 1, y: 0 }); // viajan con el riel, no individualmente
+    function maxX() {
+      var wrap = sec.querySelector(".container");
+      return Math.max(0, grid.scrollWidth - wrap.clientWidth);
+    }
+    var tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sec,
+        start: "top top",
+        end: function () { return "+=" + (maxX() + 700); },
+        scrub: 0.5,
+        pin: true,
+        invalidateOnRefresh: true,
+        refreshPriority: 2
+      }
+    });
+    tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08, immediateRender: true }, 0);
+    tl.fromTo(grid, { x: 0 }, { x: function () { return -maxX(); }, ease: "none", duration: 2.4 }, 0.35);
+  })();
+
+  /* Cumplimiento: los puntos entran alternando izquierda/derecha */
+  (function cumplimientoSlides() {
+    var items = document.querySelectorAll(".comp-item");
+    consume(items);
+    items.forEach(function (item, i) {
+      gsap.fromTo(item,
+        { opacity: 0, x: i % 2 ? 130 : -130, y: 40 },
+        {
+          opacity: 1, x: 0, y: 0, ease: "power2.out",
+          scrollTrigger: { trigger: item, start: "top 96%", end: "top 62%", scrub: 0.5 }
+        });
+    });
+  })();
+
   /* ── Reveals: planos y de profundidad 3D ──
      Los bloques grandes (títulos, tarjetas, terminal) llegan
      "desde lejos": escala reducida + blur + rotación en X,
      como si avanzaran desde el fondo hacia el frente. */
   var DEPTH_SELECTOR = ".h2, .cta-title, .biz-card, .cap-card, .sec-card, .use-card, .terminal, .comp-item, .demo-form";
   document.querySelectorAll(".reveal").forEach(function (el) {
+    if (consumed.indexOf(el) !== -1) return; // ya lo controla una escena
     if (el.matches(DEPTH_SELECTOR)) {
       // Scrub: el elemento avanza desde el fondo EXACTAMENTE al ritmo
       // de tu scroll — adelante se construye, atrás se desconstruye.
@@ -450,9 +543,11 @@
 
   /* ── Desconstrucción al salir: cada sección se aleja
      hacia el fondo cuando la dejas atrás ─────────────── */
+  var pinnedIds = isMobile ? ["capacidades"] : ["soluciones", "capacidades", "seguridad"];
   gsap.utils.toArray(".section .container").forEach(function (c) {
     var sec = c.closest(".section");
     if (!sec || sec.id === "contacto") return; // el formulario queda firme
+    if (pinnedIds.indexOf(sec.id) !== -1) return; // las escenas pinneadas se gobiernan solas
     gsap.to(c, {
       opacity: 0.2, scale: 0.95, y: -70,
       ease: "none",
@@ -509,7 +604,8 @@
         trigger: stage,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.6
+        scrub: 0.6,
+        refreshPriority: 4
       }
     });
 
@@ -576,6 +672,7 @@
         start: "top top",
         end: "bottom bottom",
         scrub: 0.5,
+        refreshPriority: 3,
         onUpdate: function (self) {
           var p = self.progress * N;
           var seg = Math.min(N - 1, Math.floor(p));
@@ -725,6 +822,13 @@
     });
   }
 
+  /* ── Orden de refresh por posición en la página ──
+     Las escenas se crean en orden distinto al del documento;
+     sort() garantiza que cada pin calcule su inicio DESPUÉS
+     de que los pins anteriores hayan reservado su espacio. */
+  ScrollTrigger.sort();
+  ScrollTrigger.refresh();
+
   /* ── Refresh tras cargar fuentes ────────── */
-  window.addEventListener("load", function () { ScrollTrigger.refresh(); });
+  window.addEventListener("load", function () { ScrollTrigger.sort(); ScrollTrigger.refresh(); });
 })();

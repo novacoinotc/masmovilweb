@@ -83,6 +83,76 @@
     if (lenis) { open ? lenis.stop() : lenis.start(); }
   });
 
+  /* ── Formulario: solicitar una prueba ───── */
+  (function demoForm() {
+    var form = document.getElementById("demo-form");
+    if (!form) return;
+    var btn = document.getElementById("form-btn");
+    var status = document.getElementById("form-status");
+    var EMAIL = "direccion@masmovil.lat";
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // validación simple
+      var invalid = false;
+      form.querySelectorAll("[required]").forEach(function (field) {
+        var bad = !field.value.trim() ||
+          (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value));
+        field.classList.toggle("invalid", bad);
+        if (bad) invalid = true;
+      });
+      if (invalid) {
+        status.textContent = "Revisa los campos marcados.";
+        status.className = "form-status err";
+        return;
+      }
+      if (form.querySelector('[name="_honey"]').value) return; // bot
+
+      var data = {
+        nombre: form.nombre.value.trim(),
+        empresa: form.empresa.value.trim(),
+        email: form.email.value.trim(),
+        interes: form.interes.value,
+        mensaje: form.mensaje.value.trim() || "—",
+        _subject: "Solicitud de prueba — masmovil.lat",
+        _template: "table"
+      };
+
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+      status.textContent = "Enviando…";
+      status.className = "form-status";
+
+      fetch("https://formsubmit.co/ajax/" + EMAIL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(data)
+      })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function () {
+          status.textContent = "¡Listo! Recibimos tu solicitud, te contactamos muy pronto.";
+          status.className = "form-status ok";
+          form.reset();
+        })
+        .catch(function () {
+          // Fallback: abrir el cliente de correo con los datos precargados
+          var body = "Nombre: " + data.nombre + "\nEmpresa: " + data.empresa +
+            "\nCorreo: " + data.email + "\nMe interesa: " + data.interes +
+            "\n\n" + data.mensaje;
+          window.location.href = "mailto:" + EMAIL +
+            "?subject=" + encodeURIComponent("Solicitud de prueba — MASMOVIL") +
+            "&body=" + encodeURIComponent(body);
+          status.textContent = "Abrimos tu correo para completar el envío.";
+          status.className = "form-status";
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.style.opacity = "";
+        });
+    });
+  })();
+
   /* ── Canvas: red de nodos viva ─────────── */
   (function initCanvas() {
     if (prefersReduced) return;
@@ -230,18 +300,38 @@
     });
   })();
 
-  /* ── Reveals genéricos ──────────────────── */
-  document.querySelectorAll(".reveal").forEach(function (el, i) {
-    gsap.to(el, {
-      opacity: 1, y: 0,
-      duration: 0.95,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: el,
-        start: "top 88%",
-        toggleActions: "play none none reverse"
-      }
-    });
+  /* ── Reveals: planos y de profundidad 3D ──
+     Los bloques grandes (títulos, tarjetas, terminal) llegan
+     "desde lejos": escala reducida + blur + rotación en X,
+     como si avanzaran desde el fondo hacia el frente. */
+  var DEPTH_SELECTOR = ".h2, .cta-title, .biz-card, .cap-card, .sec-card, .use-card, .terminal, .comp-item, .demo-form";
+  document.querySelectorAll(".reveal").forEach(function (el) {
+    if (el.matches(DEPTH_SELECTOR)) {
+      gsap.fromTo(el,
+        { opacity: 0, scale: 0.7, y: 120, rotateX: 16, transformPerspective: 1100, filter: "blur(12px)" },
+        {
+          opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)",
+          duration: 1.2,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 92%",
+            toggleActions: "play none none reverse"
+          },
+          onComplete: function () { el.style.filter = ""; }
+        });
+    } else {
+      gsap.to(el, {
+        opacity: 1, y: 0,
+        duration: 0.95,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 88%",
+          toggleActions: "play none none reverse"
+        }
+      });
+    }
   });
 
   /* ── Statement: palabras que se encienden ── */
@@ -281,26 +371,29 @@
     // 1) Encabezado entra
     tl.fromTo(".pin-head",
       { opacity: 0, y: 60 },
-      { opacity: 1, y: 0, duration: 0.6 }, 0);
+      { opacity: 1, y: 0, duration: 0.5 }, 0);
 
-    // 2) Dashboard emerge desde el fondo (zoom-in)
+    // 2) Dashboard llega desde muy lejos (zoom 3D profundo)
     tl.fromTo("#dash-wrap",
-      { opacity: 0, scale: 0.62, y: 140, rotateX: 14, transformPerspective: 900 },
-      { opacity: 1, scale: 1, y: 0, rotateX: 0, duration: 1.4, ease: "power2.out" }, 0.25);
+      { opacity: 0, scale: 0.4, y: 260, rotateX: 24, transformPerspective: 1200, filter: "blur(14px)" },
+      { opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)", duration: 1.5, ease: "power2.out" }, 0.15);
 
     // 3) La gráfica se dibuja
-    tl.to(".chart-line", { strokeDashoffset: 0, duration: 1.2, ease: "power1.inOut" }, 1.0);
+    tl.to(".chart-line", { strokeDashoffset: 0, duration: 1.1, ease: "power1.inOut" }, 1.0);
 
     // 4) Callouts aparecen alrededor
-    tl.fromTo(".co-1", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.5 }, 1.5);
-    tl.fromTo(".co-2", { opacity: 0, x: 34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.5 }, 1.75);
-    tl.fromTo(".co-3", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.5 }, 2.0);
-    tl.fromTo(".co-4", { opacity: 0, y: 30, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, 2.25);
+    tl.fromTo(".co-1", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.5);
+    tl.fromTo(".co-2", { opacity: 0, x: 34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.7);
+    tl.fromTo(".co-3", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.9);
+    tl.fromTo(".co-4", { opacity: 0, y: 30, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.45 }, 2.1);
 
-    // 5) Zoom-through de salida: todo crece y se desvanece
-    tl.to("#dash-wrap", { scale: 1.16, opacity: 0, y: -60, duration: 1.1, ease: "power2.in" }, 3.1);
-    tl.to(".pin-head", { opacity: 0, y: -50, duration: 0.8 }, 3.1);
-    tl.to("[data-co]", { opacity: 0, scale: 1.1, duration: 0.5 }, 3.1);
+    // 5) Zoom-through de salida: crece hacia la cámara pero queda
+    //    parcialmente visible al despinnear — así el scroll nunca
+    //    pasa por una pantalla vacía; el dashboard sale de cuadro
+    //    de forma natural junto con la siguiente sección.
+    tl.to("#dash-wrap", { scale: 1.14, opacity: 0.45, y: -70, duration: 0.9, ease: "power2.in" }, 3.0);
+    tl.to(".pin-head", { opacity: 0, y: -60, duration: 0.7 }, 3.0);
+    tl.to("[data-co]", { opacity: 0, scale: 1.12, duration: 0.45 }, 3.0);
   })();
 
   /* ── Parallax de orbes ──────────────────── */

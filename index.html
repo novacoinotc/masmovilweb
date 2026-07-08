@@ -453,23 +453,45 @@
     <!-- ══════════ CTA / CONTACTO ══════════ -->
     <section class="section cta-final" id="contacto">
       <div class="container cta-inner">
-        <p class="eyebrow reveal">Contacto</p>
+        <p class="eyebrow reveal">Solicita una prueba</p>
         <h2 class="cta-title reveal">¿Listo para operar con<br /><em class="grad">infraestructura de grado bancario?</em></h2>
-        <p class="lead reveal">Agenda una demo en vivo de la plataforma, solicita la documentación
-           de integración para tu equipo técnico o conoce nuestros esquemas comerciales por volumen.</p>
-        <div class="cta-actions reveal">
-          <a class="btn btn-primary btn-lg btn-magnetic" href="mailto:direccion@novacorp.mx?subject=Contacto%20MASMOVIL">
-            direccion@novacorp.mx
-          </a>
-          <a class="btn btn-ghost btn-lg btn-magnetic" href="https://wa.me/5213332272003" target="_blank" rel="noopener">
-            WhatsApp&nbsp; +52 1 333 227 2003
-          </a>
-        </div>
-        <div class="cta-points reveal">
-          <span>🌐 Demo en vivo</span>
-          <span>🔌 Documentación API</span>
-          <span>🤝 Esquemas por volumen</span>
-        </div>
+        <p class="lead reveal">Cuéntanos de tu operación y te damos acceso a una demo en vivo
+           de la plataforma, junto con la documentación de integración para tu equipo técnico.</p>
+        <form id="demo-form" class="demo-form reveal" novalidate>
+          <div class="ff">
+            <label for="f-nombre">Nombre</label>
+            <input id="f-nombre" name="nombre" type="text" required autocomplete="name" placeholder="Tu nombre" />
+          </div>
+          <div class="ff">
+            <label for="f-empresa">Empresa</label>
+            <input id="f-empresa" name="empresa" type="text" required autocomplete="organization" placeholder="Nombre de tu empresa" />
+          </div>
+          <div class="ff">
+            <label for="f-email">Correo</label>
+            <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="tucorreo@empresa.com" />
+          </div>
+          <div class="ff">
+            <label for="f-interes">Me interesa</label>
+            <select id="f-interes" name="interes">
+              <option>Plataforma de pagos SPEI</option>
+              <option>Integración vía API</option>
+              <option>Telecomunicaciones</option>
+              <option>Desarrollo de software</option>
+            </select>
+          </div>
+          <div class="ff ff-full">
+            <label for="f-msg">Cuéntanos de tu operación <span class="opt">(opcional)</span></label>
+            <textarea id="f-msg" name="mensaje" rows="4" placeholder="Caso de uso, volumen aproximado, tiempos…"></textarea>
+          </div>
+          <input type="text" name="_honey" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <div class="ff-full form-foot">
+            <button type="submit" class="btn btn-primary btn-lg" id="form-btn">Solicitar una prueba
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+        <p class="cta-alt reveal">O escríbenos directo a <a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a></p>
       </div>
     </section>
 
@@ -503,8 +525,8 @@
       </div>
       <div class="footer-col">
         <h4>Contacto</h4>
-        <a href="mailto:direccion@novacorp.mx">direccion@novacorp.mx</a>
-        <a href="https://wa.me/5213332272003" target="_blank" rel="noopener">WhatsApp +52 1 333 227 2003</a>
+        <a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a>
+        <a href="#contacto">Solicitar una prueba</a>
         <p class="footer-addr">Pompeya 2775, Lomas de Guevara,<br />C.P. 44657, Guadalajara, Jalisco, México</p>
       </div>
     </div>

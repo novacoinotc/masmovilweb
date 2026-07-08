@@ -34,7 +34,11 @@ Al ser un sitio estático no requiere configuración: Vercel lo detecta como
 ## Contenido / datos legales
 
 - Razón social, RFC y domicilio (footer) tomados de la Constancia de Situación Fiscal (SAT, ene 2026).
-- Contacto: direccion@novacorp.mx · WhatsApp +52 1 333 227 2003.
+- Contacto: direccion@masmovil.lat (sin teléfono).
+- Formulario "Solicitar una prueba": envía por FormSubmit (`formsubmit.co/ajax/direccion@masmovil.lat`).
+  **La primera vez que alguien envíe el formulario, FormSubmit manda un correo de activación a
+  direccion@masmovil.lat — hay que darle clic para que empiecen a llegar los envíos.**
+  Si el envío falla, hace fallback a `mailto:`.
 - Copy de la plataforma de pagos basado en la oferta comercial de NOVACORE.
 
 ## Accesibilidad / rendimiento

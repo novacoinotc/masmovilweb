@@ -153,6 +153,55 @@
     });
   })();
 
+  /* ── Feed vivo: transacciones que llegan solas ──
+     El dashboard "respira": cada pocos segundos entra una
+     operación nueva y el saldo se actualiza. */
+  (function liveFeed() {
+    var rows = document.getElementById("dash-rows");
+    var saldoEl = document.getElementById("dc-saldo");
+    if (!rows || !saldoEl) return;
+    var saldo = 4382150;
+    var seq = [
+      { dep: true,  label: "Depósito SPEI · CLABE •••2338", amt: 15200 },
+      { dep: false, label: "Transferencia · Proveedor SA de CV", amt: 82450 },
+      { dep: true,  label: "Depósito SPEI · CLABE •••7714", amt: 63000 },
+      { dep: true,  label: "Depósito SPEI · CLABE •••1020", amt: 9800 },
+      { dep: false, label: "Dispersión lote #3492 · 96 pagos", amt: 412300 },
+      { dep: true,  label: "Depósito SPEI · CLABE •••4402", amt: 230000 },
+      { dep: true,  label: "Depósito SPEI · CLABE •••8155", amt: 47500 },
+      { dep: false, label: "Nómina quincenal · 58 empleados", amt: 386200 }
+    ];
+    var idx = 0, timer = null;
+    function fmt(n) { return n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function tick() {
+      var t = seq[idx % seq.length]; idx++;
+      var div = document.createElement("div");
+      div.className = "dr";
+      div.innerHTML =
+        '<span class="dr-dot ' + (t.dep ? "in" : "out") + '"></span>' +
+        "<span>" + t.label + "</span>" +
+        '<span class="dr-amt ' + (t.dep ? "in" : "") + '">' + (t.dep ? "+" : "−") + " $" + fmt(t.amt) + "</span>" +
+        '<span class="dr-tag">' + (t.dep ? "CEP ✓" : "Liquidado") + "</span>";
+      rows.insertBefore(div, rows.firstChild);
+      if (hasGsap && !prefersReduced) {
+        gsap.from(div, { y: -18, opacity: 0, duration: 0.5, ease: "power2.out" });
+        gsap.fromTo(saldoEl, { color: t.dep ? "#34d399" : "#f472b6" }, { color: "#eef2ff", duration: 1.2 });
+      }
+      while (rows.children.length > 3) rows.removeChild(rows.lastChild);
+      saldo += t.dep ? t.amt : -t.amt;
+      saldoEl.innerHTML = "$" + Math.floor(saldo).toLocaleString("es-MX") + ".<small>00</small>";
+    }
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { if (!timer) timer = setInterval(tick, 2800); }
+          else { clearInterval(timer); timer = null; }
+        });
+      }, { threshold: 0.4 });
+      io.observe(rows);
+    }
+  })();
+
   /* ── Canvas: red de nodos viva ─────────── */
   (function initCanvas() {
     if (prefersReduced) return;
@@ -237,6 +286,11 @@
 
   gsap.registerPlugin(ScrollTrigger);
   if (prefersReduced) return;
+  ScrollTrigger.config({ ignoreMobileResize: true });
+
+  // Blur más ligero en móvil: iOS renderiza filter:blur con costo alto
+  var BLUR_DEEP = isMobile ? "6px" : "12px";
+  var BLUR_DASH = isMobile ? "8px" : "14px";
 
   /* ── Barra de progreso ─────────────────── */
   gsap.to("#scroll-bar", {
@@ -308,7 +362,7 @@
   document.querySelectorAll(".reveal").forEach(function (el) {
     if (el.matches(DEPTH_SELECTOR)) {
       gsap.fromTo(el,
-        { opacity: 0, scale: 0.7, y: 120, rotateX: 16, transformPerspective: 1100, filter: "blur(12px)" },
+        { opacity: 0, scale: 0.7, y: 120, rotateX: 16, transformPerspective: 1100, filter: "blur(" + BLUR_DEEP + ")" },
         {
           opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)",
           duration: 1.2,
@@ -373,27 +427,97 @@
       { opacity: 0, y: 60 },
       { opacity: 1, y: 0, duration: 0.5 }, 0);
 
-    // 2) Dashboard llega desde muy lejos (zoom 3D profundo)
+    // 2) El marco del dashboard llega desde muy lejos (zoom 3D profundo)
     tl.fromTo("#dash-wrap",
-      { opacity: 0, scale: 0.4, y: 260, rotateX: 24, transformPerspective: 1200, filter: "blur(14px)" },
-      { opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)", duration: 1.5, ease: "power2.out" }, 0.15);
+      { opacity: 0, scale: 0.4, y: 260, rotateX: 24, transformPerspective: 1200, filter: "blur(" + BLUR_DASH + ")" },
+      { opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)", duration: 1.2, ease: "power2.out" }, 0.15);
 
-    // 3) La gráfica se dibuja
-    tl.to(".chart-line", { strokeDashoffset: 0, duration: 1.1, ease: "power1.inOut" }, 1.0);
+    // 3) La interfaz se CONSTRUYE pieza por pieza conforme escroleas
+    //    (y se desconstruye al subir: scrub reversible)
+    tl.fromTo(".ds-item",
+      { opacity: 0, x: -20 },
+      { opacity: 1, x: 0, duration: 0.22, stagger: 0.08, immediateRender: true }, 0.95);
+    tl.fromTo(".dc",
+      { opacity: 0, y: 30, scale: 0.88 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.35, stagger: 0.16, immediateRender: true }, 1.1);
+    tl.fromTo(".dash-chart",
+      { opacity: 0, scaleY: 0.5, transformOrigin: "50% 100%" },
+      { opacity: 1, scaleY: 1, duration: 0.4, immediateRender: true }, 1.6);
+    tl.to(".chart-line", { strokeDashoffset: 0, duration: 1.0, ease: "power1.inOut" }, 1.75);
+    tl.fromTo(".dr",
+      { opacity: 0, y: 26 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.2, immediateRender: true }, 2.0);
 
     // 4) Callouts aparecen alrededor
-    tl.fromTo(".co-1", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.5);
-    tl.fromTo(".co-2", { opacity: 0, x: 34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.7);
-    tl.fromTo(".co-3", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.45 }, 1.9);
-    tl.fromTo(".co-4", { opacity: 0, y: 30, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.45 }, 2.1);
+    tl.fromTo(".co-1", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.4 }, 2.7);
+    tl.fromTo(".co-2", { opacity: 0, x: 34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.4 }, 2.85);
+    tl.fromTo(".co-3", { opacity: 0, x: -34, scale: 0.85 }, { opacity: 1, x: 0, scale: 1, duration: 0.4 }, 3.0);
+    tl.fromTo(".co-4", { opacity: 0, y: 30, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.4 }, 3.15);
 
     // 5) Zoom-through de salida: crece hacia la cámara pero queda
     //    parcialmente visible al despinnear — así el scroll nunca
     //    pasa por una pantalla vacía; el dashboard sale de cuadro
     //    de forma natural junto con la siguiente sección.
-    tl.to("#dash-wrap", { scale: 1.14, opacity: 0.45, y: -70, duration: 0.9, ease: "power2.in" }, 3.0);
-    tl.to(".pin-head", { opacity: 0, y: -60, duration: 0.7 }, 3.0);
-    tl.to("[data-co]", { opacity: 0, scale: 1.12, duration: 0.45 }, 3.0);
+    tl.to("#dash-wrap", { scale: 1.14, opacity: 0.45, y: -70, duration: 0.9, ease: "power2.in" }, 4.0);
+    tl.to(".pin-head", { opacity: 0, y: -60, duration: 0.7 }, 4.0);
+    tl.to("[data-co]", { opacity: 0, scale: 1.12, duration: 0.45 }, 4.0);
+  })();
+
+  /* ── El código de la API se teclea con el scroll ──
+     Cada carácter aparece conforme bajas, con cursor
+     parpadeante — como si alguien lo escribiera en vivo. */
+  (function typeCode() {
+    var code = document.getElementById("api-code");
+    if (!code) return;
+
+    // Envuelve cada carácter en un span (respetando el resaltado de sintaxis)
+    var chars = [];
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          child.textContent.split("").forEach(function (ch) {
+            var s = document.createElement("span");
+            s.textContent = ch;
+            s.style.visibility = "hidden";
+            frag.appendChild(s);
+            chars.push(s);
+          });
+          node.replaceChild(frag, child);
+        } else if (child.nodeType === 1) {
+          walk(child);
+        }
+      });
+    })(code);
+
+    var caret = document.createElement("span");
+    caret.className = "tcaret";
+    code.appendChild(caret);
+
+    var state = { n: 0 }, last = 0;
+    gsap.to(state, {
+      n: chars.length,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".terminal",
+        start: "top 82%",
+        end: "+=850",
+        scrub: 0.4
+      },
+      onUpdate: function () {
+        var upto = Math.round(state.n);
+        if (upto === last) return;
+        var lo = Math.min(last, upto), hi = Math.max(last, upto);
+        for (var i = lo; i < hi; i++) {
+          chars[i].style.visibility = i < upto ? "visible" : "hidden";
+        }
+        last = upto;
+        var anchor = chars[Math.min(upto, chars.length - 1)];
+        if (anchor && anchor.parentNode) {
+          anchor.parentNode.insertBefore(caret, upto >= chars.length ? null : anchor);
+        }
+      }
+    });
   })();
 
   /* ── Parallax de orbes ──────────────────── */

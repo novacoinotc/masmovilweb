@@ -41,8 +41,18 @@ Al ser un sitio estático no requiere configuración: Vercel lo detecta como
   Si el envío falla, hace fallback a `mailto:`.
 - Copy de la plataforma de pagos basado en la oferta comercial de NOVACORE.
 
+## Efectos "vivos"
+
+- El dashboard del pin se **construye pieza por pieza** con el scroll (y se desconstruye al subir).
+- El código de la API se **teclea solo** con cursor parpadeante, ligado al scroll.
+- **Feed vivo**: cada ~3s entra una transacción nueva al dashboard y el saldo se actualiza
+  (solo mientras el dashboard es visible — IntersectionObserver).
+- En móvil los callouts se muestran como chips animados bajo el dashboard.
+
 ## Accesibilidad / rendimiento
 
-- `prefers-reduced-motion`: desactiva todas las animaciones.
+- `prefers-reduced-motion`: desactiva todas las animaciones. **Ojo:** si un teléfono tiene
+  "Reducir movimiento" activado (iOS: Ajustes → Accesibilidad → Movimiento), el sitio se
+  muestra estático a propósito.
 - Si el CDN de GSAP no carga, la página se muestra completa sin animaciones (fallback `html.js-anim`).
 - Optimizado para móvil (verificado a 390px, sin overflow horizontal).

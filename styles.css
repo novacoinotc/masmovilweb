@@ -498,6 +498,7 @@ ul { list-style: none; }
   padding: 3px 10px; color: var(--text-faint); white-space: nowrap;
 }
 
+.co-strip { display: contents; }
 .callout {
   position: absolute; z-index: 3;
   display: flex; flex-direction: column; gap: 2px;
@@ -581,6 +582,16 @@ ul { list-style: none; }
 .term-body .k { color: #8b5cf6; }
 .term-body .s { color: #34d399; }
 .term-body .n { color: #f472b6; }
+
+/* Tecleo en vivo del código */
+.tcaret {
+  display: inline-block; width: 8px; height: 1.1em;
+  background: var(--cyan); vertical-align: text-bottom;
+  margin-left: 1px; border-radius: 1px;
+  animation: caret-blink 0.85s steps(1) infinite;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
 
 /* ── Seguridad ────────────────────────────── */
 
@@ -751,7 +762,12 @@ ul { list-style: none; }
 @media (max-width: 1024px) {
   .biz-grid, .sec-grid, .cap-grid, .use-grid { grid-template-columns: repeat(2, 1fr); }
   .api-grid, .comp-grid { grid-template-columns: 1fr; gap: 44px; }
-  .callout { display: none; }
+  /* Callouts como chips debajo del dashboard */
+  .co-strip {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 14px;
+  }
+  .callout { position: static; padding: 10px 14px; }
   .statement-facts { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
@@ -764,19 +780,35 @@ ul { list-style: none; }
   .dash-body { grid-template-columns: 1fr; min-height: 0; }
   .dash-side { display: none; }
   .dash-main { padding: 14px; gap: 12px; }
-  .dash-cards { grid-template-columns: 1fr; }
+  .dash-cards { grid-template-columns: 1fr 1fr; }
+  .dc:nth-child(3) { grid-column: 1 / -1; }
   .dc, .dr, .dash-main, .dash-chart { min-width: 0; }
   .dc { padding: 12px 14px; }
-  .dash-chart { height: 80px; }
+  .dc-value { font-size: 17px; }
+  .dash-chart { height: 68px; }
+  #dash-rows .dr:nth-child(n+3) { display: none; }
   .dr { padding: 10px 12px; gap: 8px; }
   .dr-amt { font-size: 11px; }
   .dash-url { display: none; }
+  .pin-viewport { justify-content: flex-start; padding-top: calc(var(--nav-h) + 10px); }
+  .pin-head { margin-bottom: 24px; }
+  .co-strip { gap: 8px; margin-top: 10px; }
+  .callout { padding: 8px 12px; }
+  .co-k { font-size: 12px; }
+  .co-v { display: none; }
   .pin-stage { height: 185vh; }
   .hero-scroll-hint { display: none; }
   .demo-form { grid-template-columns: 1fr; }
   .form-foot .btn { width: 100%; justify-content: center; }
   .statement-facts { grid-template-columns: 1fr 1fr; gap: 26px 16px; }
   .dr-tag { display: none; }
+}
+
+/* Teléfonos con pantalla corta: compactar la escena pinned */
+@media (max-width: 720px) and (max-height: 740px) {
+  .pin-head .h2 { font-size: 24px; }
+  .dash { zoom: 0.85; }
+  .co-strip { margin-top: 8px; }
 }
 
 /* ── Accesibilidad: reduced motion ────────── */

@@ -241,7 +241,7 @@
                 <div class="dash-cards">
                   <div class="dc">
                     <span class="dc-label">Saldo disponible</span>
-                    <span class="dc-value">$4,382,150.<small>00</small></span>
+                    <span class="dc-value" id="dc-saldo">$4,382,150.<small>00</small></span>
                     <span class="dc-trend up">▲ Entradas hoy $612,400</span>
                   </div>
                   <div class="dc">
@@ -267,7 +267,7 @@
                     <path d="M0,95 C40,88 60,60 95,64 C130,68 150,40 190,45 C230,50 250,78 290,70 C330,62 350,30 395,34 C440,38 470,18 520,22 L520,120 L0,120 Z" fill="url(#chart-fill)"/>
                   </svg>
                 </div>
-                <div class="dash-rows">
+                <div class="dash-rows" id="dash-rows">
                   <div class="dr"><span class="dr-dot in"></span><span>Depósito SPEI · CLABE •••4821</span><span class="dr-amt in">+ $45,000.00</span><span class="dr-tag">CEP ✓</span></div>
                   <div class="dr"><span class="dr-dot out"></span><span>Dispersión lote #3491 · 218 pagos</span><span class="dr-amt">− $982,340.00</span><span class="dr-tag">Liquidado</span></div>
                   <div class="dr"><span class="dr-dot in"></span><span>Depósito SPEI · CLABE •••9106</span><span class="dr-amt in">+ $128,500.00</span><span class="dr-tag">CEP ✓</span></div>
@@ -276,11 +276,13 @@
             </div>
           </div>
 
-          <!-- Callouts flotantes -->
-          <div class="callout co-1" data-co><span class="co-k">CLABEs ilimitadas</span><span class="co-v">generadas al instante</span></div>
-          <div class="callout co-2" data-co><span class="co-k">Ventana de cancelación</span><span class="co-v">8s para deshacer errores</span></div>
-          <div class="callout co-3" data-co><span class="co-k">Webhooks</span><span class="co-v">entrega garantizada</span></div>
-          <div class="callout co-4" data-co><span class="co-k">Kill switch</span><span class="co-v">freno de emergencia</span></div>
+          <!-- Callouts flotantes (chips en móvil) -->
+          <div class="co-strip">
+            <div class="callout co-1" data-co><span class="co-k">CLABEs ilimitadas</span><span class="co-v">generadas al instante</span></div>
+            <div class="callout co-2" data-co><span class="co-k">Cancelación 8s</span><span class="co-v">para deshacer errores</span></div>
+            <div class="callout co-3" data-co><span class="co-k">Webhooks</span><span class="co-v">entrega garantizada</span></div>
+            <div class="callout co-4" data-co><span class="co-k">Kill switch</span><span class="co-v">freno de emergencia</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -353,7 +355,7 @@
             <div class="dash-dots"><i></i><i></i><i></i></div>
             <span>POST /v1/transferencias</span>
           </div>
-          <pre class="term-body"><code><span class="c">// Dispersión programática con firma HMAC</span>
+          <pre class="term-body"><code id="api-code"><span class="c">// Dispersión programática con firma HMAC</span>
 <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">"https://api…/v1/transferencias"</span>, {
   method: <span class="s">"POST"</span>,
   headers: {

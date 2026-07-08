@@ -43,6 +43,11 @@ Al ser un sitio estático no requiere configuración: Vercel lo detecta como
 
 ## Efectos "vivos"
 
+- **"El viaje de una transferencia"** (`#viaje`): descenso scrollytelling tipo iceberg por las
+  6 capas del stack (orden → firma → core → cumplimiento → SPEI → liquidada), con cronómetro
+  t=0→3.80s, pulso de dinero bajando por el carril, fondo que cambia de color por capa y
+  burbujas subiendo. Estallido verde al liquidar.
+
 - El dashboard del pin se **construye pieza por pieza** con el scroll (y se desconstruye al subir).
 - El código de la API se **teclea solo** con cursor parpadeante, ligado al scroll.
 - **Feed vivo**: cada ~3s entra una transacción nueva al dashboard y el saldo se actualiza

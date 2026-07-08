@@ -287,6 +287,81 @@
       </div>
     </section>
 
+    <!-- ══════════ EL VIAJE DE UNA TRANSFERENCIA (descenso por capas) ══════════ -->
+    <section class="journey" id="viaje" aria-label="El viaje de una transferencia SPEI">
+      <div class="j-viewport">
+        <div class="j-bg" id="j-bg"></div>
+        <div class="j-bubbles" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="j-track" aria-hidden="true">
+          <div class="j-line"><span class="j-line-fill" id="j-line-fill"></span></div>
+          <div class="j-packet" id="j-packet"></div>
+        </div>
+        <div class="j-hud" aria-hidden="true">
+          <span class="j-hud-k">El viaje de una transferencia</span>
+          <span class="j-hud-t" id="j-hud-t">t = 0.00 s</span>
+          <span class="j-hud-l" id="j-hud-l">CAPA 01 · LA ORDEN</span>
+        </div>
+        <div class="j-layers">
+          <article class="j-layer" data-t="0" data-name="LA ORDEN">
+            <span class="j-num">01</span>
+            <div class="j-card">
+              <h3>El cliente ordena el pago</h3>
+              <p>Desde la plataforma web o directo desde tu sistema vía API.
+                 Individual, lote masivo o nómina completa.</p>
+              <code class="j-chip">POST /v1/transferencias</code>
+            </div>
+          </article>
+          <article class="j-layer" data-t="0.18" data-name="LA FIRMA">
+            <span class="j-num">02</span>
+            <div class="j-card">
+              <h3>La solicitud se autentica</h3>
+              <p>Firma HMAC verificada, protección anti-replay e idempotencia:
+                 nada entra al core sin identidad criptográfica.</p>
+              <code class="j-chip">X-Signature ✓ · X-Timestamp ✓</code>
+            </div>
+          </article>
+          <article class="j-layer" data-t="0.42" data-name="EL CORE">
+            <span class="j-num">03</span>
+            <div class="j-card">
+              <h3>El core valida y asienta</h3>
+              <p>Saldo, límites y CLABE destino verificados; banco detectado
+                 y asiento en el libro mayor de doble entrada.</p>
+              <code class="j-chip">ledger: débito ⇄ crédito</code>
+            </div>
+          </article>
+          <article class="j-layer" data-t="0.85" data-name="CUMPLIMIENTO">
+            <span class="j-num">04</span>
+            <div class="j-card">
+              <h3>Cumplimiento en línea</h3>
+              <p>Screening contra listas de sanciones y scoring de riesgo
+                 en tiempo real. Lo inusual se detiene aquí, no después.</p>
+              <code class="j-chip">PLD/AML · score: aprobado</code>
+            </div>
+          </article>
+          <article class="j-layer" data-t="2.10" data-name="RED SPEI">
+            <span class="j-num">05</span>
+            <div class="j-card">
+              <h3>Viaja por la red SPEI</h3>
+              <p>La orden llega al procesador autorizado y liquida en la
+                 infraestructura de Banco de México. 24/7/365.</p>
+              <code class="j-chip">Banxico · liquidando…</code>
+            </div>
+          </article>
+          <article class="j-layer" data-t="3.80" data-name="LIQUIDADA">
+            <span class="j-num">06</span>
+            <div class="j-card j-card-final">
+              <h3>Liquidada, con comprobante</h3>
+              <p>El beneficiario ya tiene el dinero. CEP oficial de Banxico,
+                 clave de rastreo y webhook notificando a tu sistema.</p>
+              <code class="j-chip j-chip-ok">estatus: liquidada · CEP ✓</code>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- ══════════ CAPACIDADES ══════════ -->
     <section class="section" id="capacidades">
       <div class="container">

@@ -463,6 +463,77 @@
     tl.to("[data-co]", { opacity: 0, scale: 1.12, duration: 0.45 }, 4.0);
   })();
 
+  /* ── El viaje de una transferencia ─────────
+     Descenso tipo "iceberg": cada capa del stack sube desde
+     abajo y pasa de largo, el fondo se oscurece con la
+     profundidad, un pulso de dinero baja por el carril y el
+     cronómetro corre de t=0 a t=3.80s (liquidación real SPEI). */
+  (function journey() {
+    var stage = document.querySelector(".journey");
+    if (!stage) return;
+    var layers = gsap.utils.toArray(".j-layer");
+    var N = layers.length;
+    var hudT = document.getElementById("j-hud-t");
+    var hudL = document.getElementById("j-hud-l");
+    var names = layers.map(function (l) { return l.getAttribute("data-name"); });
+    var times = layers.map(function (l) { return parseFloat(l.getAttribute("data-t")); });
+    var depths = ["#071026", "#0a0e2a", "#110b2e", "#140825", "#0c0618", "#03170f"];
+
+    var tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: stage,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.5,
+        onUpdate: function (self) {
+          var p = self.progress * N;
+          var seg = Math.min(N - 1, Math.floor(p));
+          var segP = Math.min(1, p - seg);
+          var t0 = times[seg];
+          var t1 = seg + 1 < N ? times[seg + 1] : times[N - 1];
+          hudT.textContent = "t = " + (t0 + (t1 - t0) * segP).toFixed(2) + " s";
+          hudL.textContent = "CAPA 0" + (seg + 1) + " · " + names[seg];
+        }
+      }
+    });
+
+    layers.forEach(function (layer, i) {
+      var card = layer.querySelector(".j-card");
+      var num = layer.querySelector(".j-num");
+      if (i === 0) {
+        // la primera capa ya está en escena al entrar
+        gsap.set(layer, { y: 0 });
+      } else {
+        tl.fromTo(layer, { y: "108vh" }, { y: "0vh", duration: 0.55, ease: "none", immediateRender: true }, i - 0.35);
+      }
+      // la tarjeta se enfoca al llegar al centro
+      tl.fromTo(card,
+        { opacity: i === 0 ? 1 : 0.25, scale: i === 0 ? 1 : 0.92 },
+        { opacity: 1, scale: 1, duration: 0.2, immediateRender: i !== 0 }, Math.max(0.01, i + 0.05));
+      // el número fantasma se mueve más lento (parallax de profundidad)
+      tl.fromTo(num, { yPercent: 26 }, { yPercent: -26, duration: 1.3, ease: "none" }, Math.max(0, i - 0.35));
+      // todas menos la última pasan de largo hacia arriba
+      if (i < N - 1) {
+        tl.to(layer, { y: "-108vh", duration: 0.55, ease: "none" }, i + 0.62);
+        tl.to(card, { opacity: 0.2, scale: 0.94, duration: 0.2 }, i + 0.62);
+      }
+      // el fondo se hunde de color con cada capa
+      tl.to("#j-bg", { backgroundColor: depths[i], duration: 0.6, ease: "none" }, Math.max(0, i - 0.3));
+    });
+
+    // el pulso desciende por el carril durante todo el viaje
+    tl.fromTo("#j-packet", { top: "14%" }, { top: "80%", duration: N, ease: "none" }, 0);
+    tl.fromTo("#j-line-fill", { scaleY: 0 }, { scaleY: 1, duration: N, ease: "none" }, 0);
+
+    // liquidación: el pulso estalla en verde
+    tl.to("#j-packet", {
+      backgroundColor: "#34d399",
+      boxShadow: "0 0 70px 24px rgba(52, 211, 153, 0.6)",
+      scale: 1.5,
+      duration: 0.35
+    }, N - 0.45);
+  })();
+
   /* ── El código de la API se teclea con el scroll ──
      Cada carácter aparece conforme bajas, con cursor
      parpadeante — como si alguien lo escribiera en vivo. */

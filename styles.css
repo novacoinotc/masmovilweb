@@ -519,6 +519,133 @@ ul { list-style: none; }
 .co-4 { bottom: -26px; right: 60px; border-color: rgba(52, 211, 153, 0.4); }
 .co-4 .co-k { color: var(--green); }
 
+/* ── El viaje de una transferencia ────────── */
+
+.journey { height: 560vh; position: relative; z-index: 2; }
+.j-viewport {
+  position: sticky; top: 0; height: 100svh;
+  overflow: hidden;
+}
+.j-bg {
+  position: absolute; inset: 0;
+  background-color: #071026;
+  transition: none;
+}
+.j-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(900px circle at 20% 15%, rgba(34, 211, 238, 0.07), transparent 55%),
+    radial-gradient(900px circle at 85% 80%, rgba(139, 92, 246, 0.08), transparent 55%);
+}
+
+/* Burbujas que suben constantemente (el fondo vive) */
+.j-bubbles { position: absolute; inset: 0; pointer-events: none; }
+.j-bubbles i {
+  position: absolute; bottom: -50px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.35), rgba(34, 211, 238, 0) 70%);
+  animation: j-rise linear infinite;
+}
+.j-bubbles i:nth-child(1)  { left: 6%;  width: 14px; height: 14px; animation-duration: 11s; animation-delay: 0s; }
+.j-bubbles i:nth-child(2)  { left: 14%; width: 8px;  height: 8px;  animation-duration: 15s; animation-delay: 3s; }
+.j-bubbles i:nth-child(3)  { left: 24%; width: 18px; height: 18px; animation-duration: 13s; animation-delay: 6s; }
+.j-bubbles i:nth-child(4)  { left: 33%; width: 6px;  height: 6px;  animation-duration: 17s; animation-delay: 1.5s; }
+.j-bubbles i:nth-child(5)  { left: 44%; width: 11px; height: 11px; animation-duration: 12s; animation-delay: 8s; }
+.j-bubbles i:nth-child(6)  { left: 55%; width: 7px;  height: 7px;  animation-duration: 16s; animation-delay: 4s; }
+.j-bubbles i:nth-child(7)  { left: 63%; width: 15px; height: 15px; animation-duration: 10s; animation-delay: 2s; }
+.j-bubbles i:nth-child(8)  { left: 72%; width: 9px;  height: 9px;  animation-duration: 14s; animation-delay: 7s; }
+.j-bubbles i:nth-child(9)  { left: 80%; width: 12px; height: 12px; animation-duration: 12.5s; animation-delay: 0.8s; }
+.j-bubbles i:nth-child(10) { left: 88%; width: 6px;  height: 6px;  animation-duration: 18s; animation-delay: 5s; }
+.j-bubbles i:nth-child(11) { left: 94%; width: 10px; height: 10px; animation-duration: 13.5s; animation-delay: 9s; }
+.j-bubbles i:nth-child(12) { left: 50%; width: 5px;  height: 5px;  animation-duration: 19s; animation-delay: 11s; }
+@keyframes j-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  8% { opacity: 1; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-112vh); opacity: 0; }
+}
+
+/* Carril central: el pulso de dinero desciende */
+.j-track { position: absolute; inset: 0; pointer-events: none; }
+.j-line {
+  position: absolute; left: 50%; top: 9%; bottom: 9%;
+  width: 2px; transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px; overflow: hidden;
+}
+.j-line-fill {
+  display: block; width: 100%; height: 100%;
+  background: linear-gradient(180deg, var(--cyan), var(--violet));
+  transform: scaleY(0); transform-origin: top;
+}
+.j-packet {
+  position: absolute; left: 50%; top: 16%;
+  width: 16px; height: 16px; margin-left: -8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 24px 6px rgba(34, 211, 238, 0.55);
+  animation: packet-pulse 1.6s ease-in-out infinite;
+}
+@keyframes packet-pulse {
+  50% { box-shadow: 0 0 38px 12px rgba(34, 211, 238, 0.4); }
+}
+
+/* HUD: cronómetro del viaje */
+.j-hud {
+  position: absolute; top: calc(var(--nav-h) + 22px); left: 4vw;
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: var(--font-mono); z-index: 4;
+}
+.j-hud-k { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-faint); }
+.j-hud-t {
+  font-size: clamp(22px, 3vw, 34px); font-weight: 500;
+  color: var(--cyan); text-shadow: 0 0 24px rgba(34, 211, 238, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.j-hud-l { font-size: 12px; letter-spacing: 0.18em; color: var(--text-dim); }
+
+/* Capas que pasan de largo */
+.j-layers { position: absolute; inset: 0; }
+.j-layer {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  padding: 0 7vw;
+  will-change: transform;
+}
+.j-layer:nth-child(odd) { justify-content: flex-start; }
+.j-layer:nth-child(even) { justify-content: flex-end; }
+.j-num {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(140px, 24vw, 320px);
+  color: rgba(255, 255, 255, 0.045);
+  letter-spacing: -0.04em; line-height: 1;
+  pointer-events: none; user-select: none;
+}
+.j-layer:nth-child(odd) .j-num { right: 6vw; }
+.j-layer:nth-child(even) .j-num { left: 6vw; }
+.j-card {
+  position: relative; max-width: 440px;
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  background: rgba(6, 10, 22, 0.78);
+  backdrop-filter: blur(16px);
+  padding: 32px 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  will-change: transform, opacity;
+}
+.j-card h3 { font-family: var(--font-display); font-size: clamp(20px, 2.4vw, 26px); font-weight: 600; margin-bottom: 12px; }
+.j-card p { color: var(--text-dim); font-size: 14.5px; margin-bottom: 18px; }
+.j-chip {
+  display: inline-block; font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.04em;
+  color: var(--cyan);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.08);
+  padding: 7px 14px; border-radius: 999px;
+}
+.j-card-final { border-color: rgba(52, 211, 153, 0.5); box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(52, 211, 153, 0.12); }
+.j-chip-ok { color: var(--green); border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.08); }
+
 /* ── Capacidades ──────────────────────────── */
 
 .cap-grid {
@@ -791,6 +918,18 @@ ul { list-style: none; }
   .dr-amt { font-size: 11px; }
   .dash-url { display: none; }
   .pin-viewport { justify-content: flex-start; padding-top: calc(var(--nav-h) + 10px); }
+  /* Viaje en móvil: carril a la izquierda, tarjetas a la derecha */
+  .journey { height: 430vh; }
+  .j-line, .j-packet { left: 22px; }
+  .j-line { transform: none; }
+  .j-packet { margin-left: -7px; }
+  .j-layer { padding: 0 5vw 0 48px; align-items: center; }
+  .j-layer:nth-child(odd), .j-layer:nth-child(even) { justify-content: center; }
+  .j-num { font-size: 130px; opacity: 0.7; }
+  .j-layer:nth-child(odd) .j-num, .j-layer:nth-child(even) .j-num { right: 4vw; left: auto; top: 24%; }
+  .j-card { padding: 24px 22px; }
+  .j-hud { left: 48px; top: calc(var(--nav-h) + 14px); }
+  .j-hud-t { font-size: 22px; }
   .pin-head { margin-bottom: 24px; }
   .co-strip { gap: 8px; margin-top: 10px; }
   .callout { padding: 8px 12px; }

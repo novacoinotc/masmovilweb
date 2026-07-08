@@ -202,17 +202,35 @@
     }
   })();
 
-  /* ── Canvas: red de nodos viva ─────────── */
+  /* ── Canvas v2: fondo vivo e interactivo ───
+     - El color viaja por la página (cian → índigo → violeta →
+       rosa → verde) según qué tan abajo vas.
+     - Al escrolear rápido, las partículas se estiran en estelas
+       de velocidad y el campo se desplaza contigo (parallax).
+     - Clic o tap en cualquier parte: explosión de chispas.
+     - El cursor atrae la red de nodos. */
   (function initCanvas() {
     if (prefersReduced) return;
     var canvas = document.getElementById("net-canvas");
     var ctx = canvas.getContext("2d");
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var W, H, particles;
-    var COUNT = isMobile ? 34 : 78;
-    var LINK = isMobile ? 110 : 150;
+    var sparks = [];
+    var COUNT = isMobile ? 30 : 72;
+    var LINK = isMobile ? 100 : 150;
     var mouse = { x: -9999, y: -9999 };
     var running = true;
+    var lastScroll = 0, scrollVel = 0;
+    var HUES = [195, 230, 268, 315, 155]; // recorrido de color por la página
+
+    function themeHue() {
+      var doc = document.documentElement;
+      var max = Math.max(1, doc.scrollHeight - window.innerHeight);
+      var p = Math.min(1, Math.max(0, (window.scrollY || doc.scrollTop || 0) / max));
+      var seg = Math.min(HUES.length - 2, Math.floor(p * (HUES.length - 1)));
+      var segP = p * (HUES.length - 1) - seg;
+      return HUES[seg] + (HUES[seg + 1] - HUES[seg]) * segP;
+    }
 
     function resize() {
       W = window.innerWidth; H = window.innerHeight;
@@ -230,17 +248,24 @@
           vx: (Math.random() - 0.5) * 0.28,
           vy: (Math.random() - 0.5) * 0.28,
           r: Math.random() * 1.6 + 0.6,
-          hue: Math.random() > 0.5 ? "34,211,238" : "139,92,246"
+          dh: Math.random() * 44 // variación de tono por partícula
         });
       }
     }
 
     function step() {
       if (!running) { requestAnimationFrame(step); return; }
+      var y = window.scrollY || 0;
+      scrollVel += ((y - lastScroll) - scrollVel) * 0.18; // suavizado
+      lastScroll = y;
+      var hue = themeHue();
+      var streak = Math.min(Math.abs(scrollVel) * 0.5, 36);
+
       ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < COUNT; i++) {
         var p = particles[i];
-        p.x += p.vx; p.y += p.vy;
+        p.x += p.vx;
+        p.y += p.vy - scrollVel * 0.055; // el campo viaja con tu scroll
 
         // atracción sutil al cursor
         var dxm = mouse.x - p.x, dym = mouse.y - p.y;
@@ -251,12 +276,23 @@
         }
 
         if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
-        if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+        if (p.y < -30) p.y = H + 30; if (p.y > H + 30) p.y = -30;
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(" + p.hue + ",0.55)";
-        ctx.fill();
+        var h = (hue + p.dh) % 360;
+        if (streak > 4) {
+          // estela de velocidad: la partícula se estira
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x, p.y + (scrollVel > 0 ? streak : -streak));
+          ctx.strokeStyle = "hsla(" + h + ",85%,66%,0.5)";
+          ctx.lineWidth = p.r;
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = "hsla(" + h + ",85%,66%,0.55)";
+          ctx.fill();
+        }
 
         for (var j = i + 1; j < COUNT; j++) {
           var q = particles[j];
@@ -266,17 +302,39 @@
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(q.x, q.y);
-            ctx.strokeStyle = "rgba(120,150,220," + (0.09 * (1 - d / LINK)) + ")";
+            ctx.strokeStyle = "hsla(" + hue + ",60%,72%," + (0.1 * (1 - d / LINK)) + ")";
             ctx.lineWidth = 1;
             ctx.stroke();
           }
         }
       }
+
+      // chispas de interacción (clic / tap)
+      for (var s = sparks.length - 1; s >= 0; s--) {
+        var sp = sparks[s];
+        sp.x += sp.vx; sp.y += sp.vy - scrollVel * 0.055;
+        sp.vx *= 0.96; sp.vy *= 0.96;
+        sp.life -= 0.02;
+        if (sp.life <= 0) { sparks.splice(s, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 2.4 * sp.life + 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = "hsla(" + (hue + sp.dh) % 360 + ",90%,70%," + sp.life + ")";
+        ctx.fill();
+      }
+
       requestAnimationFrame(step);
     }
 
     window.addEventListener("resize", function () { resize(); make(); });
     window.addEventListener("pointermove", function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+    window.addEventListener("pointerdown", function (e) {
+      for (var k = 0; k < 16; k++) {
+        var a = (Math.PI * 2 * k) / 16 + Math.random() * 0.5;
+        var spd = 1.4 + Math.random() * 3.2;
+        sparks.push({ x: e.clientX, y: e.clientY, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, life: 1, dh: Math.random() * 44 });
+      }
+      if (sparks.length > 160) sparks.splice(0, sparks.length - 160);
+    }, { passive: true });
     document.addEventListener("visibilitychange", function () { running = !document.hidden; });
 
     resize(); make(); step();
@@ -289,7 +347,6 @@
   ScrollTrigger.config({ ignoreMobileResize: true });
 
   // Blur más ligero en móvil: iOS renderiza filter:blur con costo alto
-  var BLUR_DEEP = isMobile ? "6px" : "12px";
   var BLUR_DASH = isMobile ? "8px" : "14px";
 
   /* ── Barra de progreso ─────────────────── */
@@ -342,17 +399,28 @@
     });
   });
 
-  /* ── Marquee infinito ───────────────────── */
+  /* ── Marquee infinito (acelera con tu scroll) ── */
+  var marqueeTween = null;
   (function marquee() {
     var track = document.getElementById("marquee-track");
     track.innerHTML += track.innerHTML; // duplicar para loop
-    gsap.to(track, {
+    marqueeTween = gsap.to(track, {
       xPercent: -50,
       duration: 26,
       ease: "none",
       repeat: -1
     });
   })();
+  ScrollTrigger.create({
+    start: 0,
+    end: "max",
+    onUpdate: function (self) {
+      if (!marqueeTween) return;
+      var boost = 1 + Math.min(Math.abs(self.getVelocity()) / 700, 3.5);
+      marqueeTween.timeScale(boost);
+      gsap.to(marqueeTween, { timeScale: 1, duration: 1.4, ease: "power2.out", overwrite: true });
+    }
+  });
 
   /* ── Reveals: planos y de profundidad 3D ──
      Los bloques grandes (títulos, tarjetas, terminal) llegan
@@ -361,32 +429,55 @@
   var DEPTH_SELECTOR = ".h2, .cta-title, .biz-card, .cap-card, .sec-card, .use-card, .terminal, .comp-item, .demo-form";
   document.querySelectorAll(".reveal").forEach(function (el) {
     if (el.matches(DEPTH_SELECTOR)) {
-      gsap.fromTo(el,
-        { opacity: 0, scale: 0.7, y: 120, rotateX: 16, transformPerspective: 1100, filter: "blur(" + BLUR_DEEP + ")" },
-        {
-          opacity: 1, scale: 1, y: 0, rotateX: 0, filter: "blur(0px)",
-          duration: 1.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 92%",
-            toggleActions: "play none none reverse"
-          },
-          onComplete: function () { el.style.filter = ""; }
-        });
+      // Scrub: el elemento avanza desde el fondo EXACTAMENTE al ritmo
+      // de tu scroll — adelante se construye, atrás se desconstruye.
+      var fromVars = { opacity: 0, scale: 0.7, y: 130, rotateX: 16, transformPerspective: 1100 };
+      var toVars = {
+        opacity: 1, scale: 1, y: 0, rotateX: 0,
+        ease: "power2.out",
+        scrollTrigger: { trigger: el, start: "top 98%", end: "top 58%", scrub: 0.5 }
+      };
+      if (!isMobile) { fromVars.filter = "blur(12px)"; toVars.filter = "blur(0px)"; }
+      gsap.fromTo(el, fromVars, toVars);
     } else {
       gsap.to(el, {
         opacity: 1, y: 0,
-        duration: 0.95,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: el,
-          start: "top 88%",
-          toggleActions: "play none none reverse"
-        }
+        ease: "power2.out",
+        scrollTrigger: { trigger: el, start: "top 97%", end: "top 74%", scrub: 0.5 }
       });
     }
   });
+
+  /* ── Desconstrucción al salir: cada sección se aleja
+     hacia el fondo cuando la dejas atrás ─────────────── */
+  gsap.utils.toArray(".section .container").forEach(function (c) {
+    var sec = c.closest(".section");
+    if (!sec || sec.id === "contacto") return; // el formulario queda firme
+    gsap.to(c, {
+      opacity: 0.2, scale: 0.95, y: -70,
+      ease: "none",
+      scrollTrigger: { trigger: sec, start: "bottom 55%", end: "bottom 12%", scrub: 0.5 }
+    });
+  });
+
+  /* ── Hero: parallax 3D con el cursor ────── */
+  if (!isMobile) {
+    var heroEl = document.querySelector(".hero");
+    heroEl.addEventListener("pointermove", function (e) {
+      var px = e.clientX / window.innerWidth - 0.5;
+      var py = e.clientY / window.innerHeight - 0.5;
+      gsap.to(".hero-content", {
+        x: px * 28, rotateY: px * 5, rotateX: -py * 5,
+        transformPerspective: 1200,
+        duration: 0.8, ease: "power2.out"
+      });
+      gsap.to(".orb-a", { xPercent: px * 7, duration: 1.4, ease: "power2.out" });
+      gsap.to(".orb-b", { xPercent: -px * 9, duration: 1.4, ease: "power2.out" });
+    });
+    heroEl.addEventListener("pointerleave", function () {
+      gsap.to(".hero-content", { x: 0, rotateY: 0, rotateX: 0, duration: 1, ease: "power3.out" });
+    });
+  }
 
   /* ── Statement: palabras que se encienden ── */
   (function statement() {

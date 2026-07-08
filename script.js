@@ -259,7 +259,7 @@
       scrollVel += ((y - lastScroll) - scrollVel) * 0.18; // suavizado
       lastScroll = y;
       var hue = themeHue();
-      var streak = Math.min(Math.abs(scrollVel) * 0.5, 36);
+      var streak = Math.min(Math.abs(scrollVel) * 0.35, 18);
 
       ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < COUNT; i++) {
@@ -416,158 +416,36 @@
     end: "max",
     onUpdate: function (self) {
       if (!marqueeTween) return;
-      var boost = 1 + Math.min(Math.abs(self.getVelocity()) / 700, 3.5);
+      var boost = 1 + Math.min(Math.abs(self.getVelocity()) / 900, 1.6);
       marqueeTween.timeScale(boost);
       gsap.to(marqueeTween, { timeScale: 1, duration: 1.4, ease: "power2.out", overwrite: true });
     }
   });
 
-  /* ══ ESCENAS PINNEADAS ══════════════════════
-     La pantalla se fija y el contenido se arma frente a ti,
-     al ritmo del scroll — toda la página funciona como el viaje. */
-  var consumed = [];
-  function consume(nodeList) {
-    Array.prototype.forEach.call(nodeList, function (n) { consumed.push(n); });
-  }
-
-  /* Escena: Soluciones — las 3 tarjetas llegan una por una (desktop) */
-  if (!isMobile) {
-    (function solucionesScene() {
-      var sec = document.getElementById("soluciones");
-      if (!sec) return;
-      var head = sec.querySelectorAll(".eyebrow, .h2");
-      var cards = sec.querySelectorAll(".biz-card");
-      consume(head); consume(cards);
-      var tl = gsap.timeline({
-        scrollTrigger: { trigger: sec, start: "top top", end: "+=2400", scrub: 0.5, pin: true, refreshPriority: 5 }
-      });
-      tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, immediateRender: true }, 0);
-      cards.forEach(function (card, i) {
-        tl.fromTo(card,
-          { opacity: 0, y: "60vh", scale: 0.5, rotateX: 26, transformPerspective: 1000 },
-          { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.8, ease: "power2.out", immediateRender: true },
-          0.45 + i * 0.75);
-      });
-      tl.to({}, { duration: 0.5 }); // respiro antes de soltar el pin
-    })();
-
-    /* Escena: Seguridad — el muro se construye tarjeta por tarjeta (desktop) */
-    (function seguridadScene() {
-      var sec = document.getElementById("seguridad");
-      if (!sec) return;
-      var head = sec.querySelectorAll(".eyebrow, .h2");
-      var cards = sec.querySelectorAll(".sec-card");
-      consume(head); consume(cards);
-      var tl = gsap.timeline({
-        scrollTrigger: { trigger: sec, start: "top top", end: "+=2200", scrub: 0.5, pin: true, refreshPriority: 1 }
-      });
-      tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, immediateRender: true }, 0);
-      cards.forEach(function (card, i) {
-        tl.fromTo(card,
-          { opacity: 0, y: 140, scale: 0.55, rotateX: 30, transformPerspective: 1000 },
-          { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.5, ease: "back.out(1.4)", immediateRender: true },
-          0.4 + i * 0.35);
-      });
-      tl.to({}, { duration: 0.5 });
-    })();
-  }
-
-  /* Escena: Capacidades — galería que viaja en horizontal (todos los dispositivos) */
-  (function capacidadesScene() {
-    var sec = document.getElementById("capacidades");
-    var grid = sec && sec.querySelector(".cap-grid");
-    if (!grid) return;
-    var head = sec.querySelectorAll(".eyebrow, .h2");
-    var cards = sec.querySelectorAll(".cap-card");
-    consume(head); consume(cards);
-    gsap.set(cards, { opacity: 1, y: 0 }); // viajan con el riel, no individualmente
-    function maxX() {
-      var wrap = sec.querySelector(".container");
-      return Math.max(0, grid.scrollWidth - wrap.clientWidth);
-    }
-    var tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sec,
-        start: "top top",
-        end: function () { return "+=" + (maxX() + 700); },
-        scrub: 0.5,
-        pin: true,
-        invalidateOnRefresh: true,
-        refreshPriority: 2
-      }
-    });
-    tl.fromTo(head, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08, immediateRender: true }, 0);
-    tl.fromTo(grid, { x: 0 }, { x: function () { return -maxX(); }, ease: "none", duration: 2.4 }, 0.35);
-  })();
-
-  /* Cumplimiento: los puntos entran alternando izquierda/derecha */
-  (function cumplimientoSlides() {
-    var items = document.querySelectorAll(".comp-item");
-    consume(items);
-    items.forEach(function (item, i) {
-      gsap.fromTo(item,
-        { opacity: 0, x: i % 2 ? 130 : -130, y: 40 },
-        {
-          opacity: 1, x: 0, y: 0, ease: "power2.out",
-          scrollTrigger: { trigger: item, start: "top 96%", end: "top 62%", scrub: 0.5 }
-        });
-    });
-  })();
-
-  /* ── Reveals: planos y de profundidad 3D ──
-     Los bloques grandes (títulos, tarjetas, terminal) llegan
-     "desde lejos": escala reducida + blur + rotación en X,
-     como si avanzaran desde el fondo hacia el frente. */
-  var DEPTH_SELECTOR = ".h2, .cta-title, .biz-card, .cap-card, .sec-card, .use-card, .terminal, .comp-item, .demo-form";
+  /* ── Reveals sobrios: fade + rise de una sola pasada ──
+     Estilo Stripe/Linear: entrada corta, elegante, sin reversa. */
   document.querySelectorAll(".reveal").forEach(function (el) {
-    if (consumed.indexOf(el) !== -1) return; // ya lo controla una escena
-    if (el.matches(DEPTH_SELECTOR)) {
-      // Scrub: el elemento avanza desde el fondo EXACTAMENTE al ritmo
-      // de tu scroll — adelante se construye, atrás se desconstruye.
-      var fromVars = { opacity: 0, scale: 0.7, y: 130, rotateX: 16, transformPerspective: 1100 };
-      var toVars = {
-        opacity: 1, scale: 1, y: 0, rotateX: 0,
-        ease: "power2.out",
-        scrollTrigger: { trigger: el, start: "top 98%", end: "top 58%", scrub: 0.5 }
-      };
-      if (!isMobile) { fromVars.filter = "blur(12px)"; toVars.filter = "blur(0px)"; }
-      gsap.fromTo(el, fromVars, toVars);
-    } else {
-      gsap.to(el, {
+    gsap.fromTo(el,
+      { opacity: 0, y: 28 },
+      {
         opacity: 1, y: 0,
-        ease: "power2.out",
-        scrollTrigger: { trigger: el, start: "top 97%", end: "top 74%", scrub: 0.5 }
+        duration: 0.8,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 88%", once: true }
       });
-    }
   });
 
-  /* ── Desconstrucción al salir: cada sección se aleja
-     hacia el fondo cuando la dejas atrás ─────────────── */
-  var pinnedIds = isMobile ? ["capacidades"] : ["soluciones", "capacidades", "seguridad"];
-  gsap.utils.toArray(".section .container").forEach(function (c) {
-    var sec = c.closest(".section");
-    if (!sec || sec.id === "contacto") return; // el formulario queda firme
-    if (pinnedIds.indexOf(sec.id) !== -1) return; // las escenas pinneadas se gobiernan solas
-    gsap.to(c, {
-      opacity: 0.2, scale: 0.95, y: -70,
-      ease: "none",
-      scrollTrigger: { trigger: sec, start: "bottom 55%", end: "bottom 12%", scrub: 0.5 }
-    });
-  });
-
-  /* ── Hero: parallax 3D con el cursor ────── */
+  /* ── Hero: parallax sutil con el cursor ─── */
   if (!isMobile) {
     var heroEl = document.querySelector(".hero");
     heroEl.addEventListener("pointermove", function (e) {
       var px = e.clientX / window.innerWidth - 0.5;
       var py = e.clientY / window.innerHeight - 0.5;
       gsap.to(".hero-content", {
-        x: px * 28, rotateY: px * 5, rotateX: -py * 5,
-        transformPerspective: 1200,
-        duration: 0.8, ease: "power2.out"
+        x: px * 14, rotateY: px * 2.5, rotateX: -py * 2.5,
+        transformPerspective: 1400,
+        duration: 0.9, ease: "power2.out"
       });
-      gsap.to(".orb-a", { xPercent: px * 7, duration: 1.4, ease: "power2.out" });
-      gsap.to(".orb-b", { xPercent: -px * 9, duration: 1.4, ease: "power2.out" });
     });
     heroEl.addEventListener("pointerleave", function () {
       gsap.to(".hero-content", { x: 0, rotateY: 0, rotateX: 0, duration: 1, ease: "power3.out" });
@@ -756,12 +634,12 @@
     var state = { n: 0 }, last = 0;
     gsap.to(state, {
       n: chars.length,
+      duration: 2.4,
       ease: "none",
       scrollTrigger: {
         trigger: ".terminal",
-        start: "top 82%",
-        end: "+=850",
-        scrub: 0.4
+        start: "top 78%",
+        once: true
       },
       onUpdate: function () {
         var upto = Math.round(state.n);

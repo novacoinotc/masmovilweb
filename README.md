@@ -1,71 +1,42 @@
-# MASMOVIL — Landing page corporativa
+# MASMOVIL — Landing corporativa (Next.js + React)
 
-Sitio estático de **MASMOVIL, S.A. de C.V.** (RFC MAS191203EY6): telecomunicaciones,
-software e infraestructura de pagos SPEI. Pensado como presencia web para el proceso
-de integración indirecta a SPEI vía STP.
+Sitio de **MASMOVIL, S.A. de C.V.** (RFC MAS191203EY6): telecomunicaciones, software
+e infraestructura de pagos SPEI. Presencia web para la integración indirecta a SPEI vía STP.
 
 ## Stack
 
-- HTML + CSS + JS puros (sin build, sin dependencias locales)
-- GSAP 3 + ScrollTrigger (animaciones de scroll, sección pinned con zoom)
-- Lenis (smooth scroll)
-- Canvas propio (red de nodos animada de fondo)
-- Fuentes: Space Grotesk, Inter, JetBrains Mono (Google Fonts)
+- **Next.js 15** (App Router, prerender estático) + **React 19** + TypeScript
+- **Framer Motion** — todas las animaciones: springs, variants, gestos, scroll scrub
+- **next/font** — IBM Plex Sans + IBM Plex Mono (autohospedadas)
+- CSS propio (sistema de diseño generado con la skill UI/UX Pro Max: Minimalismo/Swiss, azul financiero, verde = dinero)
 
-## Ver en local
-
-```bash
-cd masmovil-web
-python3 -m http.server 4173
-# abrir http://localhost:4173
-```
-
-## Deploy en Vercel
+## Desarrollo
 
 ```bash
-cd masmovil-web
-vercel          # preview
-vercel --prod   # producción
+npm install
+npm run dev      # http://localhost:4300
+npm run build    # build de producción
 ```
 
-Al ser un sitio estático no requiere configuración: Vercel lo detecta como
-"Other / static" y sirve `index.html` directamente.
+## Deploy
 
-## Contenido / datos legales
+Push a `main` → Vercel detecta Next.js (framework fijado en `vercel.json`) y despliega.
 
-- Razón social, RFC y domicilio (footer) tomados de la Constancia de Situación Fiscal (SAT, ene 2026).
-- Contacto: direccion@masmovil.lat (sin teléfono).
-- Formulario "Solicitar una prueba": envía por FormSubmit (`formsubmit.co/ajax/direccion@masmovil.lat`).
-  **La primera vez que alguien envíe el formulario, FormSubmit manda un correo de activación a
-  direccion@masmovil.lat — hay que darle clic para que empiecen a llegar los envíos.**
-  Si el envío falla, hace fallback a `mailto:`.
-- Copy de la plataforma de pagos basado en la oferta comercial de NOVACORE.
+## Interactividad
 
-## Efectos "vivos"
+- Cursor custom (punto + anillo con resorte) y **spotlight global** que sigue al mouse
+- Fondo de partículas: color que viaja con el scroll, estelas de velocidad, chispas al clic/tap, atracción al cursor
+- Hero con parallax 3D al cursor; botones magnéticos; tarjetas con tilt 3D + glow
+- Dashboard que se construye al entrar en viewport, con **feed vivo de transacciones** (AnimatePresence) y saldo animado
+- **"El viaje de una transferencia"**: scrollytelling con cronómetro t=0→3.80s, pulso descendente y fondo por profundidad
+- Código de la API que se **teclea solo** con cursor parpadeante
+- Formulario "Solicitar una prueba" → FormSubmit a direccion@masmovil.lat (activar el primer correo) con shake de validación y fallback mailto
 
-- **"El viaje de una transferencia"** (`#viaje`): descenso scrollytelling tipo iceberg por las
-  6 capas del stack (orden → firma → core → cumplimiento → SPEI → liquidada), con cronómetro
-  t=0→3.80s, pulso de dinero bajando por el carril, fondo que cambia de color por capa y
-  burbujas subiendo. Estallido verde al liquidar.
+## Accesibilidad
 
-- El dashboard del pin se **construye pieza por pieza** con el scroll (y se desconstruye al subir).
-- El código de la API se **teclea solo** con cursor parpadeante, ligado al scroll.
-- **Feed vivo**: cada ~3s entra una transacción nueva al dashboard y el saldo se actualiza
-  (solo mientras el dashboard es visible — IntersectionObserver).
-- En móvil los callouts se muestran como chips animados bajo el dashboard.
+`useReducedMotion` en todos los efectos, `:focus-visible`, contraste AA+, sin emojis como íconos.
 
-## Accesibilidad / rendimiento
+## Datos legales
 
-- `prefers-reduced-motion`: desactiva todas las animaciones. **Ojo:** si un teléfono tiene
-  "Reducir movimiento" activado (iOS: Ajustes → Accesibilidad → Movimiento), el sitio se
-  muestra estático a propósito.
-- Si el CDN de GSAP no carga, la página se muestra completa sin animaciones (fallback `html.js-anim`).
-- Optimizado para móvil (verificado a 390px, sin overflow horizontal).
-
-## Sistema de diseño (v2 — UI/UX Pro Max)
-
-Generado con la skill ui-ux-pro-max para "fintech B2B / infraestructura de pagos":
-- **Estilo:** Minimalismo / Swiss — limpio, funcional, alto contraste.
-- **Tipografía:** IBM Plex Sans (display y cuerpo) + IBM Plex Mono (datos/código) — la familia tipográfica del sector financiero.
-- **Color:** azul financiero (#3b82f6) + cyan (#22d3ee) como acentos; **verde solo para dinero y estados positivos**. Se eliminaron los gradientes morado/rosa ("AI startup look") que la guía marca como anti-patrón para fintech.
-- Accesibilidad: `:focus-visible` con outline cyan, contraste AA+, `prefers-reduced-motion`.
+Constancia de Situación Fiscal (SAT): razón social, RFC y domicilio en el footer.
+Contacto: direccion@masmovil.lat (sin teléfono).

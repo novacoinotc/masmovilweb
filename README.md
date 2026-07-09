@@ -61,3 +61,11 @@ Al ser un sitio estático no requiere configuración: Vercel lo detecta como
   muestra estático a propósito.
 - Si el CDN de GSAP no carga, la página se muestra completa sin animaciones (fallback `html.js-anim`).
 - Optimizado para móvil (verificado a 390px, sin overflow horizontal).
+
+## Sistema de diseño (v2 — UI/UX Pro Max)
+
+Generado con la skill ui-ux-pro-max para "fintech B2B / infraestructura de pagos":
+- **Estilo:** Minimalismo / Swiss — limpio, funcional, alto contraste.
+- **Tipografía:** IBM Plex Sans (display y cuerpo) + IBM Plex Mono (datos/código) — la familia tipográfica del sector financiero.
+- **Color:** azul financiero (#3b82f6) + cyan (#22d3ee) como acentos; **verde solo para dinero y estados positivos**. Se eliminaron los gradientes morado/rosa ("AI startup look") que la guía marca como anti-patrón para fintech.
+- Accesibilidad: `:focus-visible` con outline cyan, contraste AA+, `prefers-reduced-motion`.

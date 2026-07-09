@@ -185,7 +185,7 @@
       rows.insertBefore(div, rows.firstChild);
       if (hasGsap && !prefersReduced) {
         gsap.from(div, { y: -18, opacity: 0, duration: 0.5, ease: "power2.out" });
-        gsap.fromTo(saldoEl, { color: t.dep ? "#34d399" : "#f472b6" }, { color: "#eef2ff", duration: 1.2 });
+        gsap.fromTo(saldoEl, { color: t.dep ? "#34d399" : "#f87171" }, { color: "#eef2ff", duration: 1.2 });
       }
       while (rows.children.length > 3) rows.removeChild(rows.lastChild);
       saldo += t.dep ? t.amt : -t.amt;
@@ -221,7 +221,7 @@
     var mouse = { x: -9999, y: -9999 };
     var running = true;
     var lastScroll = 0, scrollVel = 0;
-    var HUES = [195, 230, 268, 315, 155]; // recorrido de color por la página
+    var HUES = [195, 210, 222, 205, 160]; // recorrido azul→verde, sin morados
 
     function themeHue() {
       var doc = document.documentElement;
@@ -542,7 +542,7 @@
     var hudL = document.getElementById("j-hud-l");
     var names = layers.map(function (l) { return l.getAttribute("data-name"); });
     var times = layers.map(function (l) { return parseFloat(l.getAttribute("data-t")); });
-    var depths = ["#071026", "#0a0e2a", "#110b2e", "#140825", "#0c0618", "#03170f"];
+    var depths = ["#071026", "#081228", "#091730", "#071328", "#050e1f", "#03170f"];
 
     var tl = gsap.timeline({
       scrollTrigger: {

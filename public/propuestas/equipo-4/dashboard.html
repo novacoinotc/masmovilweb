@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MASMOVIL — Core SPEI · Dashboard</title>
+<meta name="description" content="Dashboard del core bancario de MASMOVIL: SPEI in/out 24/7 vía STP, CLABEs ilimitadas, dispersión masiva, conciliación automática y PLD en tiempo real.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS (mismo sistema que la landing) ============ */
+:root{
+  --crema:#F5F0E8; --crema-alto:#FBF8F2; --crema-bajo:#EDE6D8; --zebra:#EFE9DF;
+  --cobalto:#1D4ED8; --cobalto-hover:#1E40AF; --cobalto-tinta:#DBE4FA; --cobalto-claro:#96B3F2;
+  --amarillo:#FBBF24; --amarillo-prof:#B45309; --amarillo-tinta:#FCEFC7;
+  --coral:#F97362; --coral-prof:#C2402F; --coral-tinta:#FDE2DD;
+  --negro:#16130D; --tinta-60:#57534A; --tinta-30:#A8A093;
+  --exito:#166534; --exito-tinta:#DCEFE0;
+  --borde:2px solid var(--negro); --sombra-dura:6px 6px 0 var(--negro);
+  --dur-micro:140ms; --dur-in:480ms;
+  --ease-out-quint:cubic-bezier(0.22,1,0.36,1);
+  --ease-snap:cubic-bezier(0.34,1.28,0.44,1);
+  --ease-inout:cubic-bezier(0.65,0,0.35,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--crema); color:var(--negro);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:1rem; line-height:1.55;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+img,svg,canvas{display:block;max-width:100%}
+a{color:inherit}
+h1,h2,h3{font-family:'Archivo',system-ui,sans-serif}
+.mono{font-family:'Space Mono',monospace}
+::selection{background:var(--amarillo);color:var(--negro)}
+:focus-visible{outline:3px solid var(--cobalto);outline-offset:2px}
+.oscuro :focus-visible{outline-color:var(--amarillo)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip-link{position:absolute;left:-999px;top:0;background:var(--negro);color:var(--crema);padding:.6rem 1rem;z-index:300;font-weight:700}
+.skip-link:focus{left:8px;top:8px}
+#grano{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* formas geométricas de fondo (quietas pero presentes; el dashboard es herramienta) */
+#capa-formas{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#capa-formas i{position:absolute;border-radius:9999px}
+#capa-formas .fa{right:-12vw;top:-14vw;width:34vw;height:34vw;background:var(--cobalto);opacity:.07}
+#capa-formas .fb{left:-9vw;bottom:-11vw;width:26vw;height:26vw;background:var(--amarillo);opacity:.16}
+#capa-formas .fc{left:38vw;bottom:-4vw;width:12vw;height:12vw;background:var(--coral);opacity:.10}
+
+/* ============ BARRA DE ESTADO + TOPBAR ============ */
+#top{position:sticky;top:0;z-index:100}
+.barra-estado{height:38px;background:var(--negro);color:var(--crema);display:flex;align-items:center;gap:.7rem;padding:0 1.1rem;font-family:'Space Mono',monospace;font-size:.75rem;white-space:nowrap;overflow:hidden}
+.punto-vivo{width:9px;height:9px;border-radius:9999px;background:var(--amarillo);flex:none;animation:pulso 1.4s var(--ease-inout) infinite}
+@keyframes pulso{0%,100%{opacity:1}50%{opacity:.35}}
+.barra-estado .txt-frozen{display:none}
+body.frozen .barra-estado{background:var(--coral-tinta);color:var(--negro)}
+body.frozen .barra-estado .txt-normal{display:none}
+body.frozen .barra-estado .txt-frozen{display:inline;font-weight:700}
+body.frozen .punto-vivo{background:var(--coral-prof);animation:none}
+.topbar{background:var(--crema);border-bottom:var(--borde);display:flex;align-items:center;gap:1rem;padding:.6rem 1.1rem}
+.wordmark{font-family:'Archivo';font-weight:900;font-stretch:120%;font-size:1.2rem;letter-spacing:.02em;display:inline-flex;align-items:center;text-decoration:none}
+.wordmark .o{position:relative;width:1.05em;height:1.05em;margin:0 .05em;flex:none}
+.wordmark .o i{position:absolute;inset:0;border-radius:9999px;background:var(--cobalto)}
+.wordmark .o u{position:absolute;inset:-3px;animation:orbita 5s linear infinite}
+.wordmark .o u::before{content:'';position:absolute;top:-2px;left:50%;width:7px;height:7px;margin-left:-3.5px;border-radius:9999px;background:var(--amarillo)}
+@keyframes orbita{to{transform:rotate(360deg)}}
+.tag-core{font-family:'Space Mono',monospace;font-size:.72rem;border:var(--borde);padding:.15rem .5rem;background:var(--amarillo)}
+.topbar .sep{flex:1}
+.sel-empresa{font-family:'Space Grotesk';font-weight:700;font-size:.9rem;border:var(--borde);background:var(--crema-alto);padding:.45rem .7rem;color:var(--negro);border-radius:0;max-width:270px}
+.chip-2fa{display:inline-flex;align-items:center;gap:.45rem;font-family:'Space Mono',monospace;font-size:.72rem;border:var(--borde);padding:.3rem .6rem;background:var(--exito-tinta);color:var(--exito);font-weight:700}
+.chip-2fa::before{content:'';width:8px;height:8px;border-radius:9999px;background:var(--exito)}
+.avatar{width:38px;height:38px;border-radius:9999px;background:var(--cobalto);color:var(--crema);border:var(--borde);display:grid;place-items:center;font-weight:700;font-size:.85rem;flex:none}
+@media(max-width:900px){.chip-2fa span{display:none}.sel-empresa{max-width:160px}}
+@media(max-width:560px){.tag-core{display:none}}
+
+/* ============ LAYOUT ============ */
+.layout{display:grid;grid-template-columns:216px 1fr;min-height:calc(100vh - 96px);position:relative;z-index:10}
+.sidebar{border-right:var(--borde);background:var(--crema);padding:1.3rem .9rem;position:sticky;top:96px;align-self:start;height:calc(100vh - 96px);overflow:auto}
+.sidebar ul{list-style:none;display:grid;gap:.15rem}
+.sidebar a{display:flex;align-items:center;gap:.65rem;text-decoration:none;font-weight:500;font-size:.92rem;padding:.55rem .6rem;border:2px solid transparent}
+.sidebar a:hover{background:var(--crema-bajo)}
+.sidebar a[aria-current="true"]{border:var(--borde);background:var(--amarillo);font-weight:700}
+.sidebar .ic{width:14px;height:14px;flex:none;background:var(--cobalto)}
+.sidebar .ic.circ{border-radius:9999px}
+.sidebar .ic.semi{border-radius:9999px 9999px 0 0;height:8px;align-self:center}
+.sidebar .ic.neg{background:var(--negro)}
+.sidebar .ic.cor{background:var(--coral)}
+.sidebar .ic.ama{background:var(--amarillo);outline:2px solid var(--negro)}
+.sidebar .grupo{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta-60);margin:1.2rem .6rem .5rem}
+.sidebar .grupo:first-child{margin-top:0}
+.env{margin-top:1.6rem;border-top:var(--borde);padding-top:1rem;font-family:'Space Mono',monospace;font-size:.7rem;color:var(--tinta-60)}
+.env b{display:block;color:var(--negro)}
+main{padding:1.8rem clamp(1rem,2.6vw,2.4rem) 4rem;min-width:0}
+
+/* ============ CABECERA ============ */
+.cabecera{display:flex;flex-wrap:wrap;align-items:end;gap:1rem;margin-bottom:1.6rem}
+.cabecera h1{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:900;font-stretch:115%;text-transform:uppercase;line-height:1}
+.cabecera .fecha{font-family:'Space Mono',monospace;font-size:.8rem;color:var(--tinta-60)}
+.cabecera .sep{flex:1}
+.btn{display:inline-block;font-family:'Space Grotesk';font-weight:700;font-size:.92rem;padding:.6rem 1.1rem;cursor:pointer;text-decoration:none;text-align:center;border:var(--borde);transition:transform var(--dur-micro) var(--ease-out-quint),box-shadow var(--dur-micro) var(--ease-out-quint),background var(--dur-micro)}
+.btn-primario{background:var(--cobalto);color:var(--crema)}
+.btn-primario:hover{background:var(--cobalto-hover);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--negro)}
+.btn-secundario{background:transparent;color:var(--negro)}
+.btn-secundario:hover{background:var(--amarillo)}
+.btn-mini{font-size:.75rem;padding:.32rem .6rem}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ============ KPIs ============ */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:.9rem;margin-bottom:1.6rem}
+.kpi{border:var(--borde);background:var(--crema-alto);padding:.95rem 1rem;position:relative;overflow:hidden}
+.kpi .marca{position:absolute;right:-18px;top:-18px;width:52px;height:52px;border-radius:9999px;opacity:.9}
+.kpi.k-saldo .marca{background:var(--cobalto)}
+.kpi.k-in .marca{background:var(--exito);border-radius:9999px 9999px 0 0;height:26px;top:auto;bottom:0;right:10px}
+.kpi.k-out .marca{background:var(--coral);border-radius:0 0 9999px 9999px;height:26px;top:0;right:10px}
+.kpi.k-ord .marca{background:var(--amarillo)}
+.kpi.k-tasa .marca{background:var(--negro);width:14px;height:70px;border-radius:0;right:12px;top:-10px;transform:rotate(18deg)}
+.kpi.k-clabes .marca{background:var(--amarillo);width:34px;height:34px;border-radius:0;right:12px;top:12px;transform:rotate(45deg)}
+.kpi b{display:block;font-family:'Space Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:var(--tinta-60);margin-bottom:.35rem;position:relative;z-index:1}
+.kpi .valor{font-family:'Space Mono',monospace;font-weight:700;font-size:clamp(1.05rem,1.6vw,1.45rem);font-variant-numeric:tabular-nums;position:relative;z-index:1}
+.kpi .delta{font-size:.72rem;font-weight:700;margin-top:.25rem;display:inline-block;position:relative;z-index:1}
+.delta.up{color:var(--exito)} .delta.down{color:var(--coral-prof)} .delta.plano{color:var(--tinta-60)}
+@media(max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* ============ GRID PRINCIPAL ============ */
+.grid-main{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:1.2rem;align-items:start;margin-bottom:1.6rem}
+.card{border:var(--borde);background:var(--crema-alto);padding:1.2rem 1.3rem}
+.card.sombra{box-shadow:var(--sombra-dura)}
+.card h2{font-size:1.05rem;font-weight:800;font-stretch:110%;text-transform:uppercase;letter-spacing:.02em;display:flex;align-items:center;gap:.55rem;margin-bottom:.9rem}
+.card h2::before{content:'';width:9px;height:9px;background:var(--cobalto);flex:none}
+.card .sub{font-size:.83rem;color:var(--tinta-60);margin:-.6rem 0 .9rem}
+@media(max-width:1080px){.grid-main{grid-template-columns:1fr}}
+
+/* gráfica */
+.gr-head{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between}
+.gr-toggles{display:flex;gap:.4rem}
+.gr-toggles button{font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;border:var(--borde);background:transparent;padding:.28rem .6rem;cursor:pointer}
+.gr-toggles button[aria-pressed="true"]{background:var(--negro);color:var(--crema)}
+.gr-leyenda{display:flex;gap:1.1rem;font-family:'Space Mono',monospace;font-size:.72rem;margin:.7rem 0 .4rem}
+.gr-leyenda span{display:inline-flex;align-items:center;gap:.4rem}
+.gr-leyenda i{width:11px;height:11px;flex:none}
+.gr-leyenda .li-in i{background:var(--cobalto);border-radius:9999px}
+.gr-leyenda .li-out i{background:var(--coral)}
+#wrap-grafica{position:relative}
+#grafica{width:100%;height:280px;cursor:crosshair}
+#tooltip-gr{position:absolute;pointer-events:none;background:var(--negro);color:var(--crema);font-family:'Space Mono',monospace;font-size:.72rem;padding:.5rem .65rem;display:none;z-index:5;white-space:nowrap;box-shadow:4px 4px 0 rgba(22,19,13,.25)}
+#tooltip-gr b{color:var(--amarillo);font-weight:700}
+
+/* ============ KILL SWITCH CARD ============ */
+.card-kill{background:var(--negro);color:var(--crema)}
+.card-kill h2{color:var(--crema)}
+.card-kill h2::before{background:var(--coral)}
+.card-kill p{font-size:.85rem;color:var(--tinta-30);margin-bottom:1rem}
+.zona-sw{display:flex;align-items:center;gap:1.1rem}
+#kill-switch{flex:none;width:118px;height:118px;border-radius:9999px;background:var(--coral);border:3px solid var(--crema);cursor:pointer;font-family:'Archivo';font-weight:900;font-stretch:110%;font-size:.9rem;text-transform:uppercase;color:var(--negro);transition:transform 320ms var(--ease-snap),background var(--dur-micro)}
+#kill-switch:hover{background:#fa8375}
+#kill-switch[aria-checked="true"]{background:var(--crema);transform:rotate(-90deg)}
+#kill-switch .sub-sw{display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:.62rem;text-transform:none;margin-top:.3rem}
+.sw-datos{font-family:'Space Mono',monospace;font-size:.75rem;display:grid;gap:.45rem}
+.sw-datos .fila-sw{display:flex;justify-content:space-between;gap:.8rem;border-bottom:1px dashed var(--tinta-60);padding-bottom:.35rem}
+.sw-datos .fila-sw b{color:var(--amarillo);font-weight:700;font-variant-numeric:tabular-nums}
+#retenidas-msj{margin-top:.9rem;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--coral);min-height:1.3em}
+body.frozen #retenidas-msj{color:var(--coral)}
+
+/* conciliación + dispersión */
+.dona-wrap{display:flex;align-items:center;gap:1.1rem}
+.dona{width:104px;height:104px;flex:none}
+.dona .fondo{fill:none;stroke:var(--crema-bajo);stroke-width:14}
+.dona .arco{fill:none;stroke:var(--cobalto);stroke-width:14;stroke-linecap:butt;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 900ms var(--ease-out-quint)}
+.dona text{font-family:'Space Mono',monospace;font-weight:700;font-size:17px;fill:var(--negro)}
+.dona-datos{font-size:.83rem;display:grid;gap:.3rem}
+.dona-datos .mono{font-size:.75rem;color:var(--tinta-60)}
+.barra-lote{height:22px;border:var(--borde);background:var(--crema);position:relative;overflow:hidden;margin:.6rem 0 .45rem}
+.barra-lote i{position:absolute;inset:0;right:auto;background:var(--amarillo);width:0%;transition:width 600ms var(--ease-out-quint)}
+.barra-lote::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent 0 10px,rgba(22,19,13,.06) 10px 20px)}
+.lote-meta{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--tinta-60)}
+.lote-meta b{color:var(--negro);font-variant-numeric:tabular-nums}
+.col-der{display:grid;gap:1.2rem}
+
+/* ============ FEED ============ */
+.feed-head{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.filtros{display:flex;gap:.4rem;flex-wrap:wrap}
+.filtros button{font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;border:var(--borde);background:transparent;padding:.28rem .65rem;cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--cobalto);color:var(--crema)}
+.tabla-wrap{overflow-x:auto;border:var(--borde);background:var(--crema-alto)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+caption{text-align:left;padding:.7rem 1rem;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--tinta-60);border-bottom:var(--borde)}
+th{font-family:'Space Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:.6rem .9rem;border-bottom:var(--borde);background:var(--crema-bajo);white-space:nowrap}
+td{padding:.55rem .9rem;font-size:.85rem;border-bottom:1px solid var(--crema-bajo);vertical-align:middle;white-space:nowrap}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr.nueva{animation:filaIn 420ms var(--ease-out-quint)}
+@keyframes filaIn{from{opacity:0;transform:translateY(-8px);background:var(--amarillo-tinta)}to{opacity:1;transform:none}}
+td .monto{font-family:'Space Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+td .monto.neg{color:var(--coral-prof)}
+td .monto.pos{color:var(--exito)}
+.dir{display:inline-grid;place-items:center;width:26px;height:26px;border:var(--borde);font-weight:700;font-size:.8rem;border-radius:9999px}
+.dir.in{background:var(--cobalto-tinta)} .dir.out{background:var(--coral-tinta)}
+.chip{display:inline-block;font-family:'Space Mono',monospace;font-size:.66rem;font-weight:700;padding:.18rem .5rem;border:2px solid currentColor;text-transform:uppercase;letter-spacing:.04em}
+.chip.liq{color:var(--exito);background:var(--exito-tinta)}
+.chip.tra{color:var(--amarillo-prof);background:var(--amarillo-tinta)}
+.chip.dev{color:var(--coral-prof);background:var(--coral-tinta)}
+.chip.ret{color:var(--coral-prof);background:var(--coral-tinta)}
+.clave-td{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--tinta-60)}
+.acciones-td{display:flex;gap:.35rem}
+.btn-tabla{font-family:'Space Mono',monospace;font-size:.66rem;font-weight:700;border:2px solid var(--negro);background:var(--crema);padding:.24rem .5rem;cursor:pointer}
+.btn-tabla:hover{background:var(--amarillo)}
+@media(max-width:760px){
+  table{min-width:560px}
+  .oc-movil{display:none}
+}
+
+/* ============ PLD + WEBHOOKS + CLABES ============ */
+.grid-abajo{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:1.6rem}
+@media(max-width:1080px){.grid-abajo{grid-template-columns:1fr}}
+.alerta{border:var(--borde);padding:.8rem .9rem;margin-bottom:.7rem;background:var(--crema)}
+.alerta:last-child{margin-bottom:0}
+.alerta.alta{background:var(--coral-tinta)}
+.alerta.media{background:var(--amarillo-tinta)}
+.alerta .tit-al{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.88rem}
+.alerta .tit-al::before{content:'';width:10px;height:10px;flex:none;transform:rotate(45deg)}
+.alerta.alta .tit-al::before{background:var(--coral-prof)}
+.alerta.media .tit-al::before{background:var(--amarillo-prof)}
+.alerta p{font-size:.8rem;color:var(--tinta-60);margin:.3rem 0 .55rem}
+.wh-item{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px dashed var(--tinta-30);font-family:'Space Mono',monospace;font-size:.72rem}
+.wh-item:last-child{border-bottom:none}
+.wh-item .cod{font-weight:700;color:var(--exito)}
+.wh-item .cod.err{color:var(--coral-prof)}
+.wh-item .ev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.wh-item .lat{color:var(--tinta-60)}
+.wh-firma{margin-top:.8rem;font-family:'Space Mono',monospace;font-size:.7rem;color:var(--tinta-60);border-left:4px solid var(--amarillo);padding-left:.7rem}
+.clabe-item{display:flex;justify-content:space-between;align-items:center;gap:.6rem;font-family:'Space Mono',monospace;font-size:.74rem;padding:.45rem 0;border-bottom:1px dashed var(--tinta-30)}
+.clabe-item b{font-weight:700}
+.clabe-item .uso{color:var(--tinta-60);font-size:.66rem}
+.clabe-item.nueva-clabe{animation:filaIn 420ms var(--ease-out-quint);background:var(--amarillo-tinta)}
+
+/* ============ EXPEDIENTE (drawer) ============ */
+#velo{position:fixed;inset:0;background:rgba(22,19,13,.45);z-index:150;display:none}
+#velo.abierto{display:block}
+#expediente{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--crema);border-left:var(--borde);z-index:160;transform:translateX(102%);visibility:hidden;transition:transform 320ms var(--ease-out-quint),visibility 0s 320ms;display:flex;flex-direction:column;box-shadow:-8px 0 0 rgba(22,19,13,.15)}
+#expediente.abierto{transform:none;visibility:visible;transition:transform 320ms var(--ease-out-quint),visibility 0s}
+.exp-head{background:var(--negro);color:var(--crema);padding:1.1rem 1.3rem;display:flex;align-items:start;gap:.9rem}
+.exp-head .geo{width:44px;height:44px;border-radius:9999px;background:var(--amarillo);flex:none;display:grid;place-items:center;font-weight:700;color:var(--negro);font-family:'Archivo'}
+.exp-head h2{font-size:1.02rem;font-weight:800;line-height:1.2}
+.exp-head .rfc{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--tinta-30);margin-top:.2rem}
+.exp-head .cerrar{margin-left:auto;flex:none;width:34px;height:34px;border:2px solid var(--crema);background:transparent;color:var(--crema);font-size:1.1rem;font-weight:700;cursor:pointer;line-height:1}
+.exp-head .cerrar:hover{background:var(--coral);color:var(--negro);border-color:var(--coral)}
+.exp-tabs{display:flex;border-bottom:var(--borde);background:var(--crema-alto)}
+.exp-tabs button{flex:1;font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.7rem .3rem;border:none;border-right:1px solid var(--crema-bajo);background:transparent;cursor:pointer;color:var(--tinta-60)}
+.exp-tabs button:last-child{border-right:none}
+.exp-tabs button[aria-selected="true"]{background:var(--amarillo);color:var(--negro);box-shadow:inset 0 -3px 0 var(--negro)}
+.exp-cuerpo{flex:1;overflow:auto;padding:1.2rem 1.3rem}
+.exp-panel[hidden]{display:none}
+.dato{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px dashed var(--tinta-30);font-size:.85rem}
+.dato b{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-60);font-weight:700;flex:none}
+.dato span{text-align:right;font-variant-numeric:tabular-nums;word-break:break-all}
+.score-wrap{margin:1rem 0}
+.score-barra{height:16px;border:var(--borde);background:var(--crema-alto);position:relative}
+.score-barra i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--exito),var(--amarillo) 60%,var(--coral))}
+.score-barra u{position:absolute;top:-7px;bottom:-7px;width:4px;background:var(--negro)}
+.score-num{font-family:'Space Mono',monospace;font-size:.78rem;margin-top:.5rem;display:flex;justify-content:space-between}
+.lista-scr{list-style:none;display:grid;gap:.5rem;margin-top:.4rem}
+.lista-scr li{display:flex;align-items:center;gap:.6rem;font-size:.84rem;border:2px solid var(--crema-bajo);padding:.55rem .7rem;background:var(--crema-alto)}
+.lista-scr .res{margin-left:auto;font-family:'Space Mono',monospace;font-size:.66rem;font-weight:700}
+.lista-scr .ok{color:var(--exito)}
+.lista-scr .hit{color:var(--coral-prof)}
+.lista-scr li.con-hit{border-color:var(--coral-prof);background:var(--coral-tinta)}
+.doc-item{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px dashed var(--tinta-30);font-size:.84rem}
+.doc-item .cua{width:16px;height:16px;border:var(--borde);flex:none;display:grid;place-items:center;font-size:.7rem;font-weight:700}
+.doc-item.ok .cua{background:var(--exito);color:var(--crema);border-color:var(--exito)}
+.doc-item .fech{margin-left:auto;font-family:'Space Mono',monospace;font-size:.66rem;color:var(--tinta-60)}
+.act-item{padding:.5rem 0;border-bottom:1px dashed var(--tinta-30);font-size:.8rem}
+.act-item .mono{font-size:.68rem;color:var(--tinta-60);display:block}
+.exp-pie{border-top:var(--borde);padding:1rem 1.3rem;display:flex;gap:.7rem;background:var(--crema-alto)}
+.exp-pie .btn{flex:1;font-size:.82rem;padding:.6rem .4rem}
+.btn-coral{background:var(--coral);color:var(--negro)}
+.btn-coral:hover{background:#fa8375;transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--negro)}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,80px);background:var(--negro);color:var(--crema);font-family:'Space Mono',monospace;font-size:.78rem;padding:.75rem 1.1rem;z-index:200;border:2px solid var(--amarillo);opacity:0;transition:transform 300ms var(--ease-snap),opacity 200ms;max-width:92vw;text-align:center}
+#toast.ver{transform:translate(-50%,0);opacity:1}
+
+/* pie */
+.pie-dash{margin-top:2.4rem;font-family:'Space Mono',monospace;font-size:.7rem;color:var(--tinta-60);border-top:var(--borde);padding-top:1rem;display:flex;flex-wrap:wrap;gap:.4rem 1.6rem}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:var(--borde);padding:.6rem .9rem}
+  .sidebar ul{display:flex;overflow-x:auto;gap:.3rem;padding-bottom:.2rem}
+  .sidebar a{white-space:nowrap;font-size:.82rem;padding:.45rem .6rem}
+  .sidebar .grupo,.sidebar .env{display:none}
+}
+@media(max-width:560px){
+  .barra-estado{font-size:.66rem}
+  .zona-sw{flex-direction:column;align-items:start}
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div id="grano" aria-hidden="true"></div>
+<div id="capa-formas" aria-hidden="true"><i class="fa"></i><i class="fb"></i><i class="fc"></i></div>
+
+<header id="top">
+  <div class="barra-estado">
+    <span class="punto-vivo" aria-hidden="true"></span>
+    <span class="txt-normal">CORE SPEI OPERANDO · VÍA STP · BANXICO EN LÍNEA · LATENCIA PROMEDIO <span id="lat-prom">—</span> ms · <span id="reloj">--:--:--</span></span>
+    <span class="txt-frozen">OPERACIÓN PAUSADA POR EL OPERADOR · <span id="retenidas-barra">0</span> órdenes retenidas en cola segura</span>
+  </div>
+  <div class="topbar">
+    <a class="wordmark" href="landing.html" aria-label="MASMOVIL, volver a la landing">MASM<span class="o" aria-hidden="true"><i></i><u></u></span>VIL</a>
+    <span class="tag-core">CORE v2.4</span>
+    <span class="sep"></span>
+    <label class="vh" for="sel-empresa">Empresa activa</label>
+    <select id="sel-empresa" class="sel-empresa">
+      <option>Grupo Andamio SAPI de CV — cuenta maestra</option>
+      <option>Andamio Nómina SA de CV</option>
+      <option>Andamio Marketplace SA de CV</option>
+    </select>
+    <span class="chip-2fa" title="Sesión con segundo factor activo">2FA<span> ACTIVO</span></span>
+    <span class="avatar" aria-hidden="true">MG</span>
+    <span class="vh">Sesión de María Godínez, perfil Operaciones</span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Secciones del dashboard">
+    <p class="grupo">Operación</p>
+    <ul>
+      <li><a href="#contenido" aria-current="true"><span class="ic circ" aria-hidden="true"></span>Resumen</a></li>
+      <li><a href="#feed"><span class="ic neg" aria-hidden="true"></span>Operaciones</a></li>
+      <li><a href="#clabes"><span class="ic ama" aria-hidden="true"></span>CLABEs</a></li>
+      <li><a href="#dispersion"><span class="ic semi" aria-hidden="true"></span>Dispersión</a></li>
+      <li><a href="#concil"><span class="ic circ" aria-hidden="true"></span>Conciliación</a></li>
+    </ul>
+    <p class="grupo">Control</p>
+    <ul>
+      <li><a href="#pld"><span class="ic cor" aria-hidden="true"></span>Cumplimiento</a></li>
+      <li><a href="#webhooks"><span class="ic neg" aria-hidden="true"></span>Webhooks</a></li>
+      <li><a href="#kill"><span class="ic cor circ" aria-hidden="true"></span>Kill switch</a></li>
+    </ul>
+    <div class="env">
+      <b>PRODUCCIÓN</b>
+      participante indirecto vía STP<br>
+      certificado Banxico vigente<br>
+      <b style="margin-top:.5rem">API</b>
+      HMAC-SHA256 · anti-replay<br>
+      idempotencia por clave
+    </div>
+  </nav>
+
+  <main id="contenido">
+    <div class="cabecera">
+      <div>
+        <h1>Resumen operativo</h1>
+        <p class="fecha" id="fecha-hoy">—</p>
+      </div>
+      <span class="sep"></span>
+      <button class="btn btn-secundario" id="btn-csv" type="button">Exportar CSV</button>
+      <button class="btn btn-primario" id="btn-orden" type="button">Nueva orden SPEI</button>
+    </div>
+
+    <!-- KPIs -->
+    <section class="kpis" aria-label="Indicadores del día">
+      <div class="kpi k-saldo"><i class="marca" aria-hidden="true"></i><b>Saldo consolidado</b><span class="valor" id="kpi-saldo">—</span><span class="delta plano">3 cuentas</span></div>
+      <div class="kpi k-in"><i class="marca" aria-hidden="true"></i><b>Entradas hoy</b><span class="valor" id="kpi-in">—</span><span class="delta up" id="kpi-in-n">—</span></div>
+      <div class="kpi k-out"><i class="marca" aria-hidden="true"></i><b>Salidas hoy</b><span class="valor" id="kpi-out">—</span><span class="delta down" id="kpi-out-n">—</span></div>
+      <div class="kpi k-ord"><i class="marca" aria-hidden="true"></i><b>Órdenes hoy</b><span class="valor" id="kpi-ord">—</span><span class="delta up">↗ vs. ayer +6.2%</span></div>
+      <div class="kpi k-tasa"><i class="marca" aria-hidden="true"></i><b>Tasa de liquidación</b><span class="valor" id="kpi-tasa">99.82%</span><span class="delta plano">ventana 30 días</span></div>
+      <div class="kpi k-clabes"><i class="marca" aria-hidden="true"></i><b>CLABEs activas</b><span class="valor" id="kpi-clabes">12,408</span><span class="delta up" id="kpi-clabes-d">+214 esta semana</span></div>
+    </section>
+
+    <div class="grid-main">
+      <!-- GRÁFICA -->
+      <section class="card" aria-labelledby="t-grafica">
+        <div class="gr-head">
+          <h2 id="t-grafica">Flujo SPEI por hora</h2>
+          <div class="gr-toggles" role="group" aria-label="Rango de la gráfica">
+            <button type="button" data-rango="24h" aria-pressed="true">24 H</button>
+            <button type="button" data-rango="7d" aria-pressed="false">7 DÍAS</button>
+          </div>
+        </div>
+        <p class="sub" id="gr-sub">Montos liquidados por hora, corte en tiempo real.</p>
+        <div class="gr-leyenda" aria-hidden="true">
+          <span class="li-in"><i></i>ENTRADAS (SPEI IN)</span>
+          <span class="li-out"><i></i>SALIDAS (SPEI OUT)</span>
+        </div>
+        <div id="wrap-grafica">
+          <canvas id="grafica" role="img" aria-label="Gráfica de barras de entradas y salidas SPEI. La descripción de datos está disponible en la tabla oculta a continuación."></canvas>
+          <div id="tooltip-gr" aria-hidden="true"></div>
+        </div>
+        <table class="vh" id="tabla-grafica"><caption>Datos de la gráfica de flujo</caption><thead><tr><th scope="col">Periodo</th><th scope="col">Entradas</th><th scope="col">Salidas</th></tr></thead><tbody></tbody></table>
+      </section>
+
+      <!-- COLUMNA DERECHA -->
+      <div class="col-der">
+        <section class="card card-kill oscuro" id="kill" aria-labelledby="t-kill">
+          <h2 id="t-kill">Kill switch</h2>
+          <p>Pausa toda la operación de salida en un clic. Las órdenes entrantes se retienen en cola segura; nada se pierde, nada sale.</p>
+          <div class="zona-sw">
+            <button id="kill-switch" role="switch" aria-checked="false" aria-describedby="retenidas-msj">
+              <span id="sw-estado">OPERANDO</span>
+              <span class="sub-sw" id="sw-sub">clic para pausar</span>
+            </button>
+            <div class="sw-datos">
+              <div class="fila-sw"><span>Órdenes en vuelo</span><b id="sw-vuelo">0</b></div>
+              <div class="fila-sw"><span>Retenidas en cola</span><b id="sw-retenidas">0</b></div>
+              <div class="fila-sw"><span>Último simulacro</span><b id="sw-simulacro">—</b></div>
+              <div class="fila-sw"><span>Tiempo de corte</span><b>0.3 s</b></div>
+            </div>
+          </div>
+          <p id="retenidas-msj" role="status"></p>
+        </section>
+
+        <section class="card" id="concil" aria-labelledby="t-concil">
+          <h2 id="t-concil">Conciliación</h2>
+          <div class="dona-wrap">
+            <svg class="dona" viewBox="0 0 100 100" role="img" aria-label="Conciliación automática al 99.7 por ciento">
+              <circle class="fondo" cx="50" cy="50" r="40"></circle>
+              <circle class="arco" id="dona-arco" cx="50" cy="50" r="40" stroke-dasharray="251.3" stroke-dashoffset="251.3"></circle>
+              <text x="50" y="56" text-anchor="middle" id="dona-txt">0%</text>
+            </svg>
+            <div class="dona-datos">
+              <span><b id="concil-ok">4,979</b> movimientos conciliados hoy</span>
+              <span class="mono" id="concil-pend">15 pendientes · 0 diferencias</span>
+              <span class="mono">corte automático cada 5 min · CEP adjunto</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="dispersion" aria-labelledby="t-lote">
+          <h2 id="t-lote">Dispersión en curso</h2>
+          <p class="sub">Nómina quincenal · Andamio Nómina SA de CV</p>
+          <div class="barra-lote" role="progressbar" aria-labelledby="t-lote" aria-valuemin="0" aria-valuemax="1248" aria-valuenow="0" id="lote-barra"><i></i></div>
+          <div class="lote-meta"><span><b id="lote-hechas">0</b> / 1,248 abonos</span><span>lote <b>NOM-Q13</b></span></div>
+          <div class="lote-meta" style="margin-top:.3rem"><span>monto del lote</span><b id="lote-monto">$14,982,306.40</b></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- FEED -->
+    <section id="feed" aria-labelledby="t-feed">
+      <div class="feed-head">
+        <h2 style="font-size:1.05rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:.55rem"><span style="width:9px;height:9px;background:var(--cobalto);display:inline-block"></span><span id="t-feed">Operaciones en tiempo real</span></h2>
+        <div class="filtros" role="group" aria-label="Filtrar operaciones">
+          <button type="button" data-filtro="todas" aria-pressed="true">TODAS</button>
+          <button type="button" data-filtro="in" aria-pressed="false">ENTRADAS</button>
+          <button type="button" data-filtro="out" aria-pressed="false">SALIDAS</button>
+          <button type="button" data-filtro="dev" aria-pressed="false">DEVOLUCIONES</button>
+        </div>
+      </div>
+      <div class="tabla-wrap">
+        <table>
+          <caption id="feed-caption">Feed en vivo · cada operación registra CEP de Banxico al liquidar</caption>
+          <thead>
+            <tr>
+              <th scope="col">Hora</th>
+              <th scope="col"><span class="vh">Dirección</span>·</th>
+              <th scope="col">Contraparte</th>
+              <th scope="col" class="oc-movil">Banco</th>
+              <th scope="col" class="oc-movil">Clave de rastreo</th>
+              <th scope="col">Monto</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="feed-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PLD / WEBHOOKS / CLABES -->
+    <div class="grid-abajo">
+      <section class="card" id="pld" aria-labelledby="t-pld">
+        <h2 id="t-pld">Cumplimiento · PLD/AML</h2>
+        <p class="sub">Screening en listas y scoring por operación, antes de liquidar.</p>
+        <div class="alerta alta">
+          <p class="tit-al">Score elevado (78/100)</p>
+          <p>Transportes Ruta Poniente SA de CV · 3 salidas consecutivas al mismo beneficiario en 40 min.</p>
+          <button class="btn-tabla" type="button" data-exp="ruta">Abrir expediente</button>
+        </div>
+        <div class="alerta media">
+          <p class="tit-al">Posible fraccionamiento</p>
+          <p>Comercial Tapatía del Centro · 6 entradas de $9,900.00 en la misma hora, mismo ordenante.</p>
+          <button class="btn-tabla" type="button" data-exp="tapatia">Abrir expediente</button>
+        </div>
+        <div class="alerta media">
+          <p class="tit-al">Expediente por vencer</p>
+          <p>Servicios Delta Occidente · constancia de situación fiscal vence en 9 días.</p>
+          <button class="btn-tabla" type="button" data-exp="delta">Abrir expediente</button>
+        </div>
+      </section>
+
+      <section class="card" id="webhooks" aria-labelledby="t-wh">
+        <h2 id="t-wh">Webhooks</h2>
+        <p class="sub">Últimas entregas a tu endpoint. Todas firmadas.</p>
+        <div id="wh-lista"></div>
+        <p class="wh-firma">Firma <b>HMAC-SHA256</b> en header <code>X-MAS-Signature</code> · reintentos con backoff exponencial · anti-replay por timestamp.</p>
+      </section>
+
+      <section class="card" id="clabes" aria-labelledby="t-clabes">
+        <h2 id="t-clabes">CLABEs recientes</h2>
+        <p class="sub">Una CLABE por cliente, orden o propósito. Ilimitadas, por API.</p>
+        <div id="clabe-lista"></div>
+        <button class="btn btn-secundario btn-mini" id="btn-clabe" type="button" style="margin-top:.9rem">Emitir CLABE nueva</button>
+      </section>
+    </div>
+
+    <p class="pie-dash">
+      <span>MASMOVIL, S.A. de C.V. · RFC MAS191203EY6</span>
+      <span>Pompeya 2775, Lomas de Guevara, 44657 Guadalajara, Jal.</span>
+      <span>direccion@masmovil.lat</span>
+      <span>Prototipo con datos simulados · Equipo Kinético</span>
+    </p>
+  </main>
+</div>
+
+<!-- EXPEDIENTE -->
+<div id="velo"></div>
+<aside id="expediente" role="dialog" aria-modal="true" aria-labelledby="exp-nombre" aria-hidden="true">
+  <div class="exp-head oscuro">
+    <span class="geo" aria-hidden="true" id="exp-ini">—</span>
+    <div>
+      <h2 id="exp-nombre">—</h2>
+      <p class="rfc" id="exp-rfc">—</p>
+    </div>
+    <button class="cerrar" id="exp-cerrar" type="button" aria-label="Cerrar expediente">×</button>
+  </div>
+  <div class="exp-tabs" role="tablist" aria-label="Secciones del expediente">
+    <button role="tab" id="tab-datos" aria-selected="true" aria-controls="panel-datos" type="button">Datos</button>
+    <button role="tab" id="tab-scr" aria-selected="false" aria-controls="panel-scr" type="button" tabindex="-1">Screening</button>
+    <button role="tab" id="tab-docs" aria-selected="false" aria-controls="panel-docs" type="button" tabindex="-1">Documentos</button>
+    <button role="tab" id="tab-act" aria-selected="false" aria-controls="panel-act" type="button" tabindex="-1">Actividad</button>
+  </div>
+  <div class="exp-cuerpo">
+    <div class="exp-panel" id="panel-datos" role="tabpanel" aria-labelledby="tab-datos" tabindex="0">
+      <div class="dato"><b>Tipo</b><span id="exp-tipo">—</span></div>
+      <div class="dato"><b>CLABE asignada</b><span id="exp-clabe">—</span></div>
+      <div class="dato"><b>Banco liquidador</b><span>STP (90646)</span></div>
+      <div class="dato"><b>Alta en plataforma</b><span id="exp-alta">—</span></div>
+      <div class="dato"><b>Límite diario</b><span id="exp-limite">—</span></div>
+      <div class="dato"><b>Operado 30 días</b><span id="exp-vol">—</span></div>
+      <div class="score-wrap">
+        <b style="font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-60)">Score de riesgo</b>
+        <div class="score-barra" style="margin-top:.5rem"><i id="exp-score-fill" style="width:0%"></i><u id="exp-score-mark" style="left:0%"></u></div>
+        <p class="score-num"><span>0 · bajo</span><b id="exp-score-num">—</b><span>100 · alto</span></p>
+      </div>
+    </div>
+    <div class="exp-panel" id="panel-scr" role="tabpanel" aria-labelledby="tab-scr" tabindex="0" hidden>
+      <p style="font-size:.82rem;color:var(--tinta-60);margin-bottom:.6rem">Última corrida: <span class="mono" id="exp-scr-fecha">—</span> · se corre en cada operación.</p>
+      <ul class="lista-scr" id="exp-scr-lista"></ul>
+    </div>
+    <div class="exp-panel" id="panel-docs" role="tabpanel" aria-labelledby="tab-docs" tabindex="0" hidden>
+      <div id="exp-docs"></div>
+    </div>
+    <div class="exp-panel" id="panel-act" role="tabpanel" aria-labelledby="tab-act" tabindex="0" hidden>
+      <div id="exp-act"></div>
+    </div>
+  </div>
+  <div class="exp-pie">
+    <button class="btn btn-primario" id="exp-cep" type="button">Descargar CEP</button>
+    <button class="btn btn-coral" id="exp-reporte" type="button">Marcar inusual</button>
+  </div>
+</aside>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var $  = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+var fmtMXN = new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'});
+var fmtNum = new Intl.NumberFormat('es-MX');
+function pad(n,l){ n=String(n); while(n.length<l) n='0'+n; return n; }
+function hhmmss(d){ return pad(d.getHours(),2)+':'+pad(d.getMinutes(),2)+':'+pad(d.getSeconds(),2); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function rint(a,b){ return Math.round(rnd(a,b)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ---------- Fechas dinámicas, nada hardcodeado ---------- */
+var hoy=new Date();
+var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+$('#fecha-hoy').textContent = DIAS[hoy.getDay()]+' '+hoy.getDate()+' de '+MESES[hoy.getMonth()]+' de '+hoy.getFullYear()+' · corte en vivo';
+var ymd = hoy.getFullYear()+pad(hoy.getMonth()+1,2)+pad(hoy.getDate(),2);
+function fechaCorta(d){ return pad(d.getDate(),2)+' '+MESES[d.getMonth()].slice(0,3)+' '+d.getFullYear(); }
+var haceDias=function(n){ var d=new Date(hoy); d.setDate(d.getDate()-n); return d; };
+$('#sw-simulacro').textContent = fechaCorta(haceDias(6));
+
+/* ---------- Reloj + latencia ---------- */
+var reloj=$('#reloj'), latEl=$('#lat-prom');
+function tick(){ reloj.textContent=hhmmss(new Date()); }
+tick(); setInterval(tick,1000);
+function tickLat(){ latEl.textContent=rint(38,64); }
+tickLat(); setInterval(tickLat,5000);
+
+/* ---------- Datos maestros simulados ---------- */
+var BANCOS=['STP','BBVA México','Banorte','Santander','HSBC','Banregio','Scotiabank','Inbursa','BanBajío','Banco Azteca','Afirme','Multiva'];
+var CONTRAPARTES=[
+  {id:'ruta',    n:'Transportes Ruta Poniente SA de CV', rfc:'TRP150612QA3', tipo:'Persona moral · transporte de carga', clabe:'646180 2470 0001 9382 71', alta:haceDias(412), limite:2500000, vol30:18432900.50, score:78,
+   hit:{lista:'Criterio interno MASMOVIL', res:'PATRÓN ATÍPICO', detalle:true}},
+  {id:'tapatia', n:'Comercial Tapatía del Centro SA de CV', rfc:'CTC090825HL8', tipo:'Persona moral · comercio mayorista', clabe:'646180 2470 0002 5511 04', alta:haceDias(890), limite:1200000, vol30:6120044.00, score:54, hit:null},
+  {id:'delta',   n:'Servicios Delta Occidente SC', rfc:'SDO181130KP2', tipo:'Persona moral · servicios profesionales', clabe:'646180 2470 0003 8804 92', alta:haceDias(213), limite:800000, vol30:2410590.25, score:31, hit:null, docVence:true},
+  {id:'nube',    n:'Operadora Fintech Nube SAPI de CV', rfc:'OFN200417ME1', tipo:'Persona moral · agregador de pagos', clabe:'646180 2470 0004 1206 33', alta:haceDias(150), limite:5000000, vol30:44903112.80, score:22, hit:null},
+  {id:'lopez',   n:'María Fernanda López Ibarra', rfc:'LOIM880314MC5', tipo:'Persona física con actividad empresarial', clabe:'646180 2470 0005 7719 20', alta:haceDias(64), limite:250000, vol30:389200.00, score:12, hit:null},
+  {id:'volcan',  n:'Distribuidora El Volcán SA de CV', rfc:'DVO120207TR9', tipo:'Persona moral · abarrotes', clabe:'646180 2470 0006 3348 15', alta:haceDias(505), limite:1500000, vol30:9821465.10, score:27, hit:null},
+  {id:'kappa',   n:'Kappa Logística MX SA de CV', rfc:'KLM170922BB4', tipo:'Persona moral · última milla', clabe:'646180 2470 0007 9042 68', alta:haceDias(330), limite:2000000, vol30:12094830.00, score:35, hit:null},
+  {id:'perez',   n:'Jorge Pérez Santana', rfc:'PESJ910706HH1', tipo:'Persona física con actividad empresarial', clabe:'646180 2470 0008 2217 84', alta:haceDias(28), limite:180000, vol30:96500.00, score:18, hit:null}
+];
+var CONCEPTOS_OUT=['pago a proveedor','nómina quincenal','devolución de cobro','retiro de saldo','pago de comisiones'];
+var seqRastreo = 4136;
+function claveRastreo(){ return 'MAS'+ymd+pad(seqRastreo++,7); }
+
+/* ---------- Estado del día ---------- */
+var estado={
+  saldo: 48276390.22,
+  inMonto: 21493602.18, inN: 2871,
+  outMonto: 17208441.90, outN: 2123,
+  clabes: 12408,
+  vuelo: 0, retenidas: 0,
+  frozen:false
+};
+var cola=[]; /* órdenes retenidas por kill switch */
+
+function pintaKPIs(){
+  $('#kpi-saldo').textContent=fmtMXN.format(estado.saldo);
+  $('#kpi-in').textContent=fmtMXN.format(estado.inMonto);
+  $('#kpi-out').textContent=fmtMXN.format(estado.outMonto);
+  $('#kpi-in-n').textContent='↗ '+fmtNum.format(estado.inN)+' abonos';
+  $('#kpi-out-n').textContent='↘ '+fmtNum.format(estado.outN)+' cargos';
+  $('#kpi-ord').textContent=fmtNum.format(estado.inN+estado.outN);
+  $('#kpi-clabes').textContent=fmtNum.format(estado.clabes);
+}
+pintaKPIs();
+
+/* ---------- Toast ---------- */
+var toast=$('#toast'), toastT;
+function avisa(msg){
+  toast.textContent=msg;
+  toast.classList.add('ver');
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){ toast.classList.remove('ver'); },3200);
+}
+
+/* ---------- FEED en vivo ---------- */
+var feedBody=$('#feed-body'), MAXFILAS=22, filtroActivo='todas';
+var registro=[]; /* historial para exportar CSV */
+function creaOp(forzada){
+  var esIn = forzada ? forzada.dir==='in' : Math.random()<0.55;
+  var cp = pick(CONTRAPARTES);
+  var dev = !esIn && Math.random()<0.045;
+  return {
+    t:new Date(),
+    dir: esIn?'in':'out',
+    cp: cp,
+    banco: pick(BANCOS),
+    clave: claveRastreo(),
+    monto: esIn ? rnd(850,185000) : rnd(1200,240000),
+    estado: dev?'dev':'tra',
+    concepto: esIn ? 'cobro con CLABE dedicada' : pick(CONCEPTOS_OUT)
+  };
+}
+function chipEstado(e){
+  if(e==='liq') return '<span class="chip liq">Liquidado</span>';
+  if(e==='tra') return '<span class="chip tra">En tránsito</span>';
+  if(e==='ret') return '<span class="chip ret">Retenida</span>';
+  return '<span class="chip dev">Devuelta</span>';
+}
+function pintaFila(op){
+  var tr=document.createElement('tr');
+  tr.setAttribute('data-dir',op.dir);
+  tr.setAttribute('data-estado',op.estado);
+  if(!RM) tr.classList.add('nueva');
+  var signo = op.dir==='in' ? '+' : '−';
+  tr.innerHTML =
+    '<td class="mono" style="font-size:.75rem">'+hhmmss(op.t)+'</td>'+
+    '<td><span class="dir '+op.dir+'" aria-hidden="true">'+(op.dir==='in'?'↓':'↑')+'</span><span class="vh">'+(op.dir==='in'?'entrada':'salida')+'</span></td>'+
+    '<td style="white-space:normal;min-width:180px">'+op.cp.n+'<br><small style="color:var(--tinta-60);font-size:.7rem">'+op.concepto+'</small></td>'+
+    '<td class="oc-movil">'+op.banco+'</td>'+
+    '<td class="clave-td oc-movil">'+op.clave+'</td>'+
+    '<td><span class="monto '+(op.dir==='in'?'pos':'neg')+'">'+signo+' '+fmtMXN.format(op.monto)+'</span></td>'+
+    '<td class="celda-estado">'+chipEstado(op.estado)+'</td>'+
+    '<td><span class="acciones-td">'+
+      '<button class="btn-tabla acc-cep" type="button" data-clave="'+op.clave+'"'+(op.estado==='liq'?'':' disabled')+'>CEP</button>'+
+      '<button class="btn-tabla acc-exp" type="button" data-exp="'+op.cp.id+'">Expediente</button>'+
+    '</span></td>';
+  feedBody.insertBefore(tr,feedBody.firstChild);
+  aplicaFiltroFila(tr);
+  while(feedBody.children.length>MAXFILAS){ feedBody.removeChild(feedBody.lastChild); }
+  /* transición EN TRÁNSITO → LIQUIDADO */
+  if(op.estado==='tra'){
+    estado.vuelo++; pintaVuelo();
+    setTimeout(function(){
+      op.estado='liq';
+      if(!tr.parentNode) { estado.vuelo=Math.max(0,estado.vuelo-1); pintaVuelo(); return; }
+      tr.setAttribute('data-estado','liq');
+      tr.querySelector('.celda-estado').innerHTML=chipEstado('liq');
+      var b=tr.querySelector('.acc-cep'); if(b) b.disabled=false;
+      estado.vuelo=Math.max(0,estado.vuelo-1); pintaVuelo();
+      aplicaFiltroFila(tr);
+    }, RM?600:rint(2200,5200));
+  }
+  /* acumula KPIs */
+  if(op.dir==='in'){ estado.inMonto+=op.monto; estado.inN++; estado.saldo+=op.monto; }
+  else if(op.estado!=='dev'){ estado.outMonto+=op.monto; estado.outN++; estado.saldo-=op.monto; }
+  pintaKPIs();
+  registro.unshift(op);
+  if(registro.length>400) registro.length=400;
+}
+function pintaVuelo(){ $('#sw-vuelo').textContent=String(estado.vuelo); }
+
+/* siembra inicial: el feed nace con historia (todo liquidado o devuelto, sin timers) */
+(function(){
+  for(var i=9;i>0;i--){
+    var op=creaOp();
+    op.t=new Date(Date.now()-i*rint(9000,32000));
+    op.estado = (op.estado==='dev')?'dev':'liq';
+    pintaFila(op);
+  }
+  pintaVuelo();
+})();
+
+var feedTimer=null;
+function siguienteOp(){
+  if(document.hidden){ programaFeed(); return; }
+  var op=creaOp();
+  if(estado.frozen && op.dir==='out'){
+    /* el kill switch retiene salidas */
+    op.estado='ret';
+    cola.push(op);
+    estado.retenidas=cola.length;
+    $('#sw-retenidas').textContent=String(estado.retenidas);
+    $('#retenidas-barra').textContent=String(estado.retenidas);
+    $('#retenidas-msj').textContent=estado.retenidas+' orden'+(estado.retenidas===1?'':'es')+' de salida retenida'+(estado.retenidas===1?'':'s')+' en cola segura.';
+  }else{
+    pintaFila(op);
+  }
+  programaFeed();
+}
+function programaFeed(){
+  clearTimeout(feedTimer);
+  feedTimer=setTimeout(siguienteOp, rint(2600,5600));
+}
+programaFeed();
+
+/* filtros */
+function aplicaFiltroFila(tr){
+  var dir=tr.getAttribute('data-dir'), est=tr.getAttribute('data-estado');
+  var ver = filtroActivo==='todas'
+    || (filtroActivo==='in' && dir==='in')
+    || (filtroActivo==='out' && dir==='out' && est!=='dev')
+    || (filtroActivo==='dev' && est==='dev');
+  tr.style.display = ver?'':'none';
+}
+$$('.filtros button').forEach(function(b){
+  b.addEventListener('click',function(){
+    filtroActivo=b.getAttribute('data-filtro');
+    $$('.filtros button').forEach(function(x){ x.setAttribute('aria-pressed',String(x===b)); });
+    $$('#feed-body tr').forEach(aplicaFiltroFila);
+  });
+});
+
+/* acciones del feed (delegación) */
+feedBody.addEventListener('click',function(e){
+  var cep=e.target.closest('.acc-cep');
+  if(cep && !cep.disabled){
+    avisa('CEP de Banxico generado · '+cep.getAttribute('data-clave')+' (simulado)');
+    return;
+  }
+  var ex=e.target.closest('.acc-exp');
+  if(ex){ abreExpediente(ex.getAttribute('data-exp'), ex); }
+});
+
+/* ---------- GRÁFICA (canvas, vanilla) ---------- */
+var cv=$('#grafica'), ctx=cv.getContext('2d'), tip=$('#tooltip-gr');
+var rango='24h', datos=[], etiquetas=[];
+var cacheGr={}; /* mismos datos al volver a un rango: consistencia */
+var C={in:'#1D4ED8', out:'#F97362', ejes:'#57534A', linea:'#EDE6D8', txt:'#57534A'};
+function generaDatos(){
+  if(cacheGr[rango]){ datos=cacheGr[rango].d; etiquetas=cacheGr[rango].e; espejoTabla(); return; }
+  datos=[]; etiquetas=[];
+  if(rango==='24h'){
+    var hAhora=hoy.getHours();
+    for(var i=23;i>=0;i--){
+      var h=(hAhora-i+24)%24;
+      /* curva creíble: valle de madrugada, pico 10-14 y 17-19 */
+      var base = h<6 ? rnd(.06,.16) : h<9 ? rnd(.3,.55) : h<15 ? rnd(.7,1) : h<20 ? rnd(.55,.9) : rnd(.2,.4);
+      datos.push({in: base*rnd(.9,1.25)*1650000, out: base*rnd(.7,1.05)*1650000});
+      etiquetas.push(pad(h,2)+':00');
+    }
+  }else{
+    for(var j=6;j>=0;j--){
+      var d=haceDias(j), fin=d.getDay()===0||d.getDay()===6;
+      var b=fin?rnd(.25,.45):rnd(.75,1);
+      datos.push({in:b*rnd(.9,1.2)*21000000, out:b*rnd(.7,1.05)*21000000});
+      etiquetas.push(DIAS[d.getDay()].slice(0,3)+' '+d.getDate());
+    }
+  }
+  cacheGr[rango]={d:datos,e:etiquetas};
+  espejoTabla();
+}
+/* tabla accesible espejo */
+function espejoTabla(){
+  var tb=$('#tabla-grafica tbody'); tb.innerHTML='';
+  datos.forEach(function(p,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+etiquetas[i]+'</td><td>'+fmtMXN.format(p.in)+'</td><td>'+fmtMXN.format(p.out)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+var geoBar=[];
+function dibuja(){
+  var w=cv.clientWidth||cv.parentNode.clientWidth, h=280, dpr=window.devicePixelRatio||1;
+  if(!w) return;
+  cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  var padL=54, padB=26, padT=10, padR=6;
+  var iw=w-padL-padR, ih=h-padT-padB;
+  var max=0;
+  datos.forEach(function(p){ max=Math.max(max,p.in,p.out); });
+  max=max*1.12||1;
+  /* rejilla + eje Y */
+  ctx.font='11px "Space Mono",monospace'; ctx.fillStyle=C.txt; ctx.strokeStyle=C.linea; ctx.lineWidth=1;
+  for(var g=0; g<=4; g++){
+    var y=padT+ih-(ih*g/4);
+    ctx.beginPath(); ctx.moveTo(padL,y+.5); ctx.lineTo(w-padR,y+.5); ctx.stroke();
+    var v=max*g/4;
+    ctx.fillText(v>=1e6?('$'+(v/1e6).toFixed(1)+'M'):('$'+Math.round(v/1e3)+'k'),4,y+4);
+  }
+  var n=datos.length, paso=iw/n, bw=Math.min(paso*.3,16);
+  geoBar=[];
+  datos.forEach(function(p,i){
+    var x=padL+paso*i+paso/2;
+    var hIn=ih*p.in/max, hOut=ih*p.out/max;
+    ctx.fillStyle=C.in;  ctx.fillRect(x-bw-1,padT+ih-hIn,bw,hIn);
+    ctx.fillStyle=C.out; ctx.fillRect(x+1,padT+ih-hOut,bw,hOut);
+    /* remate Bauhaus: cabeza circular en la barra de entrada */
+    ctx.beginPath(); ctx.fillStyle=C.in; ctx.arc(x-1-bw/2,padT+ih-hIn,bw/2,0,Math.PI*2); ctx.fill();
+    geoBar.push({x0:padL+paso*i,x1:padL+paso*(i+1),i:i});
+    var cada = rango==='24h'?4:1;
+    if(i%cada===0){
+      ctx.fillStyle=C.txt; ctx.textAlign='center';
+      ctx.fillText(etiquetas[i],x,h-8);
+      ctx.textAlign='left';
+    }
+  });
+  /* eje base */
+  ctx.strokeStyle=C.ejes; ctx.beginPath(); ctx.moveTo(padL,padT+ih+.5); ctx.lineTo(w-padR,padT+ih+.5); ctx.stroke();
+}
+generaDatos(); dibuja();
+var rszT;
+addEventListener('resize',function(){ clearTimeout(rszT); rszT=setTimeout(dibuja,150); });
+$$('.gr-toggles button').forEach(function(b){
+  b.addEventListener('click',function(){
+    rango=b.getAttribute('data-rango');
+    $$('.gr-toggles button').forEach(function(x){ x.setAttribute('aria-pressed',String(x===b)); });
+    $('#gr-sub').textContent = rango==='24h' ? 'Montos liquidados por hora, corte en tiempo real.' : 'Montos liquidados por día, últimos 7 días.';
+    generaDatos(); dibuja();
+  });
+});
+cv.addEventListener('mousemove',function(e){
+  var r=cv.getBoundingClientRect(), x=e.clientX-r.left;
+  var hit=null;
+  for(var i=0;i<geoBar.length;i++){ if(x>=geoBar[i].x0&&x<geoBar[i].x1){ hit=geoBar[i]; break; } }
+  if(!hit){ tip.style.display='none'; return; }
+  var p=datos[hit.i];
+  tip.innerHTML='<b>'+etiquetas[hit.i]+'</b><br>IN &nbsp;'+fmtMXN.format(p.in)+'<br>OUT '+fmtMXN.format(p.out);
+  tip.style.display='block';
+  var tx=Math.max(0, Math.min(x+14, r.width-170));
+  tip.style.left=tx+'px'; tip.style.top=(e.clientY-r.top-14)+'px';
+});
+cv.addEventListener('mouseleave',function(){ tip.style.display='none'; });
+
+/* ---------- DONA conciliación ---------- */
+(function(){
+  var pct=99.7, arco=$('#dona-arco'), C2=251.3;
+  function fija(){ arco.style.strokeDashoffset=String(C2*(1-pct/100)); $('#dona-txt').textContent=pct.toFixed(1)+'%'; }
+  if(RM || !('IntersectionObserver' in window)){ arco.style.transition='none'; fija(); return; }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){ if(en.isIntersecting){ fija(); io.disconnect(); } });
+  },{threshold:.4});
+  io.observe(arco.closest('.card'));
+})();
+
+/* ---------- Lote de dispersión ---------- */
+(function(){
+  var total=1248, hechas=1093;
+  var barra=$('#lote-barra'), fill=barra.querySelector('i'), num=$('#lote-hechas');
+  function pinta(){
+    barra.setAttribute('aria-valuenow',String(hechas));
+    fill.style.width=(hechas/total*100)+'%';
+    num.textContent=fmtNum.format(hechas);
+  }
+  pinta();
+  var t=setInterval(function(){
+    if(estado.frozen) return;
+    hechas=Math.min(total,hechas+rint(3,9));
+    pinta();
+    if(hechas>=total){
+      clearInterval(t);
+      avisa('Lote NOM-Q13 dispersado: 1,248 abonos liquidados con CEP.');
+    }
+  },2400);
+})();
+
+/* ---------- Webhooks ---------- */
+(function(){
+  var evs=['transfer.settled','transfer.received','transfer.returned','clabe.created','payout.batch.completed'];
+  var cont=$('#wh-lista'), lista=[];
+  function item(){
+    return {ev:pick(evs), cod:Math.random()<0.965?200:500, lat:rint(84,420), t:new Date(Date.now()-rint(0,90)*60000)};
+  }
+  for(var i=0;i<6;i++) lista.push(item());
+  lista.sort(function(a,b){ return b.t-a.t; });
+  function pinta(){
+    cont.innerHTML=lista.slice(0,6).map(function(w){
+      return '<div class="wh-item"><span class="cod'+(w.cod===200?'':' err')+'">'+w.cod+'</span><span class="ev">'+w.ev+'</span><span class="lat">'+w.lat+' ms · '+hhmmss(w.t)+'</span></div>';
+    }).join('');
+  }
+  pinta();
+  setInterval(function(){
+    if(estado.frozen||document.hidden) return;
+    var w=item(); w.t=new Date(); lista.unshift(w); pinta();
+  },11000);
+})();
+
+/* ---------- CLABEs ---------- */
+(function(){
+  var cont=$('#clabe-lista');
+  var usos=['cobro cliente','orden marketplace','fondeo proveedor','caja sucursal','conciliación'];
+  var seq=9382;
+  function clabe(){ return '6461 8024 70'+pad(rint(10,99),2)+' '+pad(seq++,4)+' '+pad(rint(0,999999),6).slice(0,4)+' '+pad(rint(0,99),2); }
+  var iniciales=[];
+  for(var i=0;i<4;i++) iniciales.push({c:clabe(),u:pick(usos)});
+  cont.innerHTML=iniciales.map(function(x){
+    return '<div class="clabe-item"><b>'+x.c+'</b><span class="uso">'+x.u+'</span></div>';
+  }).join('');
+  $('#btn-clabe').addEventListener('click',function(){
+    var nueva={c:clabe(),u:'emitida manual'};
+    var div=document.createElement('div');
+    div.className='clabe-item nueva-clabe';
+    div.innerHTML='<b>'+nueva.c+'</b><span class="uso">'+nueva.u+'</span>';
+    cont.insertBefore(div,cont.firstChild);
+    if(cont.children.length>5) cont.removeChild(cont.lastChild);
+    estado.clabes++; pintaKPIs();
+    avisa('CLABE emitida vía API en 180 ms · lista para recibir SPEI.');
+  });
+})();
+
+/* ---------- KILL SWITCH ---------- */
+var sw=$('#kill-switch'), swTxt=$('#sw-estado'), swSub=$('#sw-sub');
+function toggleKill(){
+  estado.frozen=!estado.frozen;
+  sw.setAttribute('aria-checked',String(estado.frozen));
+  document.body.classList.toggle('frozen',estado.frozen);
+  if(estado.frozen){
+    swTxt.textContent='PAUSADO';
+    swSub.textContent='clic para reanudar';
+    $('#retenidas-msj').textContent='Corte ejecutado en 0.3 s. Las salidas se retienen; las entradas siguen abonando.';
+  }else{
+    swTxt.textContent='OPERANDO';
+    swSub.textContent='clic para pausar';
+    /* libera la cola: las retenidas salen ahora */
+    var n=cola.length;
+    cola.forEach(function(op){ op.t=new Date(); op.estado='tra'; pintaFila(op); });
+    cola=[]; estado.retenidas=0;
+    $('#sw-retenidas').textContent='0';
+    $('#retenidas-barra').textContent='0';
+    $('#retenidas-msj').textContent = n>0 ? 'Operación reanudada · '+n+' orden'+(n===1?'':'es')+' liberada'+(n===1?'':'s')+' de la cola.' : 'Operación reanudada donde estaba.';
+  }
+}
+sw.addEventListener('click',toggleKill);
+sw.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleKill(); }
+});
+
+/* ---------- EXPEDIENTE ---------- */
+var exp=$('#expediente'), velo=$('#velo'), retorno=null;
+var LISTAS=[['Lista OFAC (SDN)','OFAC'],['Lista ONU (consolidada)','ONU'],['Personas bloqueadas UIF','UIF'],['SAT 69-B (EFOS)','SAT'],['PEP nacional / extranjero','PEP'],['Criterio interno MASMOVIL','INT']];
+function abreExpediente(id, origen){
+  var c=null;
+  for(var i=0;i<CONTRAPARTES.length;i++){ if(CONTRAPARTES[i].id===id){ c=CONTRAPARTES[i]; break; } }
+  if(!c) c=CONTRAPARTES[0];
+  retorno=origen||document.activeElement;
+  $('#exp-nombre').textContent=c.n;
+  $('#exp-rfc').textContent='RFC '+c.rfc+' · expediente PLD completo';
+  $('#exp-ini').textContent=c.n.slice(0,1);
+  $('#exp-tipo').textContent=c.tipo;
+  $('#exp-clabe').textContent=c.clabe;
+  $('#exp-alta').textContent=fechaCorta(c.alta);
+  $('#exp-limite').textContent=fmtMXN.format(c.limite)+' / día';
+  $('#exp-vol').textContent=fmtMXN.format(c.vol30);
+  $('#exp-score-num').textContent=c.score+' / 100 · '+(c.score>=60?'alto':c.score>=35?'medio':'bajo');
+  $('#exp-score-fill').style.width=c.score+'%';
+  $('#exp-score-mark').style.left='calc('+c.score+'% - 2px)';
+  $('#exp-scr-fecha').textContent='hoy '+hhmmss(new Date())+' h';
+  $('#exp-scr-lista').innerHTML=LISTAS.map(function(L){
+    var esHit = c.hit && c.hit.lista===L[0];
+    return '<li'+(esHit?' class="con-hit"':'')+'><span>'+L[0]+'</span><span class="res '+(esHit?'hit':'ok')+'">'+(esHit?c.hit.res:'SIN COINCIDENCIA')+'</span></li>';
+  }).join('');
+  var docs=[
+    ['Acta constitutiva / identificación',true,fechaCorta(c.alta)],
+    ['Comprobante de domicilio',true,fechaCorta(haceDias(40))],
+    ['Constancia de situación fiscal',!c.docVence,c.docVence?'vence en 9 días':fechaCorta(haceDias(12))],
+    ['Beneficiario controlador declarado',true,fechaCorta(c.alta)],
+    ['Cuestionario de perfil transaccional',true,fechaCorta(haceDias(90))]
+  ];
+  $('#exp-docs').innerHTML=docs.map(function(d){
+    return '<div class="doc-item'+(d[1]?' ok':'')+'"><span class="cua" aria-hidden="true">'+(d[1]?'✓':'!')+'</span><span>'+d[0]+'</span><span class="fech">'+d[2]+'</span></div>';
+  }).join('');
+  var acts=[
+    ['Screening automático · sin cambios','hoy '+hhmmss(new Date())+' h'],
+    ['Operación liquidada · '+claveRastreo(),'hoy'],
+    ['Score recalculado: '+c.score+'/100',fechaCorta(haceDias(1))],
+    ['Límite diario revisado por Cumplimiento',fechaCorta(haceDias(21))],
+    ['Alta de expediente aprobada',fechaCorta(c.alta)]
+  ];
+  $('#exp-act').innerHTML=acts.map(function(a){
+    return '<div class="act-item">'+a[0]+'<span class="mono">'+a[1]+'</span></div>';
+  }).join('');
+  muestraTab('tab-datos');
+  exp.classList.add('abierto'); velo.classList.add('abierto');
+  exp.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  $('#exp-cerrar').focus();
+}
+function cierraExpediente(){
+  exp.classList.remove('abierto'); velo.classList.remove('abierto');
+  exp.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  if(retorno && retorno.focus) retorno.focus();
+}
+$('#exp-cerrar').addEventListener('click',cierraExpediente);
+velo.addEventListener('click',cierraExpediente);
+document.addEventListener('keydown',function(e){
+  if(!exp.classList.contains('abierto')) return;
+  if(e.key==='Escape'){ cierraExpediente(); return; }
+  if(e.key==='Tab'){
+    /* trampa de foco dentro del diálogo */
+    var focos=$$('#expediente button, #expediente [tabindex="0"]').filter(function(el){ return el.offsetParent!==null && el.tabIndex>=0; });
+    if(!focos.length) return;
+    var prim=focos[0], ult=focos[focos.length-1];
+    if(e.shiftKey && document.activeElement===prim){ e.preventDefault(); ult.focus(); }
+    else if(!e.shiftKey && document.activeElement===ult){ e.preventDefault(); prim.focus(); }
+    else if(!exp.contains(document.activeElement)){ e.preventDefault(); prim.focus(); }
+  }
+});
+$$('[data-exp]').forEach(function(b){
+  if(!b.classList.contains('acc-exp')){
+    b.addEventListener('click',function(){ abreExpediente(b.getAttribute('data-exp'), b); });
+  }
+});
+/* tabs del expediente */
+var TABS=['tab-datos','tab-scr','tab-docs','tab-act'];
+function muestraTab(id){
+  TABS.forEach(function(t){
+    var btn=document.getElementById(t);
+    var on=t===id;
+    btn.setAttribute('aria-selected',String(on));
+    btn.tabIndex=on?0:-1;
+    document.getElementById(btn.getAttribute('aria-controls')).hidden=!on;
+  });
+}
+TABS.forEach(function(t,idx){
+  var btn=document.getElementById(t);
+  btn.addEventListener('click',function(){ muestraTab(t); });
+  btn.addEventListener('keydown',function(e){
+    var d = e.key==='ArrowRight'?1 : e.key==='ArrowLeft'?-1 : 0;
+    if(!d) return;
+    e.preventDefault();
+    var sig=TABS[(idx+d+TABS.length)%TABS.length];
+    muestraTab(sig);
+    document.getElementById(sig).focus();
+  });
+});
+$('#exp-cep').addEventListener('click',function(){
+  avisa('CEP de Banxico de la última operación descargado (simulado).');
+});
+$('#exp-reporte').addEventListener('click',function(){
+  avisa('Operación marcada como inusual · turno creado para Oficial de Cumplimiento.');
+});
+
+/* ---------- Sidebar: sección activa ---------- */
+$$('.sidebar a').forEach(function(a){
+  a.addEventListener('click',function(){
+    $$('.sidebar a').forEach(function(x){ if(x===a){ x.setAttribute('aria-current','true'); } else { x.removeAttribute('aria-current'); } });
+  });
+});
+
+/* ---------- Botones de cabecera ---------- */
+$('#btn-csv').addEventListener('click',function(){
+  var esc=function(s){ s=String(s); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  var filas=['hora,direccion,contraparte,rfc,banco,clave_rastreo,monto_mxn,estado,concepto'];
+  registro.forEach(function(op){
+    filas.push([hhmmss(op.t),op.dir==='in'?'entrada':'salida',esc(op.cp.n),op.cp.rfc,esc(op.banco),op.clave,op.monto.toFixed(2),op.estado==='dev'?'devuelta':op.estado==='tra'?'en_transito':'liquidada',esc(op.concepto)].join(','));
+  });
+  var blob=new Blob(['﻿'+filas.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='masmovil_spei_'+ymd+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },400);
+  avisa('CSV descargado · '+registro.length+' movimientos con clave de rastreo.');
+});
+$('#btn-orden').addEventListener('click',function(){
+  if(estado.frozen){ avisa('Kill switch activo: no se pueden crear órdenes de salida.'); return; }
+  var op=creaOp({dir:'out'});
+  op.estado='tra';
+  pintaFila(op);
+  avisa('Orden creada · '+op.clave+' · idempotencia verificada.');
+});
+})();
+</script>
+</body>
+</html>

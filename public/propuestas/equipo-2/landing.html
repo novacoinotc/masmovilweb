@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASMOVIL — Infraestructura de pagos SPEI por API vía STP</title>
+<meta name="theme-color" content="#000000">
+<meta name="description" content="MASMOVIL — Infraestructura de pagos SPEI por API vía STP. CLABEs ilimitadas, dispersión masiva, CEP de Banxico en cada operación liquidada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=block" rel="stylesheet">
+<style>
+/* ═══════════════ TOKENS ═══════════════ */
+:root{
+  --bg:#000000;
+  --ph:#33FF66;
+  --ph-88:rgba(51,255,102,.88);
+  --ph-72:rgba(51,255,102,.72);
+  --ph-48:rgba(51,255,102,.48);
+  --ph-28:rgba(51,255,102,.28);
+  --ph-14:rgba(51,255,102,.14);
+  --ph-07:rgba(51,255,102,.07);
+  --amber:#FFB000;
+  --amber-16:rgba(255,176,0,.16);
+  --amber-08:rgba(255,176,0,.08);
+  --mono:'IBM Plex Mono',ui-monospace,'Courier New',monospace;
+  --disp:'VT323',var(--mono);
+  --nav-h:52px;
+  --trk-h:34px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg);
+  color:var(--ph);
+  font-family:var(--mono);
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--amber);color:#000}
+:focus{outline:none}
+:focus-visible{outline:2px dashed var(--amber);outline-offset:3px}
+a{color:var(--ph);text-decoration:none}
+a:hover{background:var(--ph);color:#000}
+abbr{text-decoration:none}
+
+/* ═══════════════ CRT TEXTURES ═══════════════ */
+.scanlines{
+  position:fixed;inset:0;height:100dvh;pointer-events:none;z-index:9000;
+  background:repeating-linear-gradient(180deg,transparent 0 2px,rgba(0,0,0,.22) 2px 3px);
+}
+.vignette{
+  position:fixed;inset:0;height:100dvh;pointer-events:none;z-index:9001;
+  background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.42) 100%);
+}
+@keyframes crtflick{
+  0%,91%,95%,100%{opacity:1}
+  92%{opacity:.965}
+  93.5%{opacity:.99}
+}
+.crt{animation:crtflick 9s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){.crt{animation:none}}
+
+/* ═══════════════ TYPO HELPERS ═══════════════ */
+.dim{color:var(--ph-72)}
+.dim48{color:var(--ph-72)}
+.micro{font-size:12px;letter-spacing:.08em;color:var(--ph-72);text-transform:uppercase}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+a.skip-link:focus{position:fixed;top:calc(var(--nav-h) + 8px);left:8px;z-index:9600;width:auto;height:auto;margin:0;padding:10px 16px;clip:auto;overflow:visible;background:#000;color:var(--amber);border:1px solid var(--amber);font-size:13px}
+pre{font-family:var(--mono);font-size:13px;line-height:1.45;overflow-x:auto}
+.pre-frame{visibility:hidden}
+html.fonts-ready .pre-frame{visibility:visible}
+
+/* semantic grammar 0.5 */
+.st-ok{color:var(--ph)}
+.st-transit{color:var(--amber)}
+.st-err{background:var(--amber);color:#000;padding:0 4px;font-weight:600}
+
+/* cursor */
+.cursor{display:inline-block;width:.62em;height:1.05em;background:var(--amber);vertical-align:text-bottom;animation:blink 1.06s steps(1,end) infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none;opacity:1}}
+
+/* ═══════════════ NAV ═══════════════ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:8000;height:var(--nav-h);
+  background:rgba(0,0,0,.94);border-bottom:1px solid var(--ph-28);
+  display:flex;align-items:center;gap:18px;padding:0 20px;
+}
+.nav .logo{font-weight:700;font-size:15px;letter-spacing:.06em;white-space:nowrap}
+.nav .logo .blk{color:var(--ph)}
+.nav .logo .sub{color:var(--ph-72);font-weight:400;font-size:12px;margin-left:8px}
+.nav-links{display:flex;gap:4px;margin-left:auto}
+.nav-links a{font-size:12.5px;padding:6px 8px;letter-spacing:.04em;color:var(--ph-72);white-space:nowrap}
+.nav-links a:hover{background:var(--ph);color:#000}
+.nav-links .fkey{color:var(--ph-72)}
+.nav-links a:hover .fkey{color:#000}
+.nav-cta{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.05em;
+  background:var(--amber);color:#000;border:1px solid var(--amber);
+  padding:8px 14px;cursor:pointer;white-space:nowrap;text-decoration:none;
+}
+.nav-cta:hover{background:#000;color:var(--amber)}
+@media (max-width:860px){.nav-links a .lbl{display:none}.nav-links a{padding:6px 5px}}
+@media (max-width:560px){.nav-links{display:none}.nav .logo .sub{display:none}}
+
+/* ═══════════════ TRACKING BAR ═══════════════ */
+.trackbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:8000;height:var(--trk-h);
+  background:rgba(0,0,0,.95);border-top:1px solid var(--ph-28);
+  display:flex;align-items:center;gap:2px;padding:0 14px;
+  font-size:11.5px;letter-spacing:.05em;overflow:hidden;white-space:nowrap;
+}
+.trackbar .trk-tag{color:var(--ph-72);margin-right:8px}
+.trk-seg{color:var(--ph-72);padding:2px 7px}
+.trk-seg.done{color:var(--ph)}
+.trk-seg.active{background:var(--amber);color:#000;font-weight:600}
+.trk-seg.flash{background:var(--amber);color:#000}
+@media (max-width:700px){.trk-seg .seg-lbl{display:none}}
+@media (max-width:480px){body.form-focused .trackbar{display:none}}
+
+/* ═══════════════ LAYOUT ═══════════════ */
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+section{scroll-margin-top:calc(var(--nav-h) + 12px);padding:72px 0 60px;border-bottom:1px dashed var(--ph-14)}
+.sec-head{margin-bottom:34px}
+.sec-head .path{font-size:12px;color:var(--ph-72);letter-spacing:.1em;margin-bottom:6px}
+.sec-head h2{font-size:clamp(20px,3vw,27px);font-weight:600;letter-spacing:.02em}
+.sec-head h2::before{content:"▌";color:var(--ph-48);margin-right:8px}
+
+/* frame boxes (CSS borders, corner ticks) */
+.box{border:1px solid var(--ph-28);position:relative;padding:20px;background:rgba(0,0,0,.5)}
+.box::before,.box::after{position:absolute;color:var(--ph-48);font-size:12px;line-height:1;pointer-events:none}
+.box::before{content:"╔";top:-6px;left:-4px}
+.box::after{content:"╝";bottom:-6px;right:-4px}
+.box .box-tag{position:absolute;top:-9px;left:14px;background:#000;padding:0 8px;font-size:11px;letter-spacing:.12em;color:var(--ph-72);text-transform:uppercase}
+.box-amber{border-color:var(--amber);background:var(--amber-08)}
+.box-amber::before,.box-amber::after{color:var(--amber)}
+.box-amber .box-tag{color:var(--amber)}
+
+/* reveal PRINT (1 frame) */
+.rv{visibility:hidden}
+.rv.on{visibility:visible}
+@media (prefers-reduced-motion:reduce){.rv{visibility:visible}}
+
+/* ═══════════════ BOOT S0 ═══════════════ */
+#boot{
+  position:fixed;inset:0;height:100dvh;z-index:9500;background:#000;
+  display:flex;align-items:center;justify-content:center;padding:24px;cursor:pointer;
+}
+#boot pre{font-size:14px;color:var(--ph);max-width:620px;width:100%;overflow:hidden}
+#boot .hint{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:12px;color:var(--ph-72)}
+#boot.gone{display:none}
+
+/* ═══════════════ S1 HERO ═══════════════ */
+#s1{padding-top:calc(var(--nav-h) + 64px);min-height:calc(88dvh);display:flex;align-items:center;border-bottom:1px dashed var(--ph-14)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:48px;align-items:center;width:100%}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr}}
+.badge{
+  display:inline-block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ph-72);border:1px solid var(--ph-48);padding:5px 12px;margin-bottom:22px;
+}
+h1{font-size:clamp(27px,4.6vw,46px);font-weight:700;line-height:1.22;letter-spacing:-.01em;margin-bottom:20px}
+h1 .l3{color:var(--ph-72)}
+.hero-sub{max-width:56ch;color:var(--ph-72);margin-bottom:26px;font-size:15.5px}
+.statusline{font-size:13px;margin-bottom:30px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.statusline .live-dot{color:var(--ph)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.statusline .live-dot::before{content:"●";margin-right:6px;animation:pulse 2s ease-in-out infinite;display:inline-block}
+@media (prefers-reduced-motion:reduce){.statusline .live-dot::before{animation:none}}
+.cep-live{color:var(--amber);border:1px solid var(--amber);padding:3px 10px;font-size:12.5px;letter-spacing:.04em}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap}
+.btn{
+  font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.05em;
+  padding:13px 22px;cursor:pointer;text-decoration:none;display:inline-block;
+  border:1px solid var(--ph);background:transparent;color:var(--ph);
+}
+.btn:hover{background:var(--ph);color:#000}
+.btn-amber{border-color:var(--amber);color:#000;background:var(--amber)}
+.btn-amber:hover{background:#000;color:var(--amber)}
+.hero-art{display:flex;justify-content:center}
+.hero-art svg{width:100%;max-width:430px;height:auto}
+@media (max-width:900px){.hero-art{display:none}}
+
+/* ═══════════════ S2 OPERACIÓN ═══════════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px}
+@media (max-width:980px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.kpi-grid{grid-template-columns:1fr}}
+.kpi{border:1px solid var(--ph-28);padding:16px 14px;background:rgba(0,0,0,.5)}
+.kpi .k-label{font-size:11.5px;letter-spacing:.1em;color:var(--ph-72);text-transform:uppercase;margin-bottom:10px}
+.kpi .k-value{font-family:var(--disp);font-size:clamp(30px,3.4vw,42px);line-height:1;color:var(--ph);min-height:1em}
+.kpi .k-value.small{font-size:clamp(19px,1.9vw,24px);line-height:1.25}
+.kpi .k-value.lit{text-shadow:0 0 14px var(--ph-48)}
+.kpi .k-value .ch{display:inline-block;width:1ch;text-align:center}
+.feed-box{border:1px solid var(--ph-28);background:rgba(0,0,0,.5)}
+.feed-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--ph-14)}
+.feed-head .fh-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ph-72)}
+.feed-scroll{overflow-x:auto}
+table.ops{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+table.ops th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ph-72);font-weight:500;text-align:left;padding:9px 14px;border-bottom:1px solid var(--ph-14)}
+table.ops td{padding:8px 14px;border-bottom:1px solid var(--ph-07);white-space:nowrap;color:var(--ph-88)}
+table.ops td.num{text-align:right}
+table.ops th.num{text-align:right}
+table.ops tbody{height:auto}
+table.ops td{height:22px}
+.feed-body-wrap{max-height:512px;overflow:hidden}
+tr.transit td{color:var(--amber)}
+tr.ok td .st-ok{color:var(--ph)}
+.feed-note{padding:10px 16px;font-size:12px;color:var(--ph-72);border-top:1px solid var(--ph-14)}
+.btn-mini{
+  font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.05em;
+  border:1px solid var(--ph);background:transparent;color:var(--ph);padding:6px 12px;cursor:pointer;
+}
+.btn-mini:hover{background:var(--ph);color:#000}
+
+/* ═══════════════ S3 ARQUITECTURA ═══════════════ */
+.arch-svg{width:100%;height:auto;display:block;margin-bottom:34px}
+.node-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media (max-width:820px){.node-grid{grid-template-columns:1fr}}
+.node{border:1px solid var(--ph-28);padding:20px;background:rgba(0,0,0,.5)}
+.node h3{font-size:15px;font-weight:600;letter-spacing:.04em;margin-bottom:4px}
+.node .n-sub{font-size:12px;color:var(--ph-72);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+.node ul{list-style:none}
+.node li{padding:3.5px 0;font-size:13.5px;color:var(--ph-72)}
+.node li::before{content:"├─ ";color:var(--ph-48)}
+.node li:last-child::before{content:"└─ "}
+.node li b{color:var(--ph);font-weight:600}
+.node pre{margin-top:14px;border:1px dashed var(--ph-28);padding:12px;font-size:12.5px;color:var(--ph-72)}
+
+/* ═══════════════ S4 CASOS ═══════════════ */
+.case-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media (max-width:980px){.case-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.case-grid{grid-template-columns:1fr}}
+.case{border:1px solid var(--ph-28);padding:20px 16px;background:rgba(0,0,0,.5)}
+.case .c-id{font-size:11px;color:var(--ph-72);letter-spacing:.14em;margin-bottom:10px}
+.case h3{font-size:15px;font-weight:600;margin-bottom:10px}
+.case p{font-size:13.5px;color:var(--ph-72)}
+
+/* ═══════════════ S5 API ═══════════════ */
+.api-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:24px;align-items:start}
+@media (max-width:900px){.api-grid{grid-template-columns:1fr}}
+.code{border:1px solid var(--ph-28);background:rgba(0,0,0,.6);padding:18px;font-size:12.8px;line-height:1.55;color:var(--ph-88)}
+.code .cm{color:var(--ph-72)}
+.code .amber-ln{color:var(--amber)}
+.idem-line{
+  margin-top:18px;border:1px solid var(--amber);color:var(--amber);
+  padding:11px 16px;font-size:13.5px;letter-spacing:.02em;background:var(--amber-08);
+}
+.clabe-demo{border:1px solid var(--ph-28);padding:20px;background:rgba(0,0,0,.5)}
+.clabe-demo h3{font-size:14px;font-weight:600;letter-spacing:.06em;margin-bottom:6px}
+.clabe-out{
+  margin-top:16px;min-height:96px;border:1px dashed var(--ph-28);padding:14px;
+  font-size:13px;line-height:1.7;color:var(--ph-88);word-break:break-all;
+}
+.clabe-out .big{font-family:var(--disp);font-size:29px;letter-spacing:.09em;line-height:1.15;display:block;color:var(--ph)}
+
+/* ═══════════════ S6 SEGURIDAD ═══════════════ */
+.sec-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:start}
+@media (max-width:900px){.sec-grid{grid-template-columns:1fr}}
+.ctrl-list{list-style:none}
+.ctrl-list li{padding:10px 0;border-bottom:1px dashed var(--ph-14);font-size:14px;display:flex;gap:12px}
+.ctrl-list li:last-child{border-bottom:none}
+.ctrl-list .chk{color:var(--ph);font-weight:700;white-space:nowrap}
+.ctrl-list .cno{color:var(--ph-72);white-space:nowrap}
+.ks-box{border:1px solid var(--amber);background:var(--amber-08);padding:20px;position:relative;margin-bottom:24px}
+.ks-box .box-tag{position:absolute;top:-9px;left:14px;background:#000;padding:0 8px;font-size:11px;letter-spacing:.14em;color:var(--amber)}
+.ks-box p{font-size:13.5px;color:var(--amber);margin-top:10px}
+.ks-scopes{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.ks-scopes span{border:1px dashed var(--amber);color:var(--amber);font-size:12px;letter-spacing:.06em;padding:4px 10px}
+.plate{border:1px solid var(--ph-28);padding:20px;background:rgba(0,0,0,.5);font-size:12.5px;line-height:1.7;color:var(--ph-72)}
+.plate .p-head{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ph-72);margin-bottom:10px}
+.plate .p-co{color:var(--ph);font-weight:600}
+
+/* ═══════════════ S7 FORM ═══════════════ */
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:860px){.form-grid{grid-template-columns:1fr}}
+.receipt{
+  position:relative;border:1px solid var(--ph-28);background:rgba(0,0,0,.5);padding:28px 26px;
+}
+.perf{position:absolute;top:0;bottom:0;width:9px;pointer-events:none;
+  background-image:radial-gradient(circle at 50% 50%,#000 2.4px,transparent 2.6px);
+  background-size:9px 16px;background-repeat:repeat-y}
+.perf.l{left:-5px;border-right:1px dashed var(--ph-28)}
+.perf.r{right:-5px;border-left:1px dashed var(--ph-28)}
+@media (max-width:480px){
+  .perf{bottom:auto;height:24px}
+}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ph-72);margin-bottom:6px}
+.field .req{color:var(--ph)}
+.field input,.field select,.field textarea{
+  width:100%;font-family:var(--mono);font-size:14.5px;color:var(--ph);
+  background:rgba(51,255,102,.05);border:1px solid var(--ph-28);padding:11px 12px;border-radius:0;
+}
+.field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ph-48) 50%),linear-gradient(135deg,var(--ph-48) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.field textarea{resize:vertical;min-height:88px}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:var(--ph-48)}
+.ferr{display:none;margin-top:6px;font-size:12.5px}
+.field.bad .ferr{display:block}
+.field.bad input,.field.bad select{border-color:var(--amber)}
+.form-note{font-size:12px;color:var(--ph-72);margin:18px 0;line-height:1.7}
+.btn-send{
+  width:100%;font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:.08em;
+  background:var(--amber);color:#000;border:1px solid var(--amber);padding:15px;cursor:pointer;
+}
+.btn-send:hover{background:#000;color:var(--amber)}
+#form-ok{display:none}
+#form-ok.show{display:block}
+#form-ok pre{font-size:13.5px;color:var(--ph);line-height:1.8}
+#form-ok .flash-ok{background:var(--ph-14)}
+.s7-side h3{font-size:15px;font-weight:600;margin-bottom:14px}
+.s7-side ul{list-style:none;margin-bottom:22px}
+.s7-side li{font-size:13.5px;color:var(--ph-72);padding:4px 0}
+.s7-side li::before{content:"> ";color:var(--ph-48)}
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer{padding:48px 0 calc(var(--trk-h) + 42px);font-size:12.5px;color:var(--ph-72);line-height:1.8}
+footer .f-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:32px;margin-bottom:30px}
+@media (max-width:760px){footer .f-grid{grid-template-columns:1fr}}
+footer .f-co{color:var(--ph-72)}
+footer .f-legal{border-top:1px dashed var(--ph-14);padding-top:22px;max-width:100ch}
+footer a{color:var(--ph-72)}
+footer .f-links{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:10px}
+footer .f-end{margin-top:24px;color:var(--ph-72)}
+</style>
+<noscript><style>
+#boot{display:none}
+.rv{visibility:visible}
+.pre-frame{visibility:visible}
+#clabe-btn,#feed-refresh{display:none}
+#cep-live{display:none}
+</style></noscript>
+</head>
+<body>
+<div class="crt">
+
+<!-- ═══════ S0 BOOT ═══════ -->
+<div id="boot" role="dialog" aria-label="Secuencia de arranque. Presione cualquier tecla para omitir." tabindex="-1">
+  <pre id="boot-pre" aria-hidden="true"></pre>
+  <div class="hint">[ cualquier tecla o clic para omitir ]</div>
+</div>
+
+<a class="sr-only skip-link" href="#s1">Saltar al contenido</a>
+
+<!-- ═══════ NAV ═══════ -->
+<header class="nav">
+  <div class="logo"><span class="blk">▓▓ MASMOVIL</span><span class="sub">MM://CORE · SPEI VÍA STP</span></div>
+  <nav class="nav-links" aria-label="Navegación principal">
+    <a href="#s2"><span class="fkey" aria-hidden="true">[F1]</span> <span class="lbl">OPERACIÓN</span></a>
+    <a href="#s3"><span class="fkey" aria-hidden="true">[F2]</span> <span class="lbl">ARQUITECTURA</span></a>
+    <a href="#s6"><span class="fkey" aria-hidden="true">[F3]</span> <span class="lbl">SEGURIDAD</span></a>
+    <a href="#s7"><span class="fkey" aria-hidden="true">[F4]</span> <span class="lbl">ACCESO</span></a>
+  </nav>
+  <a class="nav-cta" href="#s7">[ SOLICITAR ACCESO ]</a>
+</header>
+
+<main>
+<!-- ═══════ S1 HERO ═══════ -->
+<section id="s1" aria-label="Presentación">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="badge">Infraestructura de pagos SPEI · Conexión vía STP</span>
+      <h1>SPEI 24/7 con CEP de Banxico<br>en cada operación.<br><span class="l3">El núcleo que su auditor aprueba.<span class="cursor" aria-hidden="true"></span></span></h1>
+      <p class="hero-sub">Núcleo de pagos por API sobre la red SPEI, procesado a través de STP. CLABEs ilimitadas, dispersión masiva, nómina y conciliación automática — cada operación liquidada respaldada con su Comprobante Electrónico de Pago.</p>
+      <div class="statusline">
+        <span class="live-dot">EN LÍNEA · VENTANA SPEI ABIERTA</span>
+        <span class="cep-live" id="cep-live" aria-hidden="true">ÚLTIMO CEP EMITIDO: hace 4 s</span>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-amber" href="#s7">[ SOLICITAR ACCESO ]</a>
+        <a class="btn" href="#s3">[ VER ARQUITECTURA ]</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <!-- Arte SVG: CEP en fósforo -->
+      <svg viewBox="0 0 380 420" fill="none" font-family="IBM Plex Mono,monospace">
+        <rect x="30" y="18" width="320" height="384" stroke="#33FF66" stroke-opacity=".5" stroke-width="1.5"/>
+        <rect x="42" y="30" width="296" height="360" stroke="#33FF66" stroke-opacity=".22" stroke-dasharray="4 4"/>
+        <text x="190" y="66" fill="#33FF66" font-size="15" font-weight="600" text-anchor="middle" letter-spacing="3">BANCO DE MÉXICO</text>
+        <text x="190" y="88" fill="#33FF66" fill-opacity=".6" font-size="11" text-anchor="middle" letter-spacing="2">COMPROBANTE ELECTRÓNICO DE PAGO</text>
+        <line x1="60" y1="104" x2="320" y2="104" stroke="#33FF66" stroke-opacity=".35"/>
+        <text x="60" y="132" fill="#33FF66" fill-opacity=".62" font-size="10">CLAVE DE RASTREO</text>
+        <text x="60" y="150" fill="#33FF66" font-size="13" letter-spacing="1">MM7F3A9C2E41B0D8</text>
+        <text x="60" y="180" fill="#33FF66" fill-opacity=".62" font-size="10">FECHA DE LIQUIDACIÓN</text>
+        <text x="60" y="198" fill="#33FF66" font-size="13">2026-07-09 · 14:32:06 CST</text>
+        <text x="60" y="228" fill="#33FF66" fill-opacity=".62" font-size="10">ESTADO</text>
+        <text x="60" y="246" fill="#33FF66" font-size="13" font-weight="600">LIQUIDADA · CEP ✓</text>
+        <line x1="60" y1="268" x2="320" y2="268" stroke="#33FF66" stroke-opacity=".35"/>
+        <!-- sello -->
+        <circle cx="268" cy="322" r="42" stroke="#33FF66" stroke-width="1.5"/>
+        <circle cx="268" cy="322" r="34" stroke="#33FF66" stroke-opacity=".4" stroke-dasharray="3 3"/>
+        <text x="268" y="318" fill="#33FF66" font-size="11" text-anchor="middle" letter-spacing="1">SPEI</text>
+        <text x="268" y="334" fill="#33FF66" font-size="14" font-weight="700" text-anchor="middle">✓</text>
+        <!-- código de barras -->
+        <g stroke="#33FF66" stroke-opacity=".8">
+          <line x1="62" y1="300" x2="62" y2="344" stroke-width="3"/>
+          <line x1="70" y1="300" x2="70" y2="344" stroke-width="1.5"/>
+          <line x1="77" y1="300" x2="77" y2="344" stroke-width="4"/>
+          <line x1="86" y1="300" x2="86" y2="344" stroke-width="1.5"/>
+          <line x1="93" y1="300" x2="93" y2="344" stroke-width="2.5"/>
+          <line x1="101" y1="300" x2="101" y2="344" stroke-width="1.5"/>
+          <line x1="109" y1="300" x2="109" y2="344" stroke-width="4"/>
+          <line x1="118" y1="300" x2="118" y2="344" stroke-width="1.5"/>
+          <line x1="126" y1="300" x2="126" y2="344" stroke-width="3"/>
+          <line x1="134" y1="300" x2="134" y2="344" stroke-width="1.5"/>
+          <line x1="142" y1="300" x2="142" y2="344" stroke-width="2.5"/>
+          <line x1="150" y1="300" x2="150" y2="344" stroke-width="4"/>
+          <line x1="159" y1="300" x2="159" y2="344" stroke-width="1.5"/>
+          <line x1="167" y1="300" x2="167" y2="344" stroke-width="3"/>
+        </g>
+        <text x="62" y="366" fill="#33FF66" fill-opacity=".62" font-size="9" letter-spacing="2">VERIFICABLE EN BANXICO.ORG.MX/CEP</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S2 OPERACIÓN ═══════ -->
+<section id="s2" aria-labelledby="h-s2">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/OPERACION — [F1]</div>
+      <h2 id="h-s2">La red SPEI, en producción continua</h2>
+    </div>
+
+    <div class="kpi-grid rv">
+      <div class="kpi"><div class="k-label">Ventana SPEI</div><div class="k-value" data-value="24/7/365">24/7/365</div></div>
+      <div class="kpi"><div class="k-label">Liquidación típica</div><div class="k-value" data-value="&lt;30 s">&lt;30 s</div></div>
+      <div class="kpi"><div class="k-label">CEP de Banxico</div><div class="k-value small" data-value="EN CADA OPERACIÓN LIQUIDADA">EN CADA OPERACIÓN LIQUIDADA</div></div>
+      <div class="kpi"><div class="k-label">CLABEs por API</div><div class="k-value small" data-value="SIN LÍMITE">SIN LÍMITE</div></div>
+    </div>
+
+    <div class="feed-box rv">
+      <div class="feed-head">
+        <span class="fh-title">▸ Monitor de operaciones — simulación</span>
+        <button type="button" class="btn-mini" id="feed-refresh" hidden>[ ACTUALIZAR ]</button>
+      </div>
+      <div class="feed-scroll">
+      <div class="feed-body-wrap">
+      <table class="ops">
+        <caption class="sr-only">Tabla de operaciones SPEI simuladas con fines ilustrativos</caption>
+        <thead>
+          <tr><th scope="col">Hora</th><th scope="col">Clave de rastreo</th><th scope="col">Tipo</th><th scope="col">Contraparte</th><th scope="col" class="num">Monto (MXN)</th><th scope="col">Estado</th></tr>
+        </thead>
+        <tbody id="feed-body">
+          <!-- filas estáticas de respaldo (visibles sin JS; el script las reemplaza) -->
+          <tr class="ok"><td>14:31:52</td><td>MM7F3A9C2E41B0D8</td><td>OUT ▶</td><td>BBVA</td><td class="num">48,250.00</td><td><span class="st-ok">LIQUIDADA · CEP ✓</span></td></tr>
+          <tr class="ok"><td>14:31:37</td><td>MM2D80C1F49B7E63</td><td>IN ◀</td><td>BANORTE</td><td class="num">125,900.00</td><td><span class="st-ok">LIQUIDADA · CEP ✓</span></td></tr>
+          <tr class="ok"><td>14:31:04</td><td>MM9C41E7A20D5F8B</td><td>OUT ▶</td><td>SANTANDER</td><td class="num">7,340.50</td><td><span class="st-ok">LIQUIDADA · CEP ✓</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+      <div class="feed-note">Tabla de operaciones simuladas con fines ilustrativos. No representa operaciones reales ni cifras de la empresa.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S3 ARQUITECTURA ═══════ -->
+<section id="s3" aria-labelledby="h-s3">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/ARQUITECTURA — [F2]</div>
+      <h2 id="h-s3">Su sistema → MASMOVIL → STP → Banxico</h2>
+    </div>
+
+    <svg class="arch-svg rv" viewBox="0 0 1120 240" fill="none" font-family="IBM Plex Mono,monospace" role="img" aria-label="Diagrama: el sistema del cliente se conecta por API a MASMOVIL, que procesa vía STP hacia Banxico SPEI; PLD/AML supervisa y el CEP regresa como comprobante.">
+      <!-- nodos -->
+      <g stroke="#33FF66" stroke-width="1.5">
+        <rect x="14" y="80" width="200" height="80" stroke-opacity=".6"/>
+        <rect x="318" y="66" width="230" height="108"/>
+        <rect x="650" y="80" width="190" height="80" stroke-opacity=".8"/>
+        <rect x="920" y="80" width="186" height="80" stroke-opacity=".8"/>
+        <rect x="376" y="200" width="220" height="34" stroke-opacity=".5" stroke-dasharray="4 3"/>
+      </g>
+      <text x="114" y="112" fill="#33FF66" fill-opacity=".8" font-size="14" text-anchor="middle" font-weight="600">SU SISTEMA</text>
+      <text x="114" y="134" fill="#33FF66" fill-opacity=".62" font-size="11" text-anchor="middle">ERP · plataforma · backoffice</text>
+      <text x="433" y="98" fill="#33FF66" font-size="15" text-anchor="middle" font-weight="700">MASMOVIL CORE</text>
+      <text x="433" y="120" fill="#33FF66" fill-opacity=".6" font-size="11" text-anchor="middle">API REST · HMAC · idempotencia</text>
+      <text x="433" y="140" fill="#33FF66" fill-opacity=".6" font-size="11" text-anchor="middle">CLABEs · webhooks · multi-empresa</text>
+      <text x="433" y="160" fill="#33FF66" fill-opacity=".6" font-size="11" text-anchor="middle">conciliación automática</text>
+      <text x="745" y="112" fill="#33FF66" font-size="14" text-anchor="middle" font-weight="600">STP · I.F.P.E.</text>
+      <text x="745" y="134" fill="#33FF66" fill-opacity=".62" font-size="11" text-anchor="middle">participante SPEI</text>
+      <text x="1013" y="112" fill="#33FF66" font-size="14" text-anchor="middle" font-weight="600">BANXICO · SPEI</text>
+      <text x="1013" y="134" fill="#33FF66" fill-opacity=".62" font-size="11" text-anchor="middle">liquidación + CEP</text>
+      <text x="486" y="222" fill="#33FF66" fill-opacity=".7" font-size="11" text-anchor="middle">PLD/AML · screening · scoring · trazabilidad</text>
+      <!-- flechas -->
+      <g stroke="#33FF66" stroke-width="1.5" class="flow">
+        <line x1="214" y1="110" x2="318" y2="110" stroke-dasharray="6 5"/>
+        <line x1="548" y1="110" x2="650" y2="110" stroke-dasharray="6 5"/>
+        <line x1="840" y1="110" x2="920" y2="110" stroke-dasharray="6 5"/>
+      </g>
+      <g stroke="#33FF66" stroke-opacity=".45" stroke-width="1.2">
+        <line x1="920" y1="140" x2="548" y2="140" stroke-dasharray="2 4"/>
+        <line x1="433" y1="174" x2="433" y2="200"/>
+      </g>
+      <text x="266" y="100" fill="#33FF66" font-size="12" text-anchor="middle">API ▶</text>
+      <text x="599" y="100" fill="#33FF66" font-size="12" text-anchor="middle">SPEI ▶</text>
+      <text x="880" y="100" fill="#33FF66" font-size="12" text-anchor="middle">▶</text>
+      <text x="734" y="156" fill="#33FF66" fill-opacity=".6" font-size="11" text-anchor="middle">◀ CEP de vuelta a su expediente</text>
+      <style>
+        .flow line{animation:dashmove 1.6s linear infinite}
+        @keyframes dashmove{to{stroke-dashoffset:-22}}
+        @media (prefers-reduced-motion:reduce){.flow line{animation:none}}
+      </style>
+    </svg>
+
+    <div class="node-grid">
+      <div class="node rv">
+        <h3>NODO API</h3>
+        <div class="n-sub">La puerta de entrada, firmada</div>
+        <ul>
+          <li><b>MOD.01 CLABEs</b> — altas ilimitadas por API, una CLABE por cliente, proyecto o convenio</li>
+          <li><b>MOD.05 Multi-empresa</b> — varias razones sociales, un solo núcleo, saldos separados</li>
+          <li><b>MOD.06 Webhooks</b> — notificaciones firmadas, con reintentos y verificación</li>
+          <li>HMAC-SHA256 por petición · anti-replay ±30 s · idempotencia nativa</li>
+        </ul>
+      </div>
+      <div class="node rv">
+        <h3>NODO STP / BANXICO</h3>
+        <div class="n-sub">La liquidación, sin intermediarios extra</div>
+        <ul>
+          <li><b>MOD.02 SPEI-OUT</b> — transferencias, dispersión masiva y nómina, 24/7/365</li>
+          <li><b>MOD.03 SPEI-IN</b> — cobranza referenciada por CLABE, abono en segundos</li>
+          <li>Procesamiento a través de STP, participante SPEI supervisado por Banco de México</li>
+        </ul>
+      </div>
+      <div class="node rv">
+        <h3>NODO PLD/AML</h3>
+        <div class="n-sub">El control, antes de cada peso</div>
+        <ul>
+          <li>Screening contra listas (bloqueadas, PEP, sancionados) en cada contraparte</li>
+          <li>Scoring de riesgo por operación y acumulado por cliente</li>
+          <li>Trazabilidad completa: quién ordenó, quién aprobó, cuándo y con qué evidencia</li>
+        </ul>
+      </div>
+      <div class="node rv">
+        <h3>NODO CEP</h3>
+        <div class="n-sub">El comprobante que cierra la discusión</div>
+        <ul>
+          <li>El CEP es el Comprobante Electrónico de Pago que emite Banco de México por cada operación liquidada en SPEI: evidencia oficial, verificable por terceros</li>
+          <li><b>MOD.04 Conciliación</b> — cada movimiento amarra orden, acuse y CEP en un expediente</li>
+        </ul>
+        <pre class="pre-frame" aria-hidden="true">EXPEDIENTE MM7F3A9C2E41B0D8
+├─ orden.json        ✓
+├─ acuse_stp.xml     ✓
+├─ cep_banxico.xml   ✓
+└─ estado            LIQUIDADA · CEP ✓</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S4 CASOS ═══════ -->
+<section id="s4" aria-labelledby="h-s4">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/CASOS</div>
+      <h2 id="h-s4">Un núcleo, cuatro rutinas de tesorería</h2>
+    </div>
+    <div class="case-grid">
+      <div class="case rv">
+        <div class="c-id">CASO.01</div>
+        <h3>DISPERSIÓN MASIVA</h3>
+        <p>Miles de órdenes en una sola llamada o archivo. Validación previa de CLABEs, ejecución con segunda firma y un CEP por cada beneficiario liquidado.</p>
+      </div>
+      <div class="case rv">
+        <div class="c-id">CASO.02</div>
+        <h3>NÓMINA</h3>
+        <p>Pagos a colaboradores cualquier día, a cualquier hora, incluidos fines de semana y días inhábiles bancarios. Sin cortes de las 17:59.</p>
+      </div>
+      <div class="case rv">
+        <div class="c-id">CASO.03</div>
+        <h3>COBRANZA POR CLABE</h3>
+        <p>Una CLABE única por cliente o referencia. El abono se identifica solo, el webhook avisa a su sistema y la conciliación queda hecha.</p>
+      </div>
+      <div class="case rv">
+        <div class="c-id">CASO.04</div>
+        <h3>MULTI-EMPRESA</h3>
+        <p>Grupos con varias razones sociales operan desde un mismo núcleo: saldos, permisos y bitácoras separados por entidad, visión consolidada arriba.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S5 API ═══════ -->
+<section id="s5" aria-labelledby="h-s5">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/API</div>
+      <h2 id="h-s5">Una orden SPEI, en una petición</h2>
+    </div>
+    <div class="api-grid">
+      <div>
+        <pre class="code pre-frame"><code><span class="cm">// firmar, enviar, olvidarse del reintento</span>
+POST /v1/transferencias HTTP/1.1
+Host: api.masmovil.lat
+X-MM-Key: mk_live_9f2c····
+X-MM-Signature: hmac-sha256=6b04a1····   <span class="cm">← HMAC del cuerpo</span>
+X-MM-Timestamp: 1783629126               <span class="cm">← anti-replay ±30 s</span>
+Idempotency-Key: nomina-2026-07-Q1-0042
+
+{
+  "cuenta_origen":  "646180180100000023",
+  "clabe_destino":  "646180180945126971",
+  "monto_mxn":      "48250.00",
+  "concepto":       "NOMINA Q1 JUL",
+  "referencia":     "0042"
+}
+
+<span class="cm">── respuesta ────────────────────────────</span>
+HTTP/1.1 201 Created
+{
+  "clave_rastreo": "MM7F3A9C2E41B0D8",
+  "estado":        "LIQUIDADA",
+  "cep":           "emitido ✓",
+  "liquidacion_s": 11
+}</code></pre>
+        <p class="idem-line">idempotencia: reintente sin miedo. misma clave = misma orden.</p>
+      </div>
+      <div class="clabe-demo rv">
+        <h3>▸ ALTA DE CLABE — DEMO EN VIVO</h3>
+        <p class="dim" style="font-size:13px">Cada CLABE se genera bajo el prefijo 646180 (STP) con dígito de control calculado por ponderación 3-7-1 módulo 10 — verifíquelo con cualquier validador.</p>
+        <p style="margin-top:16px"><button type="button" class="btn-mini" id="clabe-btn">[ ⏎ GENERAR CLABE DEMO ]</button></p>
+        <div class="clabe-out" id="clabe-out" aria-live="polite"><span class="dim48">&gt; sin CLABEs generadas. ejecute [ ⏎ GENERAR CLABE DEMO ]_</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S6 SEGURIDAD ═══════ -->
+<section id="s6" aria-labelledby="h-s6">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/SEGURIDAD — [F3]</div>
+      <h2 id="h-s6">Controles que se demuestran, no se prometen</h2>
+    </div>
+    <div class="sec-grid">
+      <div class="box rv">
+        <span class="box-tag">Matriz de controles</span>
+        <ul class="ctrl-list">
+          <li><span class="chk">[✓]</span><span class="cno">01</span><span>HMAC-SHA256 + anti-replay + idempotencia en cada llamada a la API</span></li>
+          <li><span class="chk">[✓]</span><span class="cno">02</span><span>2FA obligatorio y segunda firma (aprobador + TOTP) en toda operación crítica</span></li>
+          <li><span class="chk">[✓]</span><span class="cno">03</span><span>Llaves y firmas resguardadas en HSM; rotación con doble control</span></li>
+          <li><span class="chk">[✓]</span><span class="cno">04</span><span>Bitácora inmutable: nadie la edita, ni administradores</span></li>
+          <li><span class="chk">[✓]</span><span class="cno">05</span><span>PLD/AML: screening contra listas, scoring por operación y trazabilidad total</span></li>
+          <li><span class="chk">[✓]</span><span class="cno">06</span><span>Kill switch con alcance granular y reanudación bajo segunda firma</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="ks-box rv">
+          <span class="box-tag">⏻ KILL SWITCH</span>
+          <div class="ks-scopes" aria-label="Alcances del kill switch">
+            <span>PAUSAR SALIDAS</span><span>PAUSAR EMPRESA</span><span>CONGELAR TODO</span>
+          </div>
+          <p>Detenga la operación en segundos, con el alcance exacto que la situación exige. Activar y reanudar requieren segunda firma del aprobador en turno + TOTP. Todo queda en bitácora.</p>
+        </div>
+        <div class="plate rv">
+          <div class="p-head">Placa registral</div>
+          <p><span class="p-co">MASMOVIL, S.A. de C.V.</span> · RFC MAS191203EY6<br>
+          Pompeya 2775, Lomas de Guevara, C.P. 44657, Guadalajara, Jalisco, México · Operando desde 2019 · masmovil.lat</p>
+          <p style="margin-top:12px">MASMOVIL, S.A. de C.V. es un proveedor de infraestructura tecnológica. Los servicios de pago se procesan a través de STP (Sistema de Transferencias y Pagos STP, S.A. de C.V., I.F.P.E.), participante en SPEI autorizado y supervisado por Banco de México. MASMOVIL no capta ni custodia recursos del público. STP®, SPEI® y CEP® son marcas de sus respectivos titulares; su mención no implica aval.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S7 ACCESO ═══════ -->
+<section id="s7" aria-labelledby="h-s7">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="path">MM://CORE/ACCESO — [F4]</div>
+      <h2 id="h-s7">Solicitar acceso al entorno de prueba</h2>
+    </div>
+    <div class="form-grid">
+      <div class="receipt rv">
+        <div class="perf l" aria-hidden="true"></div>
+        <div class="perf r" aria-hidden="true"></div>
+        <form id="acc-form" novalidate>
+          <div class="field">
+            <label for="f-nombre">Nombre completo <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-nombre" name="nombre" type="text" autocomplete="name" required aria-describedby="e-nombre">
+            <p class="ferr" id="e-nombre"><span class="st-err">[ERR] ✕ escriba su nombre</span></p>
+          </div>
+          <div class="field">
+            <label for="f-empresa">Empresa <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-empresa" name="empresa" type="text" autocomplete="organization" required aria-describedby="e-empresa">
+            <p class="ferr" id="e-empresa"><span class="st-err">[ERR] ✕ escriba el nombre de su empresa</span></p>
+          </div>
+          <div class="field">
+            <label for="f-email">Correo corporativo <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="e-email">
+            <p class="ferr" id="e-email"><span class="st-err">[ERR] ✕ correo inválido</span></p>
+          </div>
+          <div class="field">
+            <label for="f-vol">Volumen mensual estimado</label>
+            <select id="f-vol" name="volumen">
+              <option value="">— seleccione —</option>
+              <option>&lt; 1,000 operaciones</option>
+              <option>1,000 – 10,000 operaciones</option>
+              <option>10,000 – 100,000 operaciones</option>
+              <option>&gt; 100,000 operaciones</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-msg">¿Qué necesita operar?</label>
+            <textarea id="f-msg" name="mensaje" placeholder="dispersión, nómina, cobranza por CLABE, multi-empresa…"></textarea>
+          </div>
+          <p class="form-note">Prototipo de demostración: este formulario no transmite información. En producción, su solicitud se dirige a <a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a>. Consulte el aviso de privacidad antes de enviar datos personales.</p>
+          <button type="submit" class="btn-send">[ ⏎ ENVIAR SOLICITUD ]</button>
+        </form>
+        <div id="form-ok" role="status">
+          <pre id="ok-pre"></pre>
+        </div>
+      </div>
+      <div class="s7-side">
+        <h3>▸ QUÉ SIGUE DESPUÉS DE ENVIAR</h3>
+        <ul>
+          <li>Respuesta de nuestro equipo con propuesta de alcance</li>
+          <li>Credenciales de sandbox: API completa con datos simulados</li>
+          <li>Sesión técnica con su equipo (integración típica: días, no meses)</li>
+          <li>Expediente de cumplimiento para su área de riesgo</li>
+        </ul>
+        <h3>▸ CONTACTO DIRECTO</h3>
+        <ul>
+          <li><a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a></li>
+          <li>Guadalajara, Jalisco · México</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <p class="f-co">▓▓ MASMOVIL, S.A. de C.V. · RFC MAS191203EY6</p>
+        <p>Pompeya 2775, Lomas de Guevara, C.P. 44657, Guadalajara, Jalisco, México<br>
+        Empresa tecnológica mexicana · Operando desde 2019 · <a href="https://masmovil.lat">masmovil.lat</a> · <a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a></p>
+        <div class="f-links">
+          <a href="#s2">Operación</a>
+          <a href="#s3">Arquitectura</a>
+          <a href="#s4">Casos</a>
+          <a href="#s5">API</a>
+          <a href="#s6">Seguridad</a>
+          <a href="#s7">Solicitar acceso</a>
+        </div>
+      </div>
+      <div>
+        <p class="f-co">LÍNEAS DE NEGOCIO</p>
+        <p>Infraestructura de pagos SPEI · Telecomunicaciones · Software a la medida</p>
+      </div>
+    </div>
+    <div class="f-legal">
+      <p>MASMOVIL, S.A. de C.V. es un proveedor de infraestructura tecnológica. Los servicios de pago se procesan a través de STP (Sistema de Transferencias y Pagos STP, S.A. de C.V., I.F.P.E.), participante en SPEI autorizado y supervisado por Banco de México. MASMOVIL no capta ni custodia recursos del público. STP®, SPEI® y CEP® son marcas de sus respectivos titulares; su mención no implica aval.</p>
+      <p class="f-end">© 2026 MASMOVIL, S.A. de C.V. · Todos los derechos reservados · Prototipo de demostración — propuesta de producto, sin backend · EOF_</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════ TRACKING BAR ═══════ -->
+<div class="trackbar" aria-hidden="true">
+  <span class="trk-tag">TRK▸</span>
+  <span class="trk-seg" data-sec="s1">S1<span class="seg-lbl"> INICIO</span></span>
+  <span class="trk-seg" data-sec="s2">S2<span class="seg-lbl"> OPERACIÓN</span></span>
+  <span class="trk-seg" data-sec="s3">S3<span class="seg-lbl"> ARQUITECTURA</span></span>
+  <span class="trk-seg" data-sec="s4">S4<span class="seg-lbl"> CASOS</span></span>
+  <span class="trk-seg" data-sec="s5">S5<span class="seg-lbl"> API</span></span>
+  <span class="trk-seg" data-sec="s6">S6<span class="seg-lbl"> SEGURIDAD</span></span>
+  <span class="trk-seg" data-sec="s7">S7<span class="seg-lbl"> ACCESO</span></span>
+</div>
+
+<div class="scanlines" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+</div><!-- /.crt -->
+
+<script>
+(function(){
+"use strict";
+/* ═══ base ═══ */
+var RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* PRNG mulberry32, semilla fija; ?seed=<n> para variar */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+var seedParam = new URLSearchParams(location.search).get("seed");
+var rnd = mulberry32(seedParam ? (parseInt(seedParam,10)||1) : 20260709);
+
+var HEX="0123456789ABCDEF";
+function claveRastreo(){var s="MM";for(var i=0;i<14;i++)s+=HEX[rnd()*16|0];return s}
+
+/* CLABE 646180 + cuenta(11) + dígito de control (3-7-1 mód 10) */
+function makeClabe(){
+  var d="646180";
+  for(var i=0;i<11;i++)d+=(rnd()*10|0);
+  var w=[3,7,1],s=0;
+  for(var j=0;j<17;j++)s+=(+d[j]*w[j%3])%10;
+  return d+((10-s%10)%10);
+}
+
+/* ═══ fonts-ready gate (FOUT) ═══ */
+function fontsReady(){document.documentElement.classList.add("fonts-ready")}
+if(document.fonts && document.fonts.ready){document.fonts.ready.then(fontsReady)}
+setTimeout(fontsReady,3000);
+
+/* ═══ S0 BOOT ═══ */
+var boot=document.getElementById("boot");
+var bootPre=document.getElementById("boot-pre");
+var bootLines=[
+"MASMOVIL CORE v4.2.1 — TERMINAL DE ACCESO PÚBLICO",
+"─────────────────────────────────────────────────",
+"> verificando integridad del canal ......... OK",
+"> canal STP (participante SPEI) ............ CONECTADO",
+"> módulos CLABE · SPEI-IN · SPEI-OUT · CEP . CARGADOS",
+"> cifrado de sesión ........................ ACTIVO",
+"> cargando interfaz pública_"
+];
+var bootDone=false;
+function endBoot(){
+  if(bootDone)return;bootDone=true;
+  try{sessionStorage.setItem("mmBootSeen","1")}catch(e){}
+  boot.classList.add("gone");
+  boot.setAttribute("aria-hidden","true");
+  document.removeEventListener("keydown",endBoot);
+}
+var skipBoot = RM;
+try{ if(sessionStorage.getItem("mmBootSeen")==="1") skipBoot=true; }catch(e){}
+if(skipBoot){ boot.classList.add("gone"); bootDone=true; }
+else{
+  boot.addEventListener("click",endBoot);
+  document.addEventListener("keydown",endBoot);
+  (function typeBoot(){
+    var li=0,ci=0;
+    (function tick(){
+      if(bootDone)return;
+      if(li>=bootLines.length){setTimeout(endBoot,650);return}
+      var line=bootLines[li];
+      ci++;
+      if(ci>=line.length){bootPre.textContent=bootLines.slice(0,li+1).join("\n");li++;ci=0;setTimeout(tick,90)}
+      else{bootPre.textContent=bootLines.slice(0,li).join("\n")+(li?"\n":"")+line.slice(0,ci);setTimeout(tick,9)}
+    })();
+  })();
+}
+
+/* ═══ reveal PRINT (1 frame) ═══ */
+var revEls=document.querySelectorAll(".rv");
+if("IntersectionObserver" in window && !RM){
+  var revIO=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("on"); revIO.unobserve(e.target);} });
+  },{threshold:.12});
+  revEls.forEach(function(el){revIO.observe(el)});
+}else{
+  revEls.forEach(function(el){el.classList.add("on")});
+}
+
+/* ═══ hero: ÚLTIMO CEP EMITIDO vivo ═══ */
+var cepEl=document.getElementById("cep-live");
+if(!RM){
+  var cepN=4, cepMax=3+Math.floor(rnd()*10);
+  setInterval(function(){
+    cepN++;
+    if(cepN>=cepMax){cepN=0;cepMax=3+Math.floor(rnd()*10)}
+    cepEl.textContent="ÚLTIMO CEP EMITIDO: hace "+cepN+" s";
+  },1000);
+}
+
+/* ═══ S2 contadores: ciclado de dígitos de terminal ═══ */
+function cycleValue(el){
+  var text=el.getAttribute("data-value");
+  el.textContent="";
+  var spans=[];
+  for(var i=0;i<text.length;i++){
+    var s=document.createElement("span");
+    s.className="ch";
+    s.textContent=RM?text[i]:" ";
+    el.appendChild(s);spans.push(s);
+  }
+  if(RM){el.classList.add("lit");return}
+  var total=Math.min(600,Math.max(280,text.length*42));
+  var per=total/text.length;
+  spans.forEach(function(sp,i){
+    var ch=text[i];
+    if(/\d/.test(ch)){
+      var iv=setInterval(function(){sp.textContent=String(Math.floor(Math.random()*10))},45);
+      setTimeout(function(){clearInterval(iv);sp.textContent=ch},per*(i+1));
+    }else{
+      setTimeout(function(){sp.textContent=ch===" "?" ":ch},per*(i+1));
+    }
+  });
+  setTimeout(function(){el.classList.add("lit")},total+60);
+}
+var kpiVals=document.querySelectorAll(".k-value");
+if("IntersectionObserver" in window && !RM){
+  var kpiIO=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){ cycleValue(e.target); kpiIO.unobserve(e.target);} });
+  },{threshold:.5});
+  kpiVals.forEach(function(el){kpiIO.observe(el)});
+}else{
+  kpiVals.forEach(function(el){cycleValue(el)});
+}
+
+/* ═══ S2 feed simulado (store) ═══ */
+var BANKS=["BBVA","BANORTE","SANTANDER","HSBC","BANAMEX","BANREGIO","AZTECA","SCOTIABANK","INBURSA","AFIRME"];
+var feedBody=document.getElementById("feed-body");
+var MAXROWS=12;
+function fmtMonto(n){return n.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function nowHHMMSS(off){
+  var d=new Date(Date.now()-(off||0));
+  function p(x){return (x<10?"0":"")+x}
+  return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+}
+function newOp(off){
+  return{
+    hora:nowHHMMSS(off),
+    clave:claveRastreo(),
+    tipo:rnd()<.44?"IN ◀":"OUT ▶",
+    banco:BANKS[rnd()*BANKS.length|0],
+    monto:1500+Math.floor(rnd()*478500)+Math.floor(rnd()*100)/100,
+    err:rnd()<.08
+  };
+}
+function settleHTML(op){
+  return op.err
+    ? '<span class="st-err">[ERR] ✕ DEVUELTA · CLABE INEXISTENTE</span>'
+    : '<span class="st-ok">LIQUIDADA · CEP ✓</span>';
+}
+function buildRow(op,settled){
+  var tr=document.createElement("tr");
+  tr.className=settled?(op.err?"err":"ok"):"transit";
+  tr.innerHTML=
+    "<td>"+op.hora+"</td>"+
+    "<td>"+op.clave+"</td>"+
+    "<td>"+op.tipo+"</td>"+
+    "<td>"+op.banco+"</td>"+
+    '<td class="num">'+fmtMonto(op.monto)+"</td>"+
+    "<td>"+(settled?settleHTML(op):'<span class="st-transit">⧗ EN TRÁNSITO</span>')+"</td>";
+  return tr;
+}
+function pushRow(tr){
+  feedBody.insertBefore(tr,feedBody.firstChild);
+  while(feedBody.rows.length>MAXROWS)feedBody.removeChild(feedBody.lastChild);
+}
+/* siembra inicial: filas ya liquidadas (PRINT, sin animación) */
+(function seedFeed(){
+  feedBody.innerHTML=""; /* retira las filas estáticas de respaldo noscript */
+  var ops=[];
+  for(var i=0;i<10;i++)ops.push(newOp((10-i)*9000+4000));
+  ops.forEach(function(op){pushRow(buildRow(op,true))});
+})();
+function liveOp(){
+  var op=newOp(0);
+  var tr=buildRow(op,false);
+  pushRow(tr);
+  setTimeout(function(){
+    if(!tr.isConnected)return;
+    tr.className=op.err?"err":"ok";
+    tr.cells[5].innerHTML=settleHTML(op);
+  },2200+rnd()*2200);
+}
+var refreshBtn=document.getElementById("feed-refresh");
+if(RM){
+  refreshBtn.hidden=false;
+  refreshBtn.addEventListener("click",function(){pushRow(buildRow(newOp(0),true))});
+}else{
+  setInterval(liveOp,4200);
+  setTimeout(liveOp,1400);
+}
+
+/* ═══ tracking bar: monotónica, high-water mark ═══ */
+var segs=[].slice.call(document.querySelectorAll(".trk-seg"));
+var secIds=segs.map(function(s){return s.getAttribute("data-sec")});
+var hwm=-1,lastFlash=0;
+function renderTrk(){
+  segs.forEach(function(s,i){
+    s.classList.remove("active","done");
+    if(i<hwm)s.classList.add("done");
+    else if(i===hwm)s.classList.add("active");
+  });
+}
+function setHWM(i){
+  if(i<=hwm)return;
+  hwm=i;renderTrk();
+  var now=Date.now();
+  if(!RM && now-lastFlash>=400){
+    lastFlash=now;
+    var seg=segs[i];
+    seg.classList.add("flash");
+    setTimeout(function(){seg.classList.remove("flash")},280);
+  }
+}
+if("IntersectionObserver" in window){
+  var trkIO=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(e.isIntersecting){
+        var i=secIds.indexOf(e.target.id);
+        if(i>-1)setHWM(i);
+      }
+    });
+  },{threshold:.22});
+  secIds.forEach(function(id){var el=document.getElementById(id);if(el)trkIO.observe(el)});
+}
+setHWM(0);
+
+/* ocultar trackbar con teclado abierto en móvil */
+var accForm=document.getElementById("acc-form");
+accForm.addEventListener("focusin",function(){document.body.classList.add("form-focused")});
+accForm.addEventListener("focusout",function(){document.body.classList.remove("form-focused")});
+
+/* ═══ S5 demo CLABE (tecleo permitido: momento estrella) ═══ */
+var clabeBtn=document.getElementById("clabe-btn");
+var clabeOut=document.getElementById("clabe-out");
+var clabeBusy=false;
+clabeBtn.addEventListener("click",function(){
+  if(clabeBusy)return;clabeBusy=true;
+  var c=makeClabe();
+  var pretty=c.slice(0,3)+" "+c.slice(3,6)+" "+c.slice(6,17)+" "+c.slice(17);
+  var tail='\n<span class="dim">banco 646 STP · plaza 180 · dígito de control ('+c[17]+'): VÁLIDO ✓</span>\n<span class="dim48">lista para recibir SPEI de cualquier banco.</span>';
+  if(RM){
+    clabeOut.innerHTML='<span class="big">'+pretty+'</span>'+tail.replace(/\n/g,"<br>");
+    clabeBusy=false;return;
+  }
+  clabeOut.innerHTML='<span class="big"></span>';
+  var big=clabeOut.querySelector(".big");
+  var i=0;
+  (function typeC(){
+    if(i<pretty.length){
+      big.textContent=pretty.slice(0,++i)+"█";
+      setTimeout(typeC,34);
+    }else{
+      big.textContent=pretty;
+      var d=document.createElement("div");
+      d.innerHTML=tail.replace(/\n/g,"<br>");
+      clabeOut.appendChild(d);
+      clabeBusy=false;
+    }
+  })();
+});
+
+/* ═══ S7 formulario (maqueta, sin backend) ═══ */
+var ALNUM="ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+function pad2(x){return (x<10?"0":"")+x}
+function folio(d){
+  var s="ACC-"+d.getFullYear()+"-"+pad2(d.getMonth()+1)+pad2(d.getDate())+"-";
+  for(var i=0;i<4;i++)s+=ALNUM[Math.floor(rnd()*ALNUM.length)];
+  return s;
+}
+accForm.addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var ok=true;
+  function check(id,valid){
+    var inp=document.getElementById(id);
+    var f=inp.closest(".field");
+    if(!valid){f.classList.add("bad");inp.setAttribute("aria-invalid","true");ok=false}
+    else{f.classList.remove("bad");inp.removeAttribute("aria-invalid")}
+  }
+  var nombre=document.getElementById("f-nombre").value.trim();
+  var empresa=document.getElementById("f-empresa").value.trim();
+  var email=document.getElementById("f-email").value.trim();
+  check("f-nombre",nombre.length>=3);
+  check("f-empresa",empresa.length>=2);
+  check("f-email",/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email));
+  if(!ok){
+    var firstBad=accForm.querySelector(".field.bad input");
+    if(firstBad)firstBad.focus();
+    return;
+  }
+  var d=new Date();
+  var stamp=d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+" "+pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());
+  var txt=
+"═══════════════════════════════════\n"+
+"  SOLICITUD REGISTRADA ✓\n"+
+"═══════════════════════════════════\n"+
+"  FOLIO    "+folio(d)+"\n"+
+"  FECHA    "+stamp+"\n"+
+"  NOMBRE   "+nombre+"\n"+
+"  EMPRESA  "+empresa+"\n"+
+"  CORREO   "+email+"\n"+
+"───────────────────────────────────\n"+
+"  estado: recibida en esta demo.\n"+
+"  en producción: respuesta de\n"+
+"  direccion@masmovil.lat\n"+
+"═══════════════════════════════════";
+  accForm.style.display="none";
+  var okBox=document.getElementById("form-ok");
+  document.getElementById("ok-pre").textContent=txt;
+  okBox.classList.add("show");
+  okBox.setAttribute("tabindex","-1");
+  okBox.focus();
+  document.body.classList.remove("form-focused");
+});
+})();
+</script>
+</body>
+</html>

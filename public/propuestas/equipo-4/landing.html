@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MASMOVIL — Infraestructura de pagos SPEI por API</title>
+<meta name="theme-color" content="#F5F0E8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F0E8'/%3E%3Ccircle cx='16' cy='16' r='11' fill='%231D4ED8'/%3E%3C/svg%3E">
+<meta name="description" content="CLABEs ilimitadas por API, SPEI in/out 24/7, dispersión masiva y conciliación automática. Conexión a través de STP, participante autorizado de Banxico.">
+<meta property="og:title" content="MASMOVIL — Infraestructura de pagos SPEI por API">
+<meta property="og:description" content="CLABEs ilimitadas por API, SPEI in/out 24/7, dispersión masiva y conciliación automática. Conexión a través de STP, participante autorizado de Banxico.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ 1.1 TOKENS ============ */
+:root{
+  --crema:#F5F0E8; --crema-alto:#FBF8F2; --crema-bajo:#EDE6D8; --zebra:#EFE9DF;
+  --cobalto:#1D4ED8; --cobalto-hover:#1E40AF; --cobalto-tinta:#DBE4FA; --cobalto-claro:#96B3F2;
+  --amarillo:#FBBF24; --amarillo-prof:#92400E; --amarillo-tinta:#FCEFC7;
+  --coral:#F97362; --coral-prof:#C2402F; --coral-tinta:#FDE2DD;
+  --negro:#16130D; --tinta-60:#57534A; --tinta-30:#A8A093;
+  --exito:#166534; --exito-tinta:#DCEFE0;
+  --borde:2px solid var(--negro); --sombra-dura:6px 6px 0 var(--negro);
+  --dur-micro:140ms; --dur-in:480ms; --dur-shape:720ms; --dur-hero:900ms;
+  --ease-out-quint:cubic-bezier(0.22,1,0.36,1);
+  --ease-snap:cubic-bezier(0.34,1.28,0.44,1);
+  --ease-inout:cubic-bezier(0.65,0,0.35,1);
+  --t-display:clamp(3rem,8vw,7rem);
+  --t-h2:clamp(2rem,4.5vw,3.75rem);
+  --t-h3:clamp(1.5rem,2.5vw,2.25rem);
+  --t-kpi:clamp(2rem,3vw,3rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--crema); color:var(--negro);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:1.125rem; line-height:1.6;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+h1,h2,h3{font-family:'Archivo',system-ui,sans-serif}
+.mono{font-family:'Space Mono',monospace}
+::selection{background:var(--amarillo);color:var(--negro)}
+
+/* focus */
+:focus-visible{outline:3px solid var(--cobalto);outline-offset:3px}
+.seccion-oscura :focus-visible,.seccion-cobalto :focus-visible{outline-color:var(--amarillo)}
+.form-acceso :focus-visible{outline-color:var(--cobalto)}
+
+.skip-link{position:absolute;left:-999px;top:0;background:var(--negro);color:var(--crema);padding:.6rem 1rem;z-index:200;font-weight:700}
+.skip-link:focus{left:8px;top:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ============ CAPAS ============ */
+#grano{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")}
+#capa-formas{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#capa-formas .forma{position:absolute;top:0;visibility:hidden}
+main{position:relative;z-index:10}
+#capa-peso{position:fixed;inset:0;z-index:50;pointer-events:none}
+#peso{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;visibility:hidden}
+#peso .nucleo{width:44px;height:44px;border-radius:9999px;background:var(--cobalto);box-shadow:0 0 0 2px var(--crema)}
+#peso.cae .nucleo{animation:pesoCae 500ms var(--ease-snap) both}
+#peso.cae.respira .nucleo{animation:pesoCae 500ms var(--ease-snap) both,pesoRespira 3.2s var(--ease-inout) 1.2s infinite}
+#peso.final .nucleo{transform:scale(1.6);transition:transform 300ms var(--ease-snap)}
+@keyframes pesoCae{from{transform:translateY(-55vh)}70%{transform:translateY(10px)}to{transform:translateY(0)}}
+@keyframes pesoRespira{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* formas gigantes de fondo */
+.f-circulo{border-radius:9999px}
+.f-semic-abajo{border-radius:0 0 9999px 9999px}
+.f-semic-arriba{border-radius:9999px 9999px 0 0}
+.f-cob{background:var(--cobalto)} .f-ama{background:var(--amarillo)} .f-neg{background:var(--negro)} .f-cor{background:var(--coral)}
+
+/* ============ OVERLINE ============ */
+.overline{font-family:'Space Grotesk';font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:.8125rem;display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem}
+.overline::before{content:'';width:8px;height:8px;background:var(--sq,var(--cobalto));flex:none}
+
+/* ============ BOTONES ============ */
+.btn{display:inline-block;font-family:'Space Grotesk';font-weight:700;font-size:1rem;padding:.9rem 1.8rem;cursor:pointer;text-decoration:none;text-align:center;transition:transform var(--dur-micro) var(--ease-out-quint),box-shadow var(--dur-micro) var(--ease-out-quint),background var(--dur-micro)}
+.btn-primario{background:var(--cobalto);color:var(--crema);border:var(--borde)}
+.btn-primario:hover{background:var(--cobalto-hover);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--negro)}
+.btn-secundario{background:transparent;color:var(--negro);border:var(--borde)}
+.btn-secundario:hover{background:var(--amarillo)}
+.btn-negro{background:var(--negro);color:var(--crema);border:var(--borde)}
+.btn-negro:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--cobalto)}
+.btn-amarillo{background:var(--amarillo);color:var(--negro);border:var(--borde)}
+.btn-amarillo:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--negro)}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ============ REVEAL (Motor A) ============ */
+[data-reveal]{opacity:0;transition:opacity var(--dur-in) var(--ease-out-quint),transform var(--dur-in) var(--ease-out-quint)}
+[data-reveal="up"]{transform:translateY(28px)}
+[data-reveal="left"]{transform:translateX(-32px)}
+[data-reveal="right"]{transform:translateX(32px)}
+[data-reveal="scale"]{transform:scale(.9)}
+[data-reveal].is-in{opacity:1;transform:none}
+
+/* ============ S0 BARRA + NAV ============ */
+#s0{position:sticky;top:0;z-index:100}
+.barra-estado{height:40px;background:var(--negro);color:var(--crema);display:flex;align-items:center;gap:.75rem;padding:0 1.25rem;font-family:'Space Mono',monospace;font-size:.78rem;white-space:nowrap;overflow:hidden}
+.punto-vivo{width:9px;height:9px;border-radius:9999px;background:var(--amarillo);flex:none;animation:pulso 1.4s var(--ease-inout) infinite}
+@keyframes pulso{0%,100%{opacity:1}50%{opacity:.35}}
+.barra-estado .txt-frozen{display:none}
+body.frozen .barra-estado{background:var(--coral-tinta);color:var(--negro)}
+body.frozen .barra-estado .txt-normal{display:none}
+body.frozen .barra-estado .txt-frozen{display:inline}
+body.frozen .punto-vivo{background:var(--coral-prof);animation:none}
+@media(max-width:600px){.be-oculta{display:none}.barra-estado{font-size:.72rem}}
+.nav{background:var(--crema);border-bottom:var(--borde);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1.25rem}
+.wordmark{font-family:'Archivo';font-weight:900;font-stretch:120%;font-size:1.35rem;letter-spacing:.02em;display:inline-flex;align-items:center;text-decoration:none}
+.wordmark .o{position:relative;width:1.05em;height:1.05em;margin:0 .05em;flex:none}
+.wordmark .o i{position:absolute;inset:0;border-radius:9999px;background:var(--cobalto)}
+.wordmark .o u{position:absolute;inset:-3px;animation:orbita 5s linear infinite}
+.wordmark .o u::before{content:'';position:absolute;top:-2px;left:50%;width:7px;height:7px;margin-left:-3.5px;border-radius:9999px;background:var(--amarillo)}
+@keyframes orbita{to{transform:rotate(360deg)}}
+.nav-links{display:flex;gap:1.4rem;list-style:none}
+.nav-links a{text-decoration:none;font-size:.9375rem;font-weight:500}
+.nav-links a:hover{color:var(--cobalto);text-decoration:underline;text-underline-offset:4px}
+.nav .btn{padding:.55rem 1.1rem;font-size:.9rem}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* ============ S1 HERO ============ */
+#s1{position:relative;min-height:100vh;display:grid;grid-template-columns:3fr 2fr;align-items:center;gap:2rem;padding:4.5rem 5vw 7rem;overflow:hidden}
+.badge-pill{display:inline-block;border:var(--borde);border-radius:9999px;padding:.35rem 1rem;font-size:.8125rem;font-weight:700;background:var(--crema-alto);margin-bottom:1.6rem}
+.h1{font-size:var(--t-display);font-weight:900;font-stretch:120%;line-height:.95;text-transform:uppercase}
+.h1 .linea{display:block}
+.h1 .linea:nth-child(2){padding-left:.6em}
+.h1 .linea:nth-child(3){padding-left:1.2em}
+.h1 .w{display:inline-block;animation:wordUp var(--dur-in) var(--ease-out-quint) both;animation-delay:var(--d,0ms)}
+@keyframes wordUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.hero-sub{max-width:34rem;margin:1.6rem 0 2rem;color:var(--tinta-60);animation:fadeUp var(--dur-in) var(--ease-out-quint) 420ms both}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;animation:fadeUp var(--dur-in) var(--ease-out-quint) 460ms both}
+.hero-micro{margin-top:1rem;font-size:.875rem;color:var(--tinta-60);max-width:30rem;animation:fadeUp var(--dur-in) var(--ease-out-quint) 520ms both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.strip-confianza{margin-top:3rem;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--tinta-60);border-top:var(--borde);padding-top:1rem;animation:fadeUp var(--dur-in) var(--ease-out-quint) 700ms both}
+/* pieza EMISIÓN */
+.pieza-emision{position:relative;height:70vh;min-height:420px}
+.pe-circulo{position:absolute;right:-31vw;top:50%;width:62vw;height:62vw;margin-top:-31vw;border-radius:9999px;background:var(--cobalto);animation:circIn var(--dur-hero) var(--ease-snap) both}
+@keyframes circIn{from{opacity:0;transform:translateX(8vw) scale(.85)}to{opacity:1;transform:none}}
+.pe-riel{position:absolute;left:-4vw;right:0;top:50%;height:2.5px;background:var(--negro);transform-origin:left center;animation:rielIn 600ms var(--ease-out-quint) 80ms both;overflow:visible}
+@keyframes rielIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pe-riel .p{position:absolute;top:-13px;width:28px;height:28px;border-radius:9999px}
+.pe-riel .p1{background:var(--cobalto);box-shadow:0 0 0 2px var(--crema);animation:viaja 7s linear infinite}
+.pe-riel .p2{background:var(--amarillo);animation:viaja 11s linear 1.5s infinite}
+.pe-riel .p3{background:var(--coral);animation:viaja 9s linear 3s infinite}
+@keyframes viaja{from{left:-30px}to{left:104%}}
+.pe-semic{position:absolute;left:6%;bottom:4%;width:320px;height:160px;max-width:60%;border-radius:9999px 9999px 0 0;background:var(--amarillo);transform-origin:bottom center;animation:semicIn 700ms var(--ease-out-quint) 900ms both}
+@keyframes semicIn{from{opacity:0;transform:rotate(-8deg)}to{opacity:1;transform:rotate(0)}}
+.pe-barra{position:absolute;left:0;top:6%;width:24px;height:340px;max-height:52%;background:var(--negro)}
+.pe-caption{position:absolute;left:0;bottom:-2.6rem;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--tinta-60)}
+/* transición diagonal S1→S2 */
+.trans-diagonal{height:11rem;position:relative;overflow:hidden;margin-top:-4rem}
+.trans-diagonal .barraD{position:absolute;left:-10%;right:-10%;top:50%;height:3.2rem;background:var(--negro);transform:rotate(-8deg)}
+
+/* ============ S2 PROBLEMA ============ */
+#s2{position:relative;padding:7rem 5vw 8rem;background-image:radial-gradient(rgba(22,19,13,.32) 1px,transparent 1.5px);background-size:28px 28px;background-position:0 0}
+.h2{font-size:var(--t-h2);font-weight:800;font-stretch:110%;line-height:1.05;max-width:20ch}
+.intro{max-width:38rem;margin:1.4rem 0 3.5rem;color:var(--tinta-60)}
+.cols-problema{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem}
+.col-p{position:relative;padding-top:1.4rem}
+.frag{width:64px;height:64px;margin-bottom:1.2rem;position:relative}
+.frag i{position:absolute;background:var(--negro)}
+.frag.a i:nth-child(1){left:0;top:0;width:40px;height:40px}
+.frag.a i:nth-child(2){left:46px;top:14px;width:18px;height:40px}
+.frag.b i:nth-child(1){left:0;top:8px;width:64px;height:16px}
+.frag.b i:nth-child(2){left:10px;top:34px;width:44px;height:16px;transform:rotate(6deg)}
+.frag.c i:nth-child(1){left:0;top:0;width:30px;height:60px;border-radius:9999px 0 0 9999px}
+.frag.c i:nth-child(2){left:38px;top:12px;width:24px;height:36px}
+#s2.formas-flecha .frag i{transition:transform var(--dur-shape) var(--ease-inout)}
+#s2.formas-flecha .frag i:nth-child(1){transform:rotate(45deg) translateY(6px)}
+#s2.formas-flecha .frag i:nth-child(2){transform:rotate(-45deg) translateY(6px)}
+.col-p h3{font-size:1.35rem;font-weight:700;margin-bottom:.6rem}
+.col-p p{color:var(--tinta-60);font-size:1rem}
+@media(max-width:860px){.cols-problema{grid-template-columns:1fr}}
+
+/* ============ S3 RAIL ============ */
+#s3{position:relative;height:260vh}
+.rail-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+.rail-head{padding:5.5rem 5vw 0}
+.rail-rastro{position:absolute;left:0;right:0;top:58%;border-top:2px dashed var(--cobalto);opacity:.5}
+.rail-fila{display:flex;gap:5rem;padding:3rem 40vw 3rem 12vw;will-change:transform}
+.estacion{position:relative;flex:none;width:min(480px,72vw)}
+.estacion .num{font-family:'Space Mono',monospace;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:.6rem;margin-bottom:1rem}
+.estacion .num::before{content:'';width:8px;height:8px;background:var(--cobalto)}
+.estacion h3{font-size:var(--t-h3);font-weight:700;margin-bottom:.7rem}
+.estacion p{color:var(--tinta-60);font-size:1.02rem;max-width:32rem}
+.estacion .arte{height:120px;margin-bottom:1.4rem;position:relative}
+.estacion::after{content:'';position:absolute;left:50%;top:52%;width:60px;height:60px;margin:-30px 0 0 -30px;border:2px solid var(--cobalto);border-radius:9999px;opacity:0;pointer-events:none}
+.estacion.ping::after{animation:anillo 600ms var(--ease-out-quint) both}
+@keyframes anillo{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.4)}}
+.a-barra{width:180px;height:36px;background:var(--cobalto)}
+.a-anillo{width:96px;height:96px;border:14px solid var(--amarillo);border-radius:9999px}
+.a-compuerta{position:relative;width:150px;height:120px}
+.a-compuerta i{position:absolute;left:0;width:120px;height:60px;background:var(--negro)}
+.a-compuerta i:first-child{top:0;border-radius:9999px 9999px 0 0;transform-origin:bottom center}
+.a-compuerta i:last-child{top:60px;border-radius:0 0 9999px 9999px;transform-origin:top center}
+.a-clones{display:flex;gap:14px;align-items:center;height:100%}
+.a-clones i{width:26px;height:26px;border-radius:9999px;background:var(--cobalto);opacity:.35}
+.a-clones i:first-child{opacity:1;box-shadow:0 0 0 2px var(--crema)}
+.a-sello{width:74px;height:74px;background:var(--coral);transform:rotate(45deg);margin:14px}
+.rail-cierre{padding:5rem 5vw;font-size:var(--t-h3);font-weight:700;font-family:'Archivo';max-width:32ch}
+.rail-linea-movil{display:none}
+@media(max-width:767px){
+  #s3{height:auto}
+  .rail-sticky{position:static;height:auto;overflow:visible;display:block}
+  .rail-rastro{display:none}
+  .rail-fila{flex-direction:column;gap:3.5rem;padding:2.5rem 5vw 1rem;transform:none!important;position:relative}
+  .rail-fila::before{content:'';position:absolute;left:calc(5vw + 3px);top:0;bottom:0;border-left:2px dashed var(--cobalto)}
+  .estacion{width:100%;padding-left:2rem}
+}
+
+/* ============ S4 PRODUCTO + API ============ */
+#s4{position:relative;background:var(--negro);color:var(--crema);padding:7rem 5vw 8rem;clip-path:polygon(0 3.5rem,100% 0,100% 100%,0 100%)}
+#s4 .h2,#s4 h3{color:var(--crema)}
+#s4 .intro{color:var(--tinta-30)}
+.grid-api{display:grid;grid-template-columns:5fr 6fr;gap:3.5rem;margin-top:3rem;position:relative;z-index:2}
+.bloque-codigo{border:2px solid var(--crema);padding:1.6rem;font-family:'Space Mono',monospace;font-size:.85rem;line-height:1.7;background:rgba(255,255,255,.02);align-self:start;position:relative}
+.bloque-codigo .llave{color:var(--amarillo)}
+.bloque-codigo .cad{color:var(--cobalto-claro)}
+.bloque-codigo pre{white-space:pre-wrap;word-break:break-word}
+.bloque-codigo .btn{margin-top:1.3rem}
+#resp-api{margin-top:1.1rem;min-height:4.6em;color:var(--crema);font-size:.8rem;border-top:1px dashed var(--tinta-60);padding-top:.9rem}
+.tarjetas-api{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem}
+.tarjeta-api{border:2px solid var(--crema);padding:1.3rem;transition:transform var(--dur-micro) var(--ease-out-quint)}
+.tarjeta-api:hover{transform:translateY(-6px)}
+.tarjeta-api .mini{width:26px;height:26px;margin-bottom:.9rem;transition:transform var(--dur-micro) var(--ease-out-quint)}
+.tarjeta-api:hover .mini{transform:rotate(8deg)}
+.tarjeta-api h3{font-size:1.05rem;margin-bottom:.4rem}
+.tarjeta-api p{font-size:.9rem;color:var(--tinta-30)}
+.bullets-api{margin:2.6rem 0 0;display:flex;flex-wrap:wrap;gap:.6rem 2rem;list-style:none;font-family:'Space Mono',monospace;font-size:.8rem;color:var(--tinta-30);position:relative;z-index:2}
+.bullets-api li::before{content:'■ ';color:var(--amarillo)}
+.link-sandbox{display:inline-block;margin-top:1.6rem;color:var(--crema);font-weight:700;position:relative;z-index:2}
+.link-sandbox:hover{color:var(--amarillo)}
+.pieza-transito{position:absolute;right:2vw;bottom:2rem;opacity:.5;z-index:1;pointer-events:none}
+.pieza-transito .arco{stroke-dasharray:300;stroke-dashoffset:300}
+#s4.is-in-art .arco{transition:stroke-dashoffset 900ms var(--ease-out-quint);stroke-dashoffset:0}
+@media(max-width:960px){.grid-api{grid-template-columns:1fr}.tarjetas-api{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+
+/* ============ S5 KILL SWITCH ============ */
+#s5{padding:8rem 5vw;position:relative}
+.grid-kill{display:grid;grid-template-columns:minmax(280px,1fr) 1.2fr auto;gap:4rem;margin-top:3rem;align-items:start}
+.zona-switch{text-align:center}
+.riel-switch{position:relative;width:56px;height:440px;background:var(--negro);margin:0 auto;border-radius:9999px}
+#kill-switch{position:absolute;left:50%;top:0;width:240px;height:240px;margin-left:-120px;border-radius:9999px;background:var(--coral);border:var(--borde);cursor:pointer;font-family:'Archivo';font-weight:900;font-stretch:110%;font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em;color:var(--negro);transition:transform 380ms var(--ease-snap),background var(--dur-micro)}
+#kill-switch:hover{background:#fa8375}
+#kill-switch[aria-checked="true"]{transform:translateY(200px)}
+#kill-switch .sub-sw{display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:.72rem;text-transform:none;letter-spacing:0;margin-top:.4rem}
+#contador-frozen{margin-top:1.4rem;font-family:'Space Mono',monospace;font-size:.85rem;min-height:1.5em;color:var(--coral-prof);font-weight:700}
+.lista-controles{list-style:none;display:grid;gap:1.15rem}
+.lista-controles h3{font-size:1.05rem;display:flex;gap:.6rem;align-items:baseline}
+.lista-controles h3::before{content:'';width:8px;height:8px;background:var(--cobalto);flex:none;align-self:center}
+.lista-controles p{font-size:.95rem;color:var(--tinta-60);margin-left:1.25rem}
+.totem{position:relative;width:120px;height:340px;margin-top:2rem}
+.totem .caeC{position:absolute;left:50%;top:30px;width:84px;height:84px;margin-left:-42px;border-radius:9999px;background:var(--cobalto)}
+.totem .ranura{position:absolute;left:0;right:0;bottom:60px;height:20px;background:var(--amarillo)}
+.totem .ranura2{position:absolute;left:0;right:0;bottom:20px;height:20px;background:var(--amarillo)}
+@media(max-width:1080px){.grid-kill{grid-template-columns:1fr}.totem{display:none}.riel-switch{height:400px}#kill-switch[aria-checked="true"]{transform:translateY(160px)}}
+
+/* ============ S6 CUMPLIMIENTO ============ */
+#s6{padding:7rem 5vw;border-top:var(--borde);border-bottom:var(--borde)}
+.grid-cumpl{display:grid;grid-template-columns:1fr 1fr;gap:0;border:var(--borde);margin-top:3rem;background:var(--crema-alto)}
+.grid-cumpl>div{padding:1.3rem 1.6rem;border-bottom:var(--borde);font-size:1rem}
+.grid-cumpl>div:nth-child(odd){border-right:var(--borde)}
+.grid-cumpl>div:nth-last-child(-n+2){border-bottom:none}
+.grid-cumpl b{display:block;font-family:'Space Mono',monospace;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta-60);margin-bottom:.3rem}
+.nota-stp{margin-top:2rem;font-size:.95rem;color:var(--tinta-60);max-width:44rem;border-left:4px solid var(--amarillo);padding-left:1rem}
+@media(max-width:767px){.grid-cumpl{grid-template-columns:1fr}.grid-cumpl>div:nth-child(odd){border-right:none}.grid-cumpl>div:nth-last-child(-n+2){border-bottom:var(--borde)}.grid-cumpl>div:last-child{border-bottom:none}}
+
+/* ============ S7 CASOS ============ */
+#s7{padding:7rem 5vw 6rem}
+.grid-casos{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4rem;margin-top:3rem}
+.caso{border:var(--borde);background:var(--crema-alto);padding:1.6rem;box-shadow:var(--sombra-dura)}
+.caso .arte-c{height:96px;margin-bottom:1.3rem;position:relative}
+.caso h3{font-size:1.2rem;margin-bottom:.5rem}
+.caso p{font-size:.95rem;color:var(--tinta-60)}
+.cc{position:absolute;border-radius:9999px;border:8px solid var(--cobalto)}
+.cc.c1{width:90px;height:90px;left:0;top:0}
+.cc.c2{width:56px;height:56px;left:17px;top:17px;border-width:6px}
+.cc.c3{width:26px;height:26px;left:32px;top:32px;background:var(--cobalto);border:none}
+.barras-rh i{position:absolute;background:var(--amarillo);height:16px;left:0}
+.barras-rh i:nth-child(1){top:0;width:96px}
+.barras-rh i:nth-child(2){top:26px;width:72px}
+.barras-rh i:nth-child(3){top:52px;width:88px}
+.barras-rh i:nth-child(4){top:78px;width:56px}
+.mk-split i{position:absolute;top:6px;width:42px;height:84px;background:var(--cobalto)}
+.mk-split i:first-child{left:8px;border-radius:9999px 0 0 9999px}
+.mk-split i:last-child{left:60px;border-radius:0 9999px 9999px 0}
+.sq-anid i{position:absolute;border:6px solid var(--negro)}
+.sq-anid i:nth-child(1){width:90px;height:90px;left:0;top:0}
+.sq-anid i:nth-child(2){width:56px;height:56px;left:17px;top:17px}
+.sq-anid i:nth-child(3){width:24px;height:24px;left:33px;top:33px;background:var(--negro)}
+.salida-s7{margin-top:5rem;background:var(--negro);color:var(--crema);padding:1.2rem 5vw;display:flex;align-items:center;justify-content:center;gap:1rem;font-family:'Space Mono',monospace;font-size:.85rem}
+.salida-s7 svg{flex:none}
+@media(max-width:1023px){.grid-casos{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid-casos{grid-template-columns:1fr}}
+
+/* ============ S7.5 CIFRAS ============ */
+#s75{position:relative;background:var(--negro);color:var(--crema);padding:5.5rem 5vw;overflow:hidden}
+.grid-cifras{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;position:relative;z-index:2}
+.cifra .valor{font-family:'Space Mono',monospace;font-weight:700;font-size:var(--t-kpi);font-variant-numeric:tabular-nums}
+.cifra .desc{font-size:.9rem;color:var(--tinta-30);margin-top:.4rem}
+#circ-cruce{position:absolute;top:50%;left:0;width:120px;height:120px;margin-top:-60px;border-radius:9999px;background:var(--amarillo);opacity:.22;z-index:1}
+@media(max-width:860px){.grid-cifras{grid-template-columns:repeat(2,1fr)}}
+
+/* ============ S8 CIERRE ============ */
+#s8{background:var(--cobalto);color:var(--crema);padding:8rem 5vw;position:relative}
+.zona-aterrizaje{text-align:center;margin-bottom:3.5rem}
+.semic-crema{width:220px;height:110px;border-radius:9999px 9999px 0 0;background:var(--crema);margin:0 auto}
+.sello{display:inline-block;margin-top:1.2rem;border:2px solid var(--crema);padding:.5rem 1.1rem;font-family:'Space Mono',monospace;font-size:.78rem;letter-spacing:.05em}
+.display-s8{font-size:var(--t-display);font-weight:900;font-stretch:120%;line-height:.95;text-transform:uppercase;text-align:center;max-width:16ch;margin:0 auto}
+#s8 .h3-s8{font-family:'Archivo';font-size:var(--t-h3);font-weight:700;text-align:center;margin:2.2rem auto .8rem}
+#s8 .sub-s8{text-align:center;max-width:42rem;margin:0 auto 3.5rem;color:var(--cobalto-tinta)}
+.form-acceso{max-width:640px;margin:0 auto;background:var(--crema);color:var(--negro);border:var(--borde);box-shadow:var(--sombra-dura);padding:2.2rem}
+.campo{margin-bottom:1.4rem}
+.campo label{display:block;font-weight:700;font-size:.9375rem;margin-bottom:.4rem}
+.campo input,.campo select{width:100%;padding:.8rem .9rem;border:var(--borde);background:var(--crema-alto);font-family:'Space Grotesk';font-size:1rem;color:var(--negro);border-radius:0}
+.campo .ayuda{font-size:.8rem;color:var(--tinta-60);margin-top:.35rem}
+.campo.con-error input,.campo.con-error select{border:3px solid var(--amarillo-prof)}
+.campo .error{display:none;font-weight:700;font-size:.85rem;color:var(--amarillo-prof);margin-top:.4rem}
+.campo.con-error .error{display:block}
+.form-acceso .btn{width:100%;font-size:1.1rem;padding:1rem}
+.form-acceso .btn.destello{outline:3px solid var(--amarillo);outline-offset:2px}
+#form-exito{display:none;margin-top:1.3rem;background:var(--exito-tinta);color:var(--exito);border:2px solid var(--exito);padding:1rem;font-weight:700}
+.privacidad{margin-top:1rem;font-size:.8rem;color:var(--tinta-60);text-align:center}
+
+/* ============ S9 FOOTER ============ */
+#s9{background:var(--negro);color:var(--crema);padding:5rem 5vw 3rem}
+.grid-footer{display:grid;grid-template-columns:repeat(3,1fr);gap:3rem;margin-bottom:3.5rem}
+.grid-footer h3{font-size:.9rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta-30);margin-bottom:1rem}
+.grid-footer p,.grid-footer li{font-size:.95rem;color:var(--crema);opacity:.9}
+.grid-footer ul{list-style:none;display:grid;gap:.5rem}
+.grid-footer a{text-decoration:none}
+.grid-footer a:hover{color:var(--amarillo)}
+.legal{border-top:1px solid var(--tinta-60);padding-top:1.6rem;font-size:.8rem;color:var(--tinta-30);max-width:64rem}
+.firma{margin-top:2.4rem;font-family:'Archivo';font-weight:900;font-stretch:120%;font-size:clamp(1.6rem,4vw,2.6rem);text-transform:uppercase;display:inline-block;position:relative}
+.firma .punto-final{display:inline-block;width:.5em;height:.5em;border-radius:9999px;background:var(--amarillo);vertical-align:baseline;margin-left:.12em;transform:translateX(-40vw);opacity:0;transition:transform 900ms var(--ease-out-quint),opacity 300ms}
+.firma.is-in .punto-final{transform:none;opacity:1}
+@media(max-width:860px){.grid-footer{grid-template-columns:1fr}}
+
+/* ============ RESPONSIVE HERO ============ */
+@media(max-width:960px){
+  #s1{grid-template-columns:1fr;min-height:0;padding-top:2.5rem;padding-bottom:4rem}
+  .pieza-emision{height:40vh;min-height:260px;overflow:hidden;order:5}
+  .pe-circulo{right:-40vw;width:80vw;height:80vw;margin-top:-40vw}
+  .pe-semic{width:200px;height:100px}
+  .pe-barra{height:200px}
+  .h1{font-size:clamp(2.4rem,11vw,4rem)}
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  [data-reveal]{opacity:1;transform:none}
+  #capa-peso{display:none}
+  [data-waypoint]{position:relative}
+  [data-waypoint]::before{content:'';position:absolute;left:-14px;top:-14px;width:20px;height:20px;border-radius:9999px;background:var(--cobalto);box-shadow:0 0 0 2px var(--crema);z-index:5}
+  #capa-formas{display:none}
+  .rail-fila{transform:none!important;flex-wrap:wrap}
+  #circ-cruce{left:44%}
+  .totem .caeC{transform:translateY(120px)!important}
+  .trans-diagonal .barraD{transform:rotate(0deg)!important}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div id="grano" aria-hidden="true"></div>
+
+<!-- Capa de formas gigantes (Motor B) -->
+<div id="capa-formas" aria-hidden="true">
+  <div class="forma f-semic-abajo f-ama" data-sec="#s2" data-spd="0.55" data-oy="-160" style="left:-8vw;width:34vw;height:17vw;min-width:260px;min-height:130px"></div>
+  <div class="forma f-circulo f-cob"  data-sec="#s2" data-spd="0.8"  data-oy="220"  style="right:-10vw;width:26vw;height:26vw;min-width:220px;min-height:220px;opacity:.16"></div>
+  <div class="forma f-circulo f-ama"  data-sec="#s3" data-spd="0.5"  data-oy="-240" style="right:6vw;width:18vw;height:18vw;min-width:160px;min-height:160px;opacity:.5"></div>
+  <div class="forma f-neg"            data-sec="#s5" data-spd="0.65" data-oy="-120" style="left:-4vw;width:20vw;height:26px;min-width:180px;transform-origin:left"></div>
+  <div class="forma f-circulo f-cor"  data-sec="#s5" data-spd="0.9"  data-oy="300"  style="right:8vw;width:9vw;height:9vw;min-width:90px;min-height:90px;opacity:.55"></div>
+  <div class="forma f-semic-arriba f-cob" data-sec="#s6" data-spd="0.55" data-oy="240" style="right:-6vw;width:28vw;height:14vw;min-width:220px;min-height:110px;opacity:.14"></div>
+  <div class="forma f-circulo f-ama"  data-sec="#s7" data-spd="0.7"  data-oy="-200" style="left:-7vw;width:22vw;height:22vw;min-width:180px;min-height:180px;opacity:.45"></div>
+</div>
+
+<!-- S0: barra de estado + nav -->
+<header id="s0">
+  <div class="barra-estado">
+    <span class="punto-vivo" aria-hidden="true"></span>
+    <span class="txt-normal">PLATAFORMA OPERANDO · SPEI VÍA STP · <span class="be-oculta">24/7/365 · Guadalajara, MX · </span><span id="reloj">--:--:--</span></span>
+    <span class="txt-frozen">OPERACIÓN PAUSADA <span class="be-oculta">POR EL CLIENTE </span>· 0 órdenes en vuelo</span>
+  </div>
+  <nav class="nav" aria-label="Principal">
+    <a class="wordmark" href="#s1" aria-label="MASMOVIL, inicio">MASM<span class="o" aria-hidden="true"><i></i><u></u></span>VIL</a>
+    <ul class="nav-links">
+      <li><a href="#producto">Producto</a></li>
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#seguridad">Seguridad</a></li>
+      <li><a href="#api">API</a></li>
+      <li><a href="#casos">Casos de uso</a></li>
+    </ul>
+    <a class="btn btn-negro" href="#acceso">Solicitar acceso</a>
+  </nav>
+</header>
+
+<main id="contenido">
+<!-- S1: HERO -->
+<section id="s1" aria-labelledby="titulo-hero">
+  <div>
+    <span class="badge-pill">Conexión SPEI a través de STP, participante autorizado de Banxico</span>
+    <h1 class="h1" id="titulo-hero">
+      <span class="linea"><span class="w" style="--d:160ms">UN</span> <span class="w" style="--d:205ms">PESO</span> <span class="w" style="--d:250ms">SALE.</span></span>
+      <span class="linea"><span class="w" style="--d:295ms">UN</span> <span class="w" style="--d:340ms">PESO</span> <span class="w" style="--d:385ms">LLEGA.</span></span>
+      <span class="linea"><span class="w" style="--d:430ms">TODO</span> <span class="w" style="--d:475ms">LO</span> <span class="w" style="--d:520ms">DEMÁS</span> <span class="w" style="--d:565ms">ES</span> <span class="w" style="--d:610ms">NUESTRO</span> <span class="w" style="--d:655ms">PROBLEMA.</span></span>
+    </h1>
+    <p class="hero-sub">MASMOVIL es la capa de pagos que tu producto necesita: CLABEs ilimitadas por API, SPEI de entrada y salida las 24 horas, dispersión masiva y conciliación automática. Tú construyes tu negocio; nosotros movemos el dinero y lo dejamos probado.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primario" href="#acceso">Solicitar acceso</a>
+      <a class="btn btn-secundario" href="#api">Ver la API en acción ↓</a>
+    </div>
+    <p class="hero-micro">Sin teléfono y sin filas: escríbenos a <a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a> y te respondemos en menos de un día hábil.</p>
+    <p class="strip-confianza mono">Operando desde 2019 · Guadalajara, México · RFC MAS191203EY6 · Conexión vía STP a Banxico · CEP en cada transferencia liquidada</p>
+  </div>
+  <div class="pieza-emision" aria-hidden="true">
+    <div class="pe-circulo"></div>
+    <div class="pe-barra"></div>
+    <div class="pe-riel" id="wp-hero" data-waypoint="1"><i class="p p1"></i><i class="p p2"></i><i class="p p3"></i></div>
+    <div class="pe-semic"></div>
+    <p class="pe-caption mono">1 círculo = 1 peso · liquidado vía SPEI</p>
+  </div>
+</section>
+
+<div class="trans-diagonal" aria-hidden="true"><div class="barraD" data-sd="rot" data-from="-8" data-to="0"></div></div>
+
+<!-- S2: EL PROBLEMA -->
+<section id="s2" aria-labelledby="titulo-problema">
+  <p class="overline" style="--sq:var(--coral)">El problema</p>
+  <h2 class="h2" id="titulo-problema" data-reveal="up">Tu operación es 24/7. Tu portal bancario empresarial no.</h2>
+  <p class="intro" data-reveal="up">SPEI nunca duerme. Lo que duerme es la banca empresarial: portales con cortes de lote, límites nocturnos y cero APIs.</p>
+  <div class="cols-problema">
+    <div class="col-p" data-reveal="up" id="wp-problema-a" data-waypoint="2">
+      <div class="frag a" aria-hidden="true"><i></i><i></i></div>
+      <h3>Cortes de lote y horarios de portal</h3>
+      <p>Tu dispersión de las 11 de la noche espera al lote de mañana. Tu cliente no.</p>
+    </div>
+    <div class="col-p" data-reveal="up">
+      <div class="frag b" aria-hidden="true"><i></i><i></i></div>
+      <h3>Conciliación manual</h3>
+      <p>Estados de cuenta en PDF, referencias que nadie llenó y un analista pegando celdas a fin de mes.</p>
+    </div>
+    <div class="col-p" data-reveal="up" id="wp-problema-b" data-waypoint="3">
+      <div class="frag c" aria-hidden="true"><i></i><i></i></div>
+      <h3>Una sola CLABE para todo</h3>
+      <p>Cientos de clientes depositando a la misma cuenta. Adivinar quién pagó no es un proceso: es un riesgo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- S3: EL RAIL -->
+<section id="s3" aria-labelledby="titulo-rail">
+  <a id="como-funciona" aria-hidden="true"></a>
+  <div class="rail-sticky">
+    <div class="rail-head">
+      <p class="overline" style="--sq:var(--cobalto)">Cómo funciona</p>
+      <h2 class="h2" id="titulo-rail">Así viaja tu peso</h2>
+    </div>
+    <div class="rail-rastro" aria-hidden="true"></div>
+    <div id="wp-rail" data-waypoint="4" data-hold style="position:absolute;left:50%;top:58%;width:1px;height:1px" aria-hidden="true"></div>
+    <div class="rail-fila" id="rail-fila">
+      <article class="estacion" data-reveal="up">
+        <div class="arte" aria-hidden="true"><div class="a-barra"></div></div>
+        <p class="num">01 · ENTRA</p>
+        <h3>Tu cliente transfiere a su CLABE única.</h3>
+        <p>El abono llega por SPEI y tu sistema recibe un webhook firmado en segundos.</p>
+      </article>
+      <article class="estacion" data-reveal="up">
+        <div class="arte" aria-hidden="true"><div class="a-anillo"></div></div>
+        <p class="num">02 · SE IDENTIFICA</p>
+        <h3>Screening PLD/AML y scoring en milisegundos.</h3>
+        <p>La CLABE ya dice de quién es y para qué es.</p>
+      </article>
+      <article class="estacion" data-reveal="up">
+        <div class="arte" aria-hidden="true"><div class="a-compuerta" id="compuerta" data-sd="gate" data-sec="#s3" data-from="0" data-to="26"><i></i><i></i></div></div>
+        <p class="num">03 · STP → BANXICO</p>
+        <h3>Conexión directa a través de STP al SPEI de Banxico.</h3>
+        <p>Sin intermediarios de más.</p>
+      </article>
+      <article class="estacion" data-reveal="up">
+        <div class="arte" aria-hidden="true"><div class="a-clones"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <p class="num">04 · SE MUEVE</p>
+        <h3>Ordenas la salida por API, individual o masiva.</h3>
+        <p>Con idempotencia: si reintentas, no duplicas.</p>
+      </article>
+      <article class="estacion" data-reveal="up">
+        <div class="arte" aria-hidden="true"><div class="a-sello"></div></div>
+        <p class="num">05 · QUEDA PROBADO</p>
+        <h3>Cada operación liquidada genera su CEP de Banxico.</h3>
+        <p>La evidencia existe desde el primer segundo.</p>
+      </article>
+    </div>
+  </div>
+</section>
+<p class="rail-cierre" data-reveal="up">Entrada, identificación, salida, evidencia. Ese es todo el producto.</p>
+
+<!-- S4: PRODUCTO + API -->
+<section id="s4" class="seccion-oscura" aria-labelledby="titulo-api">
+  <a id="producto" aria-hidden="true"></a>
+  <p class="overline" style="--sq:var(--amarillo)">Para tu equipo técnico</p>
+  <h2 class="h2" id="titulo-api" data-reveal="up">Escrito para tu equipo, no para el nuestro.</h2>
+  <p class="intro" data-reveal="up">Una API REST con HMAC por petición, anti-replay e idempotencia nativa. Sandbox el mismo día, documentación que no miente y soporte de ingenieros, no de chatbots.</p>
+  <div class="grid-api">
+    <div class="bloque-codigo" id="api" data-waypoint-anchor>
+      <span id="wp-api" data-waypoint="5" style="position:absolute;left:0;top:50%" aria-hidden="true"></span>
+      <pre aria-label="Ejemplo de petición a la API"><span class="cad">POST /v1/transfers</span>
+{
+  <span class="llave">"clabe_destino"</span>: <span class="cad">"012320001234567895"</span>,
+  <span class="llave">"monto"</span>: <span class="cad">"15000.00"</span>,
+  <span class="llave">"concepto"</span>: <span class="cad">"Pago proveedores <span id="semana">W28</span>"</span>,
+  <span class="llave">"idempotency_key"</span>: <span class="cad">"<span id="idem-key">disp-2026-07-08-0412</span>"</span>
+}</pre>
+      <button class="btn btn-amarillo" id="btn-ejecutar" type="button">Ejecutar</button>
+      <div id="resp-api" class="mono" aria-hidden="true"></div>
+      <p id="resp-api-sr" class="sr-only" role="status"></p>
+    </div>
+    <div>
+      <div class="tarjetas-api">
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="background:var(--cobalto);border-radius:9999px" aria-hidden="true"></div><h3>CLABEs ilimitadas por API</h3><p>Una CLABE por cliente, por producto o por factura. Se genera en milisegundos y ya sabe recibir.</p></div>
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="background:var(--amarillo)" aria-hidden="true"></div><h3>SPEI in/out 24/7/365</h3><p>Cobra y paga a las 3 de la tarde o de la madrugada. La liquidación tarda segundos, no cortes.</p></div>
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="background:var(--coral);transform:rotate(45deg)" aria-hidden="true"></div><h3>Dispersión masiva y nóminas</h3><p>Miles de órdenes en una llamada. Idempotencia nativa: reintentar nunca duplica.</p></div>
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="background:var(--cobalto);border-radius:9999px 9999px 0 0" aria-hidden="true"></div><h3>Conciliación automática</h3><p>Cada abono llega identificado por su CLABE y su referencia. El fin de mes deja de ser arqueología.</p></div>
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="border:5px solid var(--amarillo)" aria-hidden="true"></div><h3>Multi-empresa</h3><p>Todas tus razones sociales en un panel, con saldos, permisos y bitácoras separados.</p></div>
+        <div class="tarjeta-api" data-reveal="up"><div class="mini" style="border:5px solid var(--cobalto);border-radius:9999px" aria-hidden="true"></div><h3>Webhooks firmados</h3><p>Cada evento llega firmado con HMAC-SHA256. Verificas la firma y confías en el dato.</p></div>
+      </div>
+    </div>
+  </div>
+  <ul class="bullets-api">
+    <li>Sandbox el mismo día</li>
+    <li>Documentación con ejemplos ejecutables</li>
+    <li>Ingenieros que responden, no chatbots</li>
+  </ul>
+  <br>
+  <a class="link-sandbox" href="#acceso">Solicita credenciales de sandbox →</a>
+  <svg class="pieza-transito" width="420" height="220" viewBox="0 0 420 220" aria-hidden="true">
+    <rect x="20"  y="90" width="18" height="110" fill="var(--crema)"/>
+    <rect x="46"  y="120" width="18" height="80" fill="var(--crema)"/>
+    <rect x="180" y="70" width="18" height="130" fill="var(--crema)"/>
+    <rect x="206" y="100" width="18" height="100" fill="var(--crema)"/>
+    <rect x="350" y="50" width="18" height="150" fill="var(--crema)"/>
+    <rect x="376" y="90" width="18" height="110" fill="var(--crema)"/>
+    <path class="arco" d="M38 90 Q 115 10 189 70" stroke="var(--cobalto-claro)" stroke-width="3" fill="none"/>
+    <path class="arco" d="M198 70 Q 280 -10 359 50" stroke="var(--cobalto-claro)" stroke-width="3" fill="none"/>
+    <path d="M359 200 L 38 200" stroke="var(--coral)" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
+    <circle cx="120" cy="200" r="8" fill="var(--coral)"/>
+  </svg>
+</section>
+
+<!-- S5: KILL SWITCH -->
+<section id="s5" aria-labelledby="titulo-kill">
+  <a id="seguridad" aria-hidden="true"></a>
+  <p class="overline" style="--sq:var(--coral)">Seguridad y control</p>
+  <h2 class="h2" id="titulo-kill" data-reveal="up">El botón que esperamos que nunca uses.</h2>
+  <p class="intro" data-reveal="up">Kill switch: congela toda tu operación en un clic. Porque el control también es infraestructura.</p>
+  <div class="grid-kill">
+    <div class="zona-switch" data-reveal="scale">
+      <div class="riel-switch">
+        <button id="kill-switch" role="switch" aria-checked="false" aria-label="Kill switch: pausar toda la operación">
+          <span id="sw-estado">OPERANDO</span>
+          <span class="sub-sw" id="sw-sub">clic para pausar</span>
+        </button>
+      </div>
+      <p id="contador-frozen" aria-live="polite"></p>
+    </div>
+    <ul class="lista-controles">
+      <li data-reveal="up"><h3>HMAC por petición</h3><p>Cada llamada llega firmada; una firma inválida no entra.</p></li>
+      <li data-reveal="up"><h3>Anti-replay</h3><p>Una petición capturada y reenviada muere en la puerta.</p></li>
+      <li data-reveal="up"><h3>Idempotencia nativa</h3><p>El mismo pago dos veces es un solo pago.</p></li>
+      <li data-reveal="up"><h3>2FA obligatorio</h3><p>Sin excepciones, ni para el director.</p></li>
+      <li data-reveal="up"><h3>Kill switch</h3><p>Toda la operación se detiene en un clic. Reactivar exige segundo factor.</p></li>
+      <li data-reveal="up"><h3>PLD/AML integrado</h3><p>Screening contra listas y scoring en cada operación, no por muestreo.</p></li>
+      <li data-reveal="up"><h3>CEP en cada operación liquidada</h3><p>La prueba la emite Banxico; nosotros la generamos y la guardamos por ti.</p></li>
+      <li data-reveal="up"><h3>Webhooks firmados</h3><p>Tu sistema puede verificar cada aviso antes de creerlo.</p></li>
+    </ul>
+    <div class="totem" aria-hidden="true">
+      <div class="caeC" data-sd="y" data-from="0" data-to="120"></div>
+      <div class="ranura"></div>
+      <div class="ranura2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- S6: CUMPLIMIENTO -->
+<section id="s6" aria-labelledby="titulo-cumpl">
+  <p class="overline" style="--sq:var(--negro)">Cumplimiento</p>
+  <h2 class="h2" id="titulo-cumpl" data-reveal="up">La parte aburrida. Nuestra favorita.</h2>
+  <p class="intro" data-reveal="up">Esta sección está escrita para tu equipo de riesgo. Sin adjetivos: controles concretos, verificables en la demo técnica.</p>
+  <div id="wp-cumplimiento" data-waypoint="6" data-hold-h style="height:1px" aria-hidden="true"></div>
+  <div class="grid-cumpl" data-reveal="up">
+    <div><b>Razón social y RFC</b>MASMOVIL, S.A. de C.V. · RFC MAS191203EY6</div>
+    <div><b>Domicilio y antigüedad</b>Guadalajara, Jalisco. Operando desde 2019.</div>
+    <div><b>PLD/AML</b>Screening contra listas y scoring por operación.</div>
+    <div><b>Autenticación</b>2FA obligatorio para todos los usuarios.</div>
+    <div><b>Evidencia</b>CEP de Banxico en cada operación liquidada.</div>
+    <div><b>Bitácora</b>Registro completo e inalterable de resoluciones.</div>
+  </div>
+  <p class="nota-stp">MASMOVIL opera su conexión a SPEI a través de STP (Sistema de Transferencias y Pagos), participante autorizado de Banxico.</p>
+</section>
+
+<!-- S7: CASOS DE USO -->
+<section id="s7" aria-labelledby="titulo-casos">
+  <a id="casos" aria-hidden="true"></a>
+  <p class="overline" style="--sq:var(--amarillo)">Casos de uso</p>
+  <h2 class="h2" id="titulo-casos" data-reveal="up">Un rail, muchos negocios.</h2>
+  <div class="grid-casos">
+    <div class="caso" data-reveal="up">
+      <div class="arte-c" aria-hidden="true"><span class="cc c1"></span><span class="cc c2"></span><span class="cc c3"></span></div>
+      <h3>Fintechs</h3><p>Una CLABE por usuario y saldos que cuadran solos.</p>
+    </div>
+    <div class="caso" data-reveal="up">
+      <div class="arte-c barras-rh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <h3>Nóminas y RH</h3><p>La quincena completa dispersada en minutos, con acuse por empleado.</p>
+    </div>
+    <div class="caso" data-reveal="up">
+      <div class="arte-c mk-split" aria-hidden="true"><i></i><i></i></div>
+      <h3>Marketplaces</h3><p>Cobra por el vendedor, separa comisiones y liquida a cada quien lo suyo.</p>
+    </div>
+    <div class="caso" data-reveal="up">
+      <div class="arte-c sq-anid" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h3>Grupos empresariales</h3><p>Todas las razones sociales en un panel, cada peso en su empresa.</p>
+    </div>
+  </div>
+  <div class="salida-s7" data-reveal="up">
+    <span>EL RAIL ES EL MISMO. EL NEGOCIO ES EL TUYO.</span>
+    <svg width="18" height="26" viewBox="0 0 18 26" aria-hidden="true"><path d="M9 0v20M2 14l7 8 7-8" stroke="var(--amarillo)" stroke-width="3" fill="none"/></svg>
+  </div>
+</section>
+
+<!-- S7.5: CIFRAS -->
+<section id="s75" class="seccion-oscura" aria-label="Cifras clave">
+  <div id="circ-cruce" data-sd="x" data-from="-0.15" data-to="1.05" aria-hidden="true"></div>
+  <div class="grid-cifras">
+    <div class="cifra" data-reveal="up"><div class="valor">24/7/365</div><div class="desc">disponibilidad SPEI in/out</div></div>
+    <div class="cifra" data-reveal="up"><div class="valor">Segundos</div><div class="desc">de instrucción a liquidación</div></div>
+    <div class="cifra" data-reveal="up"><div class="valor">CEP</div><div class="desc">de Banxico en cada operación liquidada</div></div>
+    <div class="cifra" data-reveal="up"><div class="valor" id="cifra-2019" data-count="2019">2019</div><div class="desc">operando desde Guadalajara</div></div>
+  </div>
+</section>
+
+<!-- S8: CIERRE / CTA -->
+<section id="s8" class="seccion-cobalto" aria-labelledby="titulo-cierre">
+  <a id="acceso" aria-hidden="true"></a>
+  <div class="zona-aterrizaje">
+    <div class="semic-crema" id="wp-cierre" data-waypoint="7" aria-hidden="true"></div>
+    <p class="sello mono" id="sello-rastreo">CLAVE DE RASTREO: MAS202607080000412 · LIQUIDADO</p>
+  </div>
+  <h2 class="display-s8" id="titulo-cierre" data-reveal="up">Tu primer peso puede viajar esta semana.</h2>
+  <p class="h3-s8" data-reveal="up">Solicita acceso a la plataforma.</p>
+  <p class="sub-s8" data-reveal="up">El sandbox, hoy mismo; producción, al validar tu expediente. Cuéntanos qué mueves y te respondemos con una propuesta concreta en menos de un día hábil.</p>
+  <form class="form-acceso" id="form-acceso" novalidate data-reveal="up">
+    <div class="campo">
+      <label for="f-nombre">Nombre completo</label>
+      <input id="f-nombre" name="nombre" type="text" autocomplete="name" required>
+      <p class="error">Cuéntanos tu nombre para saber a quién respondemos.</p>
+    </div>
+    <div class="campo">
+      <label for="f-correo">Correo empresarial</label>
+      <input id="f-correo" name="correo" type="email" autocomplete="email" required>
+      <p class="error">Necesitamos un correo válido para responderte.</p>
+    </div>
+    <div class="campo">
+      <label for="f-empresa">Empresa</label>
+      <input id="f-empresa" name="empresa" type="text" autocomplete="organization" required>
+      <p class="error">¿Desde qué empresa nos escribes?</p>
+    </div>
+    <div class="campo">
+      <label for="f-necesidad">¿Qué necesitas resolver?</label>
+      <select id="f-necesidad" name="necesidad" required>
+        <option value="">Elige una opción</option>
+        <option>Cobranza con CLABEs por cliente</option>
+        <option>Dispersión masiva o nóminas</option>
+        <option>Pagos 24/7 desde mi producto</option>
+        <option>Conciliación automática</option>
+        <option>Otro (cuéntanos)</option>
+      </select>
+      <p class="error">Elige la opción más cercana; nos ayuda a responderte mejor.</p>
+    </div>
+    <div class="campo">
+      <label for="f-volumen">Volumen mensual estimado <span style="font-weight:400;color:var(--tinta-60)">(opcional)</span></label>
+      <select id="f-volumen" name="volumen">
+        <option value="">Sin especificar</option>
+        <option>Menos de $1 millón MXN</option>
+        <option>$1–10 millones</option>
+        <option>$10–100 millones</option>
+        <option>Más de $100 millones</option>
+      </select>
+      <p class="ayuda">Nos ayuda a dimensionar tu propuesta. Si no lo sabes, déjalo vacío.</p>
+    </div>
+    <button class="btn btn-amarillo" id="btn-enviar" type="submit">Enviar solicitud</button>
+    <p id="form-exito" role="status">Recibido. Te escribimos desde direccion@masmovil.lat en menos de un día hábil.</p>
+    <p class="privacidad">Usamos tus datos solo para responderte. Nada de listas ni spam.</p>
+  </form>
+</section>
+</main>
+
+<!-- S9: FOOTER -->
+<footer id="s9">
+  <div class="grid-footer">
+    <div>
+      <h3>MASMOVIL</h3>
+      <p>MASMOVIL, S.A. de C.V. · Tecnología financiera desde Guadalajara. Infraestructura de pagos, telecomunicaciones y software a la medida.</p>
+    </div>
+    <div>
+      <h3>Contacto</h3>
+      <p><a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a></p>
+      <p>Pompeya 2775, Lomas de Guevara,<br>C.P. 44657, Guadalajara, Jalisco, México</p>
+    </div>
+    <div>
+      <h3>Producto</h3>
+      <ul>
+        <li><a href="#producto">CLABEs ilimitadas por API</a></li>
+        <li><a href="#producto">SPEI in/out 24/7/365</a></li>
+        <li><a href="#producto">Dispersión masiva y nóminas</a></li>
+        <li><a href="#producto">Conciliación automática</a></li>
+        <li><a href="#seguridad">Seguridad y cumplimiento</a></li>
+        <li><a href="#acceso">Solicitar acceso</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="legal">© 2026 MASMOVIL, S.A. de C.V. · RFC MAS191203EY6. Las transferencias SPEI se procesan a través de STP (Sistema de Transferencias y Pagos), participante autorizado de Banxico. Banxico, SPEI y CEP son marcas de sus respectivos titulares.</p>
+  <p class="firma" data-reveal="up">El dinero no descansa. Nosotros tampoco<span class="punto-final" aria-hidden="true"></span></p>
+</footer>
+
+<div id="capa-peso" aria-hidden="true"><div id="peso"><div class="nucleo"></div></div></div>
+
+<script>
+(function(){
+'use strict';
+var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var $  = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+/* ---------- Fechas: nada hardcodeado ---------- */
+var hoy = new Date();
+function pad(n,l){ n=String(n); while(n.length<l) n='0'+n; return n; }
+var ymd = hoy.getFullYear()+pad(hoy.getMonth()+1,2)+pad(hoy.getDate(),2);
+var CLAVE = 'MAS'+ymd+'0000412';
+$('#sello-rastreo').textContent = 'CLAVE DE RASTREO: '+CLAVE+' · LIQUIDADO';
+$('#idem-key').textContent = 'disp-'+hoy.getFullYear()+'-'+pad(hoy.getMonth()+1,2)+'-'+pad(hoy.getDate(),2)+'-0412';
+(function(){ /* semana ISO */
+  var d=new Date(Date.UTC(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()));
+  var dia=d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()+4-dia);
+  var y0=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  $('#semana').textContent='W'+Math.ceil((((d-y0)/86400000)+1)/7);
+})();
+
+/* ---------- Reloj S0 (evento discreto, 1s) ---------- */
+var reloj = $('#reloj');
+function tickReloj(){
+  var n = new Date();
+  reloj.textContent = pad(n.getHours(),2)+':'+pad(n.getMinutes(),2)+':'+pad(n.getSeconds(),2);
+}
+tickReloj(); setInterval(tickReloj,1000);
+
+/* ---------- Motor A: REVEAL ---------- */
+if(!RM && 'IntersectionObserver' in window){
+  var ioA = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('is-in'); ioA.unobserve(e.target); }
+    });
+  },{threshold:.18,rootMargin:'0px 0px -8%'});
+  $$('[data-reveal]').forEach(function(el){ ioA.observe(el); });
+  /* flecha S2 + arcos S4 + count-up: mismos umbrales, discretos */
+  var ioX = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        if(e.target.id==='s2-fin'){ $('#s2').classList.add('formas-flecha'); }
+        if(e.target.id==='s4'){ e.target.classList.add('is-in-art'); }
+        if(e.target.id==='cifra-2019'){ countUp(e.target,2019); }
+        ioX.unobserve(e.target);
+      }
+    });
+  },{threshold:.2});
+  var fin2=document.createElement('div'); fin2.id='s2-fin'; $('#s2').appendChild(fin2);
+  ioX.observe(fin2); ioX.observe($('#s4')); ioX.observe($('#cifra-2019'));
+}else{
+  $$('[data-reveal]').forEach(function(el){ el.classList.add('is-in'); });
+  $('#s4').classList.add('is-in-art');
+}
+function countUp(el,fin){
+  var t0=null;
+  function paso(t){
+    if(!t0)t0=t;
+    var p=Math.min((t-t0)/600,1); p=1-Math.pow(1-p,4);
+    el.textContent=String(Math.round(fin*p));
+    if(p<1) requestAnimationFrame(paso); else el.textContent=String(fin);
+  }
+  requestAnimationFrame(paso);
+}
+
+/* ---------- Motor B + C: scroll pasivo + rAF único ---------- */
+var vw=innerWidth, vh=innerHeight, docH=document.documentElement.scrollHeight;
+var targetY=window.scrollY||0, currentY=targetY, firstScroll=false;
+var peso=$('#peso'), pesoX=0, pesoY=0, pesoOK=false;
+
+/* formas de fondo */
+var formas=$$('#capa-formas .forma').map(function(el){
+  return {el:el,sec:el.getAttribute('data-sec'),spd:parseFloat(el.getAttribute('data-spd')),oy:parseFloat(el.getAttribute('data-oy')),cy:0,h:0,vis:false};
+});
+/* elementos scroll-driven (rot / y / x / gate) */
+var drives=$$('[data-sd]').map(function(el){
+  return {el:el,tipo:el.getAttribute('data-sd'),from:parseFloat(el.getAttribute('data-from')),to:parseFloat(el.getAttribute('data-to')),sec:el.getAttribute('data-sec'),t0:0,t1:1};
+});
+/* waypoints del peso */
+var wps=[], railSec=$('#s3'), railFila=$('#rail-fila'), railMax=0, railOn=false, lastEst=-1;
+var estaciones=$$('.estacion');
+
+function docTop(el){ var r=el.getBoundingClientRect(); return r.top+window.scrollY; }
+function medir(){
+  vw=innerWidth; vh=innerHeight;
+  docH=document.documentElement.scrollHeight;
+  var movil = vw<768;
+  railOn = !movil;
+  if(railOn){ railMax = Math.max(0, railFila.scrollWidth - vw + vw*.12); }
+  formas.forEach(function(f){
+    var sec=$(f.sec); if(!sec){f.vis=false;return;}
+    f.cy = docTop(sec)+sec.offsetHeight/2;
+    f.h  = f.el.offsetHeight;
+  });
+  drives.forEach(function(d){
+    var ref = d.sec ? $(d.sec) : d.el;
+    var top = docTop(ref), h = ref.offsetHeight;
+    d.t0 = top - vh; d.t1 = top + h;
+  });
+  /* nodos del peso */
+  wps=[];
+  var maxS = docH - vh*0.5;
+  function nodo(el,fx,oy){
+    var top=docTop(el), h=el.offsetHeight||1;
+    return {el:el,fx:fx,oy:oy,s:Math.min(top+h/2,maxS)};
+  }
+  var lista = movil ? ['#wp-hero','#wp-rail','#wp-cierre'] : ['#wp-hero','#wp-problema-a','#wp-problema-b','#wp-rail','#wp-api','#wp-cumplimiento','#wp-cierre'];
+  lista.forEach(function(sel){
+    var el=$(sel); if(!el) return;
+    var fx=.5, oy=0;
+    if(sel==='#wp-hero'){fx=.55;}
+    if(sel==='#wp-problema-a'){oy=-40 - el.offsetHeight/2;}
+    if(sel==='#wp-problema-b'){oy= 40 + el.offsetHeight/2;}
+    if(sel==='#wp-api'){fx=-0.06;}
+    if(sel==='#wp-rail'){
+      var t=docTop(railSec), hh=railSec.offsetHeight;
+      wps.push({el:el,fx:.5,oy:0,s:Math.min(t+vh*.5,docH-vh*.5)});
+      wps.push({el:el,fx:.5,oy:0,s:Math.min(t+hh-vh*.5,docH-vh*.5)});
+      return;
+    }
+    if(sel==='#wp-cumplimiento'){
+      var top6=docTop(el);
+      wps.push({el:el,fx:.06,oy:0,s:top6-vh*.3,lin:true});
+      wps.push({el:el,fx:.94,oy:0,s:top6+vh*.35,lin:true});
+      return;
+    }
+    wps.push(nodo(el,fx,oy));
+  });
+  wps.sort(function(a,b){return a.s-b.s;});
+}
+function puntoWP(n){
+  var r=n.el.getBoundingClientRect();
+  var x = (n.fx<0) ? r.left - 40 : r.left + n.fx*r.width;
+  var y = r.top + r.height/2 + n.oy;
+  if(vw<768){ x = vw*.86; }
+  return {x:x,y:y};
+}
+function smooth(t){ return t*t*(3-2*t); }
+
+var prevPX=0, prevPY=0;
+function frame(){
+  requestAnimationFrame(frame);
+  if(RM) return;
+  if(document.body.classList.contains('frozen')) return;
+  var d=targetY-currentY;
+  if(Math.abs(d)>=0.1){ currentY+=d*.12; } else { currentY=targetY; }
+  var writes=0;
+  /* formas: parallax + culling */
+  for(var i=0;i<formas.length && writes<7;i++){
+    var f=formas[i];
+    var rel=f.cy-currentY-vh/2;
+    var vis=Math.abs(rel)<vh*1.6;
+    if(vis!==f.vis){ f.vis=vis; f.el.style.visibility=vis?'visible':'hidden'; f.el.style.willChange=vis?'transform':'auto'; }
+    if(vis){ f.el.style.transform='translate3d(0,'+(vh/2+rel*f.spd+f.oy-f.h/2)+'px,0)'; writes++; }
+  }
+  /* drives */
+  for(var j=0;j<drives.length;j++){
+    var dr=drives[j];
+    var p=Math.max(0,Math.min(1,(currentY + vh*.8 - dr.t0 - vh) / (dr.t1 - dr.t0)));
+    var v=dr.from+(dr.to-dr.from)*p;
+    if(dr.tipo==='rot'){ dr.el.style.transform='rotate('+v+'deg)'; }
+    else if(dr.tipo==='y'){ dr.el.style.transform='translate3d(0,'+v+'px,0)'; }
+    else if(dr.tipo==='x'){ dr.el.style.transform='translate3d('+(v*vw)+'px,0,0)'; }
+    else if(dr.tipo==='gate'){
+      dr.el.children[0].style.transform='rotate('+(-v)+'deg)';
+      dr.el.children[1].style.transform='rotate('+v+'deg)';
+    }
+  }
+  /* rail horizontal */
+  if(railOn){
+    var h3=railSec.offsetHeight;
+    var pr=Math.max(0,Math.min(1,(currentY-railTop)/(h3-vh)));
+    railFila.style.transform='translate3d('+(-pr*railMax)+'px,0,0)';
+    var est=Math.round(pr*(estaciones.length-1));
+    if(est!==lastEst){
+      lastEst=est;
+      if(estaciones[est]){ estaciones[est].classList.remove('ping'); void estaciones[est].offsetWidth; estaciones[est].classList.add('ping'); }
+    }
+  }
+  /* el peso */
+  if(pesoOK && wps.length>1){
+    var s=currentY+vh*.5, a=wps[0], b=wps[1];
+    for(var k=0;k<wps.length-1;k++){
+      if(s>=wps[k].s){ a=wps[k]; b=wps[k+1]; }
+    }
+    var t=(s-a.s)/Math.max(1,(b.s-a.s)); t=Math.max(0,Math.min(1,t));
+    if(!(a.lin&&b.lin)) t=smooth(t);
+    var pa=puntoWP(a), pb=puntoWP(b);
+    var px=pa.x+(pb.x-pa.x)*t, py=pa.y+(pb.y-pa.y)*t;
+    /* squash direccional <=12% */
+    var dx=px-prevPX, dy=py-prevPY, sq='';
+    var vsp=Math.min(Math.abs(dx)+Math.abs(dy),30)/30*.12;
+    if(Math.abs(dy)>Math.abs(dx)) sq=' scale('+(1-vsp)+','+(1+vsp)+')';
+    else if(Math.abs(dx)>1) sq=' scale('+(1+vsp)+','+(1-vsp)+')';
+    peso.style.transform='translate3d('+px+'px,'+py+'px,0)'+sq;
+    prevPX=px; prevPY=py;
+    /* final S8 */
+    var esFinal=(b===wps[wps.length-1]&&t>0.92)||(a===wps[wps.length-1]);
+    if(esFinal&&!peso.classList.contains('final')){
+      peso.classList.add('final');
+      var btn=$('#btn-enviar'); btn.classList.add('destello');
+      setTimeout(function(){btn.classList.remove('destello');},900);
+    }else if(!esFinal&&t<0.9){ peso.classList.remove('final'); }
+  }
+}
+var railTop=0;
+function medirRail(){ railTop=docTop(railSec); }
+
+if(!RM){
+  addEventListener('scroll',function(){
+    targetY=window.scrollY;
+    if(!firstScroll){ firstScroll=true; peso.classList.remove('respira'); }
+  },{passive:true});
+  var rto;
+  addEventListener('resize',function(){ clearTimeout(rto); rto=setTimeout(function(){ medir(); medirRail(); },150); });
+  addEventListener('load',function(){ medir(); medirRail(); });
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ medir(); medirRail(); }); }
+  medir(); medirRail();
+  /* hero timeline: el peso cae al riel en t=650 */
+  setTimeout(function(){
+    peso.style.visibility='visible';
+    peso.classList.add('cae','respira');
+    pesoOK=true;
+  },650);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Kill switch S5 ---------- */
+var sw=$('#kill-switch'), swTxt=$('#sw-estado'), swSub=$('#sw-sub'), cont=$('#contador-frozen');
+function toggleKill(){
+  var on = sw.getAttribute('aria-checked')==='true';
+  on=!on;
+  sw.setAttribute('aria-checked',String(on));
+  document.body.classList.toggle('frozen',on);
+  if(on){
+    swTxt.textContent='PAUSADO';
+    swSub.textContent='clic para reanudar';
+    cont.textContent='Congelado en 0.3 s · 0 órdenes en vuelo';
+  }else{
+    swTxt.textContent='OPERANDO';
+    swSub.textContent='clic para pausar';
+    cont.textContent='Operación reanudada donde estaba.';
+  }
+}
+sw.addEventListener('click',toggleKill);
+sw.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleKill(); }
+});
+
+/* ---------- S4: Ejecutar (typewriter, micro-interacción) ---------- */
+var btnEj=$('#btn-ejecutar'), resp=$('#resp-api');
+btnEj.addEventListener('click',function(){
+  btnEj.disabled=true;
+  setTimeout(function(){btnEj.disabled=false;},2000);
+  var texto='201 Created · clave_rastreo: '+CLAVE+' · webhook: transfer.settled · CEP disponible al liquidar';
+  resp.textContent='';
+  $('#resp-api-sr').textContent=texto; /* anuncio único para lectores de pantalla */
+  if(RM){ resp.textContent=texto; return; }
+  var i=0;
+  var tw=setInterval(function(){
+    resp.textContent=texto.slice(0,++i);
+    if(i>=texto.length) clearInterval(tw);
+  },16);
+});
+
+/* ---------- Formulario S8 (maqueta + mailto) ---------- */
+var form=$('#form-acceso');
+function marca(campo,mal){
+  campo.closest('.campo').classList.toggle('con-error',mal);
+  if(mal){ campo.setAttribute('aria-invalid','true'); } else { campo.removeAttribute('aria-invalid'); }
+  return !mal;
+}
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  var nombre=$('#f-nombre'), correo=$('#f-correo'), emp=$('#f-empresa'), nec=$('#f-necesidad'), vol=$('#f-volumen');
+  var ok=true;
+  ok = marca(nombre, nombre.value.trim().length<3) && ok;
+  ok = marca(correo, !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo.value.trim())) && ok;
+  ok = marca(emp, emp.value.trim().length<2) && ok;
+  ok = marca(nec, !nec.value) && ok;
+  if(!ok){
+    var primero=form.querySelector('.con-error input,.con-error select');
+    if(primero) primero.focus();
+    return;
+  }
+  var subject='Solicitud de acceso — '+emp.value.trim();
+  var body='Nombre: '+nombre.value.trim()
+    +'\nCorreo: '+correo.value.trim()
+    +'\nEmpresa: '+emp.value.trim()
+    +'\nNecesidad: '+nec.value
+    +'\nVolumen mensual estimado: '+(vol.value||'Sin especificar')
+    +'\n\nEnviado desde la landing de MASMOVIL.';
+  $('#form-exito').style.display='block';
+  window.location.href='mailto:direccion@masmovil.lat?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+});
+/* limpiar error al teclear */
+$$('.campo input,.campo select').forEach(function(el){
+  el.addEventListener('input',function(){ el.closest('.campo').classList.remove('con-error'); el.removeAttribute('aria-invalid'); });
+});
+})();
+</script>
+</body>
+</html>

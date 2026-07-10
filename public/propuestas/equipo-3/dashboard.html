@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASMOVIL — Consola del core bancario · Sala de operaciones SPEI</title>
+<meta name="description" content="Propuesta de producto: consola del core bancario de MASMOVIL. Operación SPEI vía STP en tiempo real, kill switch, expediente PLD/AML y conciliación.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   EQUIPO MUSEO · BANCA PRIVADA / GRABADO — CONSOLA
+   Azul marino #0A1428 · Dorado champán #C9A961 · Marfil
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#0A1428;
+  --navy-deep:#060D1C;
+  --navy-panel:#0E1B36;
+  --line:rgba(201,169,97,.24);
+  --line-soft:rgba(201,169,97,.12);
+  --gold:#C9A961;
+  --gold-bright:#DDBE7A;
+  --ivory:#F3EDDD;
+  --ivory-body:#D9D2BE;
+  --muted:#A99F86;
+  --in:#9FB98F;
+  --out:#DDBE7A;
+  --alert:#C4694E;
+  --alert-bright:#E08A6D;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Inter',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--navy);
+  color:var(--ivory-body);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+::selection{background:var(--gold);color:var(--navy)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;border-radius:2px}
+img,svg,canvas{display:block;max-width:100%}
+a{color:var(--gold-bright);text-decoration:none}
+button{font-family:var(--sans);cursor:pointer}
+abbr{text-decoration:none}
+
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:400;
+  background:var(--gold);color:var(--navy);padding:.7rem 1.2rem;
+  font-weight:600;font-size:.85rem;
+}
+.skip-link:focus{left:1rem;top:1rem}
+
+h1,h2,h3{font-family:var(--serif);color:var(--ivory);font-weight:600;line-height:1.15}
+.eyebrow{
+  font-size:.66rem;font-weight:600;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--gold);
+}
+.roman{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--gold);letter-spacing:.1em}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ═══ Marco de aplicación ═══ */
+.app{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
+
+/* ─── Costado (gabinete) ─── */
+.sidebar{
+  background:var(--navy-deep);
+  border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{
+  display:flex;align-items:center;gap:.7rem;
+  padding:1.35rem 1.5rem;border-bottom:1px solid var(--line-soft);
+}
+.brand svg{width:30px;height:30px;color:var(--gold);flex:none}
+.brand-name{font-family:var(--serif);font-weight:700;font-size:1.18rem;letter-spacing:.2em;color:var(--ivory)}
+.brand-sub{font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);display:block;margin-top:.1rem}
+.nav-toggle{
+  display:none;margin-left:auto;background:none;border:1px solid var(--line);
+  color:var(--gold);padding:.45rem .7rem;font-size:.68rem;
+  letter-spacing:.14em;text-transform:uppercase;
+}
+
+.side-body{display:flex;flex-direction:column;flex:1;min-height:0}
+.entity-block{padding:1.2rem 1.5rem;border-bottom:1px solid var(--line-soft)}
+.entity-block label{display:block;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.entity-select{
+  width:100%;background:var(--navy-panel);color:var(--ivory);
+  border:1px solid var(--line);padding:.65rem .8rem;
+  font-family:var(--sans);font-size:.82rem;letter-spacing:.02em;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23C9A961'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .8rem center;
+  cursor:pointer;
+}
+
+.side-nav{padding:1rem 0;flex:1}
+.side-nav ul{list-style:none}
+.side-nav a{
+  display:flex;align-items:center;gap:.85rem;
+  padding:.72rem 1.5rem;color:var(--ivory-body);
+  font-size:.82rem;letter-spacing:.06em;
+  border-left:2px solid transparent;
+  transition:background .4s var(--ease),color .4s var(--ease),border-color .4s var(--ease);
+}
+.side-nav a:hover{color:var(--gold-bright);background:rgba(201,169,97,.05)}
+.side-nav a.active{color:var(--gold-bright);border-left-color:var(--gold);background:rgba(201,169,97,.07)}
+.side-nav .roman{width:1.4rem;text-align:right;font-size:.95rem;flex:none}
+.side-nav .badge{
+  margin-left:auto;font-family:var(--mono);font-size:.66rem;
+  color:var(--navy);background:var(--gold);padding:.06rem .42rem;border-radius:2px;
+}
+
+/* Kill switch (gabinete) */
+.ks-panel{
+  margin:1rem 1.2rem 1.2rem;border:1px solid var(--line);
+  padding:1.1rem 1.1rem 1.2rem;position:relative;background:rgba(6,13,28,.6);
+}
+.ks-panel::before,.ks-panel::after{
+  content:"";position:absolute;width:10px;height:10px;border:1px solid var(--gold);
+}
+.ks-panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.ks-panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.ks-title{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem}
+.ks-desc{font-size:.72rem;color:var(--muted);line-height:1.5;margin-bottom:.9rem}
+.ks-switch{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:.8rem;
+  background:transparent;border:1px solid var(--line);color:var(--ivory);
+  padding:.7rem .9rem;font-size:.74rem;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  transition:border-color .4s var(--ease),color .4s var(--ease),background .4s var(--ease);
+}
+.ks-switch .ks-track{
+  width:38px;height:20px;border:1px solid var(--gold);border-radius:20px;
+  position:relative;flex:none;transition:border-color .4s var(--ease);
+}
+.ks-switch .ks-knob{
+  position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+  background:var(--gold);transition:transform .45s var(--ease),background .45s var(--ease);
+}
+.ks-switch:hover{border-color:var(--gold)}
+body.ks-active .ks-switch{border-color:var(--alert);color:var(--alert-bright)}
+body.ks-active .ks-switch .ks-track{border-color:var(--alert)}
+body.ks-active .ks-switch .ks-knob{transform:translateX(18px);background:var(--alert-bright)}
+.ks-state{font-family:var(--mono);font-size:.64rem;color:var(--muted);margin-top:.55rem}
+body.ks-active .ks-state{color:var(--alert-bright)}
+
+.side-user{
+  border-top:1px solid var(--line-soft);padding:1.05rem 1.5rem;
+  display:flex;align-items:center;gap:.8rem;font-size:.76rem;
+}
+.side-user .avatar{
+  width:34px;height:34px;border:1px solid var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-style:italic;color:var(--gold-bright);flex:none;
+}
+.side-user strong{display:block;color:var(--ivory);font-weight:600}
+.side-user span{color:var(--muted);font-size:.68rem}
+.tfa{
+  margin-left:auto;font-family:var(--mono);font-size:.6rem;color:var(--in);
+  border:1px solid rgba(159,185,143,.4);padding:.15rem .45rem;letter-spacing:.08em;
+}
+
+/* ─── Salón principal ─── */
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;
+  padding:1.1rem clamp(1rem,2.5vw,2.2rem);
+  border-bottom:1px solid var(--line-soft);
+  background:rgba(6,13,28,.5);position:sticky;top:0;z-index:60;
+  backdrop-filter:blur(8px);
+}
+.topbar h1{font-size:1.45rem;font-weight:600}
+.topbar .crumb{font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);display:block}
+.top-status{display:flex;align-items:center;gap:1.2rem;margin-left:auto;flex-wrap:wrap}
+.pill{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;
+  border:1px solid var(--line);padding:.42rem .8rem;color:var(--ivory-body);
+  white-space:nowrap;
+}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--in);flex:none}
+.pill.online .dot{animation:pulse 3.2s var(--ease) infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(159,185,143,.45)}50%{box-shadow:0 0 0 5px rgba(159,185,143,0)}}
+.pill.halted{border-color:var(--alert);color:var(--alert-bright)}
+.pill.halted .dot{background:var(--alert-bright);animation:none}
+.clock{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+
+/* Bandera de emergencia */
+.ks-banner{
+  display:none;align-items:center;gap:.9rem;flex-wrap:wrap;
+  padding:.8rem clamp(1rem,2.5vw,2.2rem);
+  background:rgba(196,105,78,.12);border-bottom:1px solid var(--alert);
+  color:var(--alert-bright);font-size:.8rem;
+}
+body.ks-active .ks-banner{display:flex}
+.ks-banner svg{width:18px;height:18px;flex:none}
+.ks-banner .num{font-size:.72rem;opacity:.85}
+.ks-banner button{
+  margin-left:auto;background:none;border:1px solid var(--alert);
+  color:var(--alert-bright);padding:.4rem .9rem;font-size:.68rem;
+  letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+}
+.ks-banner button:hover{background:rgba(196,105,78,.15)}
+
+.content{padding:clamp(1.2rem,2.5vw,2.2rem);display:grid;grid-template-columns:minmax(0,1fr);gap:1.4rem;max-width:1440px;width:100%;min-width:0}
+.panel{min-width:0}
+
+/* ─── Tarjetas KPI ─── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4rem}
+.kpi{
+  border:1px solid var(--line-soft);background:rgba(14,27,54,.45);
+  padding:1.3rem 1.4rem 1.2rem;position:relative;overflow:hidden;
+}
+.kpi::after{
+  content:"";position:absolute;inset:auto 0 0 0;height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent 70%);opacity:.5;
+}
+.kpi-label{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:.6rem}
+.kpi-label .roman{font-size:.9rem}
+.kpi-value{
+  font-family:var(--serif);font-weight:600;color:var(--ivory);
+  font-size:clamp(1.5rem,2vw,1.9rem);margin-top:.55rem;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.kpi-value .cur{font-size:.62em;color:var(--gold-bright);font-style:italic;margin-right:.15em}
+.kpi-meta{font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-top:.5rem}
+.kpi-meta .up{color:var(--in)}
+.kpi-meta .down{color:var(--gold-bright)}
+
+/* ─── Paneles ─── */
+.panel{border:1px solid var(--line-soft);background:rgba(6,13,28,.5)}
+.panel-head{
+  display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;
+  padding:1rem 1.4rem;border-bottom:1px solid var(--line-soft);
+}
+.panel-head h2{font-size:1.22rem}
+.panel-head .eyebrow{margin-right:auto}
+.panel-head h2 + .eyebrow{margin-right:0;margin-left:auto}
+.panel-note{font-family:var(--mono);font-size:.64rem;color:var(--muted);letter-spacing:.06em}
+.row-2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1.4rem;align-items:stretch}
+.row-3{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:1.4rem;align-items:stretch}
+
+/* Gráfica */
+.chart-body{position:relative;padding:1.2rem 1.4rem 1rem}
+#flowChart{width:100%;height:280px}
+.chart-tip{
+  position:absolute;pointer-events:none;display:none;z-index:5;
+  background:var(--navy-deep);border:1px solid var(--line);
+  padding:.55rem .8rem;font-family:var(--mono);font-size:.66rem;line-height:1.7;
+  color:var(--ivory-body);white-space:nowrap;transform:translate(-50%,-110%);
+}
+.chart-tip b{color:var(--gold-bright);font-weight:500}
+.legend{display:flex;gap:1.6rem;padding:0 1.4rem 1.1rem;font-size:.7rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:.5rem}
+.legend i{width:16px;height:2px;background:var(--gold);display:inline-block}
+.legend .li-out i{background:var(--ivory-body)}
+
+/* Feed */
+.feed-wrap{max-height:420px;overflow:auto;overscroll-behavior:contain}
+table.ledger{width:100%;border-collapse:collapse;font-size:.78rem}
+table.ledger th,table.ledger td{padding:.68rem 1rem;text-align:left;white-space:nowrap}
+table.ledger thead th{
+  font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;border-bottom:1px solid var(--line-soft);
+  position:sticky;top:0;background:var(--navy-deep);z-index:2;
+}
+table.ledger tbody tr{border-bottom:1px solid rgba(201,169,97,.07)}
+table.ledger tbody tr:hover{background:rgba(201,169,97,.04)}
+table.ledger td:first-child{font-family:var(--mono);color:var(--muted);font-size:.72rem}
+.t-abono{color:var(--in)}
+.t-cargo{color:var(--gold-bright)}
+.mono-cell{font-family:var(--mono);font-size:.72rem}
+.amt{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+td.amt{color:var(--ivory)}
+th.amt{text-align:right}
+.estado{
+  display:inline-flex;align-items:center;gap:.45rem;font-size:.68rem;
+  letter-spacing:.06em;
+}
+.estado::before{content:"";width:6px;height:6px;border-radius:50%;flex:none}
+.e-liquidada{color:var(--in)} .e-liquidada::before{background:var(--in)}
+.e-transito{color:var(--gold-bright)} .e-transito::before{background:var(--gold-bright)}
+.e-retenida{color:var(--alert-bright)} .e-retenida::before{background:var(--alert-bright)}
+.e-devuelta{color:var(--muted)} .e-devuelta::before{background:var(--muted)}
+.cep-link{font-family:var(--mono);font-size:.68rem;border-bottom:1px dotted var(--line);padding-bottom:1px}
+.mini-btn{
+  background:none;border:1px solid var(--line);color:var(--gold-bright);
+  font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.3rem .7rem;transition:background .35s var(--ease);
+}
+.mini-btn:hover{background:rgba(201,169,97,.1)}
+tr.fresh{animation:freshRow 1.6s var(--ease)}
+@keyframes freshRow{0%{background:rgba(201,169,97,.16)}100%{background:transparent}}
+
+/* Dispersión */
+.disp-body{padding:1.3rem 1.4rem 1.4rem;display:grid;gap:1.1rem}
+.disp-title{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.82rem}
+.disp-title strong{color:var(--ivory);font-weight:600}
+.progress{
+  height:8px;border:1px solid var(--line);position:relative;background:rgba(6,13,28,.8);
+}
+.progress i{
+  position:absolute;inset:1px auto 1px 1px;width:0%;
+  background:linear-gradient(90deg,rgba(201,169,97,.55),var(--gold));
+  transition:width 1.2s var(--ease);
+}
+body.ks-active .progress i{background:linear-gradient(90deg,rgba(196,105,78,.5),var(--alert))}
+.disp-stats{display:grid;grid-template-columns:repeat(4,auto);gap:1.6rem;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.disp-stats b{display:block;color:var(--ivory);font-size:.92rem;font-weight:500}
+.disp-stats .ok b{color:var(--in)}
+.disp-stats .warn b{color:var(--alert-bright)}
+
+/* Webhooks */
+.hook-list{list-style:none;padding:.4rem 0}
+.hook-list li{
+  display:grid;grid-template-columns:auto 1fr auto auto;gap:1rem;align-items:center;
+  padding:.75rem 1.4rem;border-bottom:1px solid rgba(201,169,97,.07);font-size:.76rem;
+}
+.hook-list li:last-child{border-bottom:0}
+.hook-list .dot{width:7px;height:7px;border-radius:50%;background:var(--in)}
+.hook-list .dot.deg{background:var(--gold-bright)}
+.hook-list code{font-family:var(--mono);font-size:.7rem;color:var(--ivory-body);overflow:hidden;text-overflow:ellipsis}
+.hook-list .lat{font-family:var(--mono);font-size:.66rem;color:var(--muted)}
+.hook-list .sig{font-family:var(--mono);font-size:.6rem;color:var(--in);border:1px solid rgba(159,185,143,.35);padding:.12rem .4rem}
+
+/* Cumplimiento */
+.alerts tbody td:first-child{font-family:var(--serif);font-style:italic;color:var(--gold);font-size:.95rem}
+.sev{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase}
+.sev-alta{color:var(--alert-bright)} .sev-media{color:var(--gold-bright)} .sev-baja{color:var(--muted)}
+
+/* ─── Expediente (cajón) ─── */
+.drawer-veil{
+  position:fixed;inset:0;background:rgba(6,13,28,.72);z-index:150;
+  opacity:0;pointer-events:none;transition:opacity .5s var(--ease);
+}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);z-index:160;
+  background:var(--navy-deep);border-left:1px solid var(--line);
+  transform:translateX(102%);visibility:hidden;
+  transition:transform .55s var(--ease),visibility 0s linear .55s;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+body.drawer-open .drawer{transform:none;visibility:visible;transition:transform .55s var(--ease)}
+body.drawer-open .drawer-veil{opacity:1;pointer-events:auto}
+.drawer-head{
+  display:flex;align-items:center;gap:1rem;
+  padding:1.2rem 1.5rem;border-bottom:1px solid var(--line-soft);
+  position:sticky;top:0;background:var(--navy-deep);z-index:2;
+}
+.drawer-head h2{font-size:1.25rem}
+.drawer-head .eyebrow{display:block;margin-bottom:.2rem}
+.drawer-close{
+  margin-left:auto;background:none;border:1px solid var(--line);color:var(--gold-bright);
+  width:34px;height:34px;font-size:1rem;line-height:1;flex:none;
+}
+.drawer-close:hover{background:rgba(201,169,97,.1)}
+.drawer-body{padding:1.4rem 1.5rem 2rem;display:grid;gap:1.5rem}
+.dossier-id{
+  display:grid;grid-template-columns:auto 1fr;gap:1.1rem;align-items:center;
+  border:1px solid var(--line-soft);padding:1.1rem 1.2rem;
+}
+.dossier-id svg{width:52px;height:52px;color:var(--gold)}
+.dossier-id h3{font-size:1.15rem}
+.dossier-id .num{font-size:.68rem;color:var(--muted);display:block;margin-top:.15rem}
+.score-block .eyebrow{margin-bottom:.6rem;display:block}
+.score-bar{height:8px;border:1px solid var(--line);position:relative;background:rgba(6,13,28,.8)}
+.score-bar i{position:absolute;inset:1px auto 1px 1px;width:0%;background:var(--in);transition:width 1s var(--ease)}
+.score-bar i.mid{background:var(--gold)}
+.score-bar i.high{background:var(--alert)}
+.score-read{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-top:.45rem}
+.score-read b{color:var(--ivory);font-weight:500}
+.dossier-table{width:100%;border-collapse:collapse;font-size:.76rem}
+.dossier-table th{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:left;padding:.5rem 0;border-bottom:1px solid var(--line-soft);font-weight:600}
+.dossier-table td{padding:.55rem 0;border-bottom:1px solid rgba(201,169,97,.08)}
+.dossier-table td:last-child{text-align:right;font-family:var(--mono);font-size:.68rem}
+.clean{color:var(--in)}
+.hit{color:var(--alert-bright)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:.9rem 1.4rem;font-size:.76rem}
+.kv div span{display:block;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem}
+.kv div b{color:var(--ivory);font-weight:500;font-family:var(--mono);font-size:.78rem}
+.drawer-actions{display:grid;gap:.7rem}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+  font-size:.74rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:.8rem 1.5rem;border:1px solid var(--gold);
+  transition:background .45s var(--ease),color .45s var(--ease);
+}
+.btn-solid{background:var(--gold);color:var(--navy)}
+.btn-solid:hover{background:var(--gold-bright)}
+.btn-ghost{color:var(--gold-bright);background:transparent}
+.btn-ghost:hover{background:rgba(201,169,97,.1)}
+.drawer-note{font-size:.7rem;color:var(--muted);border-top:1px solid var(--line-soft);padding-top:1rem}
+
+/* ─── Modal kill switch ─── */
+.modal-veil{
+  position:fixed;inset:0;z-index:200;background:rgba(6,13,28,.8);
+  display:none;align-items:center;justify-content:center;padding:1.2rem;
+}
+.modal-veil.open{display:flex}
+.modal{
+  width:min(460px,100%);background:var(--navy-deep);border:1px solid var(--gold);
+  position:relative;padding:2rem 1.8rem 1.8rem;
+}
+.modal::before,.modal::after{content:"";position:absolute;width:12px;height:12px;border:1px solid var(--gold)}
+.modal::before{top:5px;left:5px;border-right:0;border-bottom:0}
+.modal::after{bottom:5px;right:5px;border-left:0;border-top:0}
+.modal h2{font-size:1.4rem;margin:.6rem 0 .7rem}
+.modal p{font-size:.8rem;color:var(--muted);margin-bottom:1.2rem}
+.modal label{display:block;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:.9rem 0 .4rem}
+.modal input{
+  width:100%;background:var(--navy-panel);border:1px solid var(--line);
+  color:var(--ivory);font-family:var(--mono);font-size:.9rem;letter-spacing:.14em;
+  padding:.7rem .9rem;
+}
+.modal input::placeholder{color:rgba(169,159,134,.5);letter-spacing:.06em}
+.modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap}
+.modal-actions .btn{flex:1}
+.btn-danger{border-color:var(--alert);background:var(--alert);color:var(--ivory)}
+.btn-danger:hover{background:var(--alert-bright)}
+.btn-danger[disabled],.btn-solid[disabled]{opacity:.4;cursor:not-allowed}
+.modal-err{font-family:var(--mono);font-size:.66rem;color:var(--alert-bright);min-height:1.1rem;margin-top:.5rem}
+
+/* Aviso flotante (toast) */
+.toast{
+  position:fixed;left:50%;bottom:1.4rem;transform:translate(-50%,180%);
+  visibility:hidden;
+  z-index:300;background:var(--navy-deep);border:1px solid var(--gold);
+  color:var(--ivory);padding:.85rem 1.4rem;font-size:.78rem;
+  transition:transform .6s var(--ease),visibility 0s linear .6s;
+  max-width:min(92vw,520px);text-align:center;
+}
+.toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .6s var(--ease)}
+
+/* Revelado */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal.is-visible{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+
+/* ─── Responsivo ─── */
+@media (max-width:1180px){
+  .kpis{grid-template-columns:1fr 1fr}
+  .row-2,.row-3{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:1024px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line-soft)}
+  .nav-toggle{display:block}
+  .side-body{display:none}
+  .sidebar.open .side-body{display:flex}
+  .side-nav{padding:.4rem 0}
+}
+@media (max-width:640px){
+  .kpis{grid-template-columns:1fr}
+  .topbar h1{font-size:1.2rem}
+  .top-status{margin-left:0;width:100%;justify-content:space-between}
+  .disp-stats{grid-template-columns:1fr 1fr;gap:1rem}
+  .hook-list li{grid-template-columns:auto 1fr;grid-auto-rows:auto}
+  .hook-list .lat{grid-column:2}
+  .feed-wrap{max-height:360px}
+  #flowChart{height:220px}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<!-- ═══ SÍMBOLOS DE GRABADO ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="sym-rosette" viewBox="0 0 26 26">
+      <g fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="13" cy="13" r="11"/>
+        <circle cx="13" cy="13" r="6.5"/>
+        <path d="M13 2v22M2 13h22M5.2 5.2l15.6 15.6M20.8 5.2L5.2 20.8"/>
+        <circle cx="13" cy="13" r="2" fill="currentColor" stroke="none"/>
+      </g>
+    </symbol>
+    <symbol id="sym-halt" viewBox="0 0 18 18">
+      <circle cx="9" cy="9" r="8" fill="none" stroke="currentColor"/>
+      <path d="M4.5 4.5l9 9" stroke="currentColor" fill="none" stroke-width="1.3"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+<!-- ═══ GABINETE ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><use href="#sym-rosette"/></svg>
+    <div>
+      <span class="brand-name">MASMOVIL</span>
+      <span class="brand-sub">Consola · Core SPEI</span>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="sideBody">Menú</button>
+  </div>
+
+  <div class="side-body" id="sideBody">
+    <div class="entity-block">
+      <label for="entitySelect">Razón social en despacho</label>
+      <select class="entity-select" id="entitySelect">
+        <option value="0" selected>Grupo consolidado</option>
+        <option value="1">MASMOVIL, S.A. de C.V.</option>
+        <option value="2">MASMOVIL PAGOS, S.A.P.I. de C.V.</option>
+      </select>
+    </div>
+
+    <nav class="side-nav" aria-label="Secciones de la consola">
+      <ul>
+        <li><a href="#panel" class="active"><span class="roman" aria-hidden="true">i</span>Sala de operaciones</a></li>
+        <li><a href="#operaciones"><span class="roman" aria-hidden="true">ii</span>Libro de operaciones</a></li>
+        <li><a href="#dispersiones"><span class="roman" aria-hidden="true">iii</span>Dispersiones</a></li>
+        <li><a href="#cumplimiento"><span class="roman" aria-hidden="true">iv</span>Cumplimiento<span class="badge" id="alertBadge">3</span></a></li>
+        <li><a href="#webhooks"><span class="roman" aria-hidden="true">v</span>Webhooks</a></li>
+      </ul>
+    </nav>
+
+    <div class="ks-panel">
+      <p class="ks-title">Interruptor de emergencia</p>
+      <p class="ks-desc">Detiene toda operación SPEI de salida de la entidad en despacho. Las entradas continúan recibiéndose.</p>
+      <button class="ks-switch" id="ksSwitch" aria-pressed="false">
+        <span id="ksSwitchLabel">Operación abierta</span>
+        <span class="ks-track" aria-hidden="true"><span class="ks-knob"></span></span>
+      </button>
+      <p class="ks-state num" id="ksState">Última prueba: 01 jul 2026 · 06:00</p>
+    </div>
+
+    <div class="side-user">
+      <span class="avatar" aria-hidden="true">TA</span>
+      <div>
+        <strong>T. Aranda</strong>
+        <span>Operadora principal</span>
+      </div>
+      <span class="tfa" title="Segundo factor verificado en esta sesión">2FA ✓</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ SALÓN PRINCIPAL ═══ -->
+<div class="main">
+  <header class="topbar">
+    <div>
+      <span class="crumb">Consola · Propuesta de producto</span>
+      <h1>Sala de operaciones</h1>
+    </div>
+    <div class="top-status">
+      <span class="pill online" id="speiPill"><span class="dot" aria-hidden="true"></span>SPEI · STP — EN LÍNEA</span>
+      <span class="pill"><span class="dot" aria-hidden="true" style="background:var(--gold)"></span>CEP 100%</span>
+      <span class="clock num" id="clock" aria-live="off">— · —</span>
+    </div>
+  </header>
+
+  <div class="ks-banner" role="status" id="ksBanner">
+    <svg aria-hidden="true"><use href="#sym-halt"/></svg>
+    <strong>Operación de salida detenida.</strong>
+    <span class="num" id="ksFolio"></span>
+    <span>Los cargos entrantes a despacho quedan retenidos hasta reanudar.</span>
+    <button type="button" id="ksResumeBtn">Reanudar operación</button>
+  </div>
+
+  <main class="content" id="contenido">
+
+    <!-- ═══ KPI ═══ -->
+    <section class="kpis" id="panel" aria-label="Cifras del día">
+      <div class="kpi reveal">
+        <p class="kpi-label"><span>Saldo en bóveda</span><span class="roman" aria-hidden="true">i</span></p>
+        <p class="kpi-value"><span class="cur">$</span><span id="kpiSaldo">0.00</span></p>
+        <p class="kpi-meta">MXN · <span id="kpiEntidad">Grupo consolidado</span></p>
+      </div>
+      <div class="kpi reveal">
+        <p class="kpi-label"><span>Entradas de hoy</span><span class="roman" aria-hidden="true">ii</span></p>
+        <p class="kpi-value"><span class="cur">$</span><span id="kpiIn">0.00</span></p>
+        <p class="kpi-meta"><span class="up">▲</span> <span id="kpiInOps">0</span> abonos liquidados · CEP emitido</p>
+      </div>
+      <div class="kpi reveal">
+        <p class="kpi-label"><span>Salidas de hoy</span><span class="roman" aria-hidden="true">iii</span></p>
+        <p class="kpi-value"><span class="cur">$</span><span id="kpiOut">0.00</span></p>
+        <p class="kpi-meta"><span class="down">▼</span> <span id="kpiOutOps">0</span> cargos · 0 duplicados (idempotencia)</p>
+      </div>
+      <div class="kpi reveal">
+        <p class="kpi-label"><span>CLABEs activas</span><span class="roman" aria-hidden="true">iv</span></p>
+        <p class="kpi-value"><span id="kpiClabes">0</span></p>
+        <p class="kpi-meta"><span class="up">+38 emitidas hoy</span> · por API, sin tope</p>
+      </div>
+    </section>
+
+    <!-- ═══ FLUJO + FEED ═══ -->
+    <section class="row-2" aria-label="Flujo del día y operaciones en vivo">
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">I · El caudal</p>
+            <h2>Flujo del día — entradas y salidas</h2>
+          </div>
+          <span class="panel-note" id="chartCut">corte —:00 CDMX</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="flowChart" role="img" aria-label="Gráfica de líneas: monto por hora de entradas y salidas SPEI del día, en pesos mexicanos"></canvas>
+          <div class="chart-tip" id="chartTip" aria-hidden="true"></div>
+        </div>
+        <div class="legend">
+          <span><i aria-hidden="true"></i>Entradas (abonos)</span>
+          <span class="li-out"><i aria-hidden="true"></i>Salidas (cargos)</span>
+        </div>
+      </div>
+
+      <div class="panel reveal" id="operaciones">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">II · El libro</p>
+            <h2>Operaciones en vivo</h2>
+          </div>
+          <span class="panel-note" id="feedNote">actualización continua</span>
+        </div>
+        <div class="feed-wrap" role="log" aria-live="polite" aria-label="Operaciones SPEI recientes">
+          <table class="ledger">
+            <thead>
+              <tr>
+                <th scope="col">Hora</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Clave de rastreo</th>
+                <th scope="col">Contraparte</th>
+                <th scope="col" class="amt">Monto MXN</th>
+                <th scope="col">Estado</th>
+                <th scope="col"><abbr title="Comprobante Electrónico de Pago">CEP</abbr></th>
+                <th scope="col"><abbr title="Expediente">Exp.</abbr></th>
+              </tr>
+            </thead>
+            <tbody id="feedBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ DISPERSIÓN + WEBHOOKS ═══ -->
+    <section class="row-3" aria-label="Dispersiones y webhooks">
+      <div class="panel reveal" id="dispersiones">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">III · La nómina</p>
+            <h2>Dispersión en curso</h2>
+          </div>
+        </div>
+        <div class="disp-body">
+          <p class="disp-title">
+            <strong>Nómina 2ª quincena de julio · lote NOM-2026-07-15A</strong>
+            <span class="num" id="dispPct">0%</span>
+          </p>
+          <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="1482" aria-valuenow="0" aria-label="Avance de la dispersión de nómina" id="dispBar"><i></i></div>
+          <div class="disp-stats">
+            <div><b class="num" id="dispTotal">1,482</b>instrucciones</div>
+            <div class="ok"><b class="num" id="dispOk">0</b>liquidadas</div>
+            <div><b class="num" id="dispTransit">0</b>en tránsito</div>
+            <div class="warn"><b class="num" id="dispDev">2</b>devueltas</div>
+          </div>
+          <p class="panel-note" id="dispNote">Resultado individual por colaborador · conciliación automática al cierre del lote.</p>
+        </div>
+      </div>
+
+      <div class="panel reveal" id="webhooks">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">IV · Los mensajeros</p>
+            <h2>Webhooks firmados</h2>
+          </div>
+          <span class="panel-note">HMAC-SHA256 · anti-replay</span>
+        </div>
+        <ul class="hook-list">
+          <li><span class="dot" aria-hidden="true"></span><code>https://api.cliente-tesoro.mx/spei/abonos</code><span class="lat num" data-hook-lat>84 ms</span><span class="sig">firma ✓</span></li>
+          <li><span class="dot" aria-hidden="true"></span><code>https://erp.cliente-tesoro.mx/hooks/liquidaciones</code><span class="lat num" data-hook-lat>112 ms</span><span class="sig">firma ✓</span></li>
+          <li><span class="dot deg" aria-hidden="true"></span><code>https://backup.cliente-tesoro.mx/spei</code><span class="lat num" data-hook-lat>1.9 s · reintento 2/5</span><span class="sig">firma ✓</span></li>
+          <li><span class="dot" aria-hidden="true"></span><code>https://conta.despacho-rivas.mx/notificaciones</code><span class="lat num" data-hook-lat>96 ms</span><span class="sig">firma ✓</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══ CUMPLIMIENTO ═══ -->
+    <section class="panel reveal" id="cumplimiento" aria-label="Cumplimiento PLD/AML">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">V · El sello</p>
+          <h2>Cumplimiento — alertas PLD/AML</h2>
+        </div>
+        <span class="panel-note">screening en alta y por operación · listas OFAC · ONU · UE · PPE · SAT 69-B</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ledger alerts">
+          <thead>
+            <tr>
+              <th scope="col">Folio</th>
+              <th scope="col">Severidad</th>
+              <th scope="col">Regla disparada</th>
+              <th scope="col">Contraparte</th>
+              <th scope="col" class="amt">Monto MXN</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Expediente</th>
+            </tr>
+          </thead>
+          <tbody id="alertBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="panel-note" style="padding:0 .2rem">
+      MASMOVIL, S.A. de C.V. · RFC MAS191203EY6 · Conexión SPEI vía STP, participante autorizado de Banco de México ·
+      Consola de demostración con datos simulados · <a href="landing.html">Volver a la presentación</a>
+    </p>
+  </main>
+</div>
+</div>
+
+<!-- ═══ CAJÓN: EXPEDIENTE ═══ -->
+<div class="drawer-veil" id="drawerVeil" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <span class="eyebrow">Expediente de riesgo</span>
+      <h2 id="drawerTitle">—</h2>
+    </div>
+    <button class="drawer-close" id="drawerClose" aria-label="Cerrar expediente">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="dossier-id">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><use href="#sym-rosette"/></svg>
+      <div>
+        <h3 id="dsName">—</h3>
+        <span class="num" id="dsMeta">—</span>
+      </div>
+    </div>
+
+    <div class="score-block">
+      <span class="eyebrow">Calificación de riesgo</span>
+      <div class="score-bar"><i id="dsScoreBar"></i></div>
+      <p class="score-read"><span>Scoring transaccional</span><b id="dsScoreVal">—</b></p>
+      <p class="score-read" style="margin-top:.15rem"><span>Nivel</span><b id="dsScoreNivel">—</b></p>
+    </div>
+
+    <div>
+      <span class="eyebrow" style="display:block;margin-bottom:.5rem">Screening de listas</span>
+      <table class="dossier-table">
+        <thead><tr><th scope="col">Lista</th><th scope="col">Resultado</th></tr></thead>
+        <tbody id="dsListas"></tbody>
+      </table>
+    </div>
+
+    <div class="kv">
+      <div><span>CLABE asignada</span><b id="dsClabe">—</b></div>
+      <div><span>Alta en plataforma</span><b id="dsAlta">—</b></div>
+      <div><span>Límite diario</span><b id="dsLimite">—</b></div>
+      <div><span>Usado hoy</span><b id="dsUsado">—</b></div>
+      <div><span>Última operación</span><b id="dsUltima">—</b></div>
+      <div><span>CEP Banxico</span><b><a class="cep-link" href="#" onclick="return false" id="dsCep">consultar folio</a></b></div>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="btn btn-solid" id="dsApprove" type="button">Marcar como revisado</button>
+      <button class="btn btn-ghost" id="dsEscalate" type="button">Escalar al oficial de cumplimiento</button>
+    </div>
+
+    <p class="drawer-note">
+      Bitácora inmutable: cada consulta a este expediente queda asentada con usuario, fecha y motivo,
+      exportable para revisión regulatoria.
+    </p>
+  </div>
+</aside>
+
+<!-- ═══ MODAL: KILL SWITCH ═══ -->
+<div class="modal-veil" id="ksModalVeil">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ksModalTitle" id="ksModal">
+    <p class="eyebrow" id="ksModalKind">Interruptor de emergencia</p>
+    <h2 id="ksModalTitle">Detener operación de salida</h2>
+    <p id="ksModalText">
+      Se suspenderán de inmediato todos los cargos SPEI de la entidad en despacho.
+      Las entradas continúan. La acción queda asentada en la bitácora con folio, usuario y hora.
+    </p>
+    <div id="ksWordRow">
+      <label for="ksWord">Escriba <strong style="color:var(--ivory)">DETENER</strong> para confirmar</label>
+      <input type="text" id="ksWord" autocomplete="off" spellcheck="false" placeholder="DETENER">
+    </div>
+    <label for="ksCode">Código de segundo factor (6 dígitos)</label>
+    <input type="text" id="ksCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">
+    <p class="modal-err" id="ksErr" role="alert"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" id="ksCancel">Cancelar</button>
+      <button class="btn btn-danger" type="button" id="ksConfirm" disabled>Detener salida</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var $ = function(id){ return document.getElementById(id); };
+
+/* ══════════ Utilidades ══════════ */
+var nf = new Intl.NumberFormat("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+var nfInt = new Intl.NumberFormat("es-MX");
+function fmt(n){ return nf.format(n); }
+function pad(n){ return (n<10?"0":"")+n; }
+function rand(min,max){ return min + Math.random()*(max-min); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function hora(d){ return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
+
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 3400);
+}
+
+/* ══════════ Reloj ══════════ */
+var MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function tickClock(){
+  var d = new Date();
+  $("clock").textContent = pad(d.getDate())+" "+MESES[d.getMonth()]+" "+d.getFullYear()+" · "+hora(d)+" CDMX";
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+/* ══════════ Revelado ceremonioso ══════════ */
+var revealEls = document.querySelectorAll(".reveal");
+if(!reduceMotion && "IntersectionObserver" in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add("is-visible"); io.unobserve(en.target); }
+    });
+  }, {threshold:.12});
+  revealEls.forEach(function(el){ io.observe(el); });
+}else{
+  revealEls.forEach(function(el){ el.classList.add("is-visible"); });
+}
+
+/* ══════════ Menú móvil ══════════ */
+var navToggle = $("navToggle"), sidebar = $("sidebar");
+navToggle.addEventListener("click", function(){
+  var open = sidebar.classList.toggle("open");
+  navToggle.setAttribute("aria-expanded", String(open));
+});
+document.querySelectorAll(".side-nav a").forEach(function(a){
+  a.addEventListener("click", function(){
+    document.querySelectorAll(".side-nav a").forEach(function(x){ x.classList.remove("active"); });
+    a.classList.add("active");
+    sidebar.classList.remove("open");
+    navToggle.setAttribute("aria-expanded","false");
+  });
+});
+
+/* ══════════ Entidades (multi-empresa) ══════════ */
+var ENTIDADES = [
+  { nombre:"Grupo consolidado",              saldo:48236914.22, inHoy:12845300.18, outHoy:9410772.64, inOps:312, outOps:287, clabes:14286 },
+  { nombre:"MASMOVIL, S.A. de C.V.",         saldo:29404187.90, inHoy: 8120446.55, outHoy:6031200.12, inOps:201, outOps:184, clabes: 9412 },
+  { nombre:"MASMOVIL PAGOS, S.A.P.I. de C.V.", saldo:18832726.32, inHoy: 4724853.63, outHoy:3379572.52, inOps:111, outOps:103, clabes: 4874 }
+];
+var entidadActiva = 0;
+
+function animNumber(el, target, decimals, dur){
+  if(reduceMotion){ el.textContent = decimals ? fmt(target) : nfInt.format(Math.round(target)); return; }
+  var startTxt = el.textContent.replace(/[^0-9.-]/g,"");
+  var start = parseFloat(startTxt) || 0;
+  var t0 = null; dur = dur || 1200;
+  function step(ts){
+    if(t0===null) t0 = ts;
+    var p = Math.min((ts-t0)/dur, 1);
+    var eased = 1 - Math.pow(1-p, 3);
+    var v = start + (target-start)*eased;
+    el.textContent = decimals ? fmt(v) : nfInt.format(Math.round(v));
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function pintarKPIs(){
+  var e = ENTIDADES[entidadActiva];
+  animNumber($("kpiSaldo"), e.saldo, true);
+  animNumber($("kpiIn"),    e.inHoy, true);
+  animNumber($("kpiOut"),   e.outHoy, true);
+  animNumber($("kpiClabes"),e.clabes, false);
+  $("kpiInOps").textContent  = nfInt.format(e.inOps);
+  $("kpiOutOps").textContent = nfInt.format(e.outOps);
+  $("kpiEntidad").textContent = e.nombre;
+}
+$("entitySelect").addEventListener("change", function(){
+  entidadActiva = parseInt(this.value, 10) || 0;
+  pintarKPIs();
+  toast("Despacho cambiado a: " + ENTIDADES[entidadActiva].nombre);
+});
+pintarKPIs();
+
+/* ══════════ Gráfica de flujo (canvas) ══════════ */
+var chart = $("flowChart"), tip = $("chartTip");
+var perfilIn  = [ .05,.03,.02,.02,.03,.06,.14,.30,.52,.74,.92,1.00,.88,.72,.66,.70,.78,.86,.72,.52,.34,.22,.14,.08 ];
+var perfilOut = [ .04,.02,.02,.01,.02,.05,.10,.24,.44,.60,.78,.86,.92,.70,.58,.62,.72,.94,.80,.48,.30,.18,.10,.06 ];
+var serieIn = [], serieOut = [];
+(function(){
+  for(var i=0;i<24;i++){
+    serieIn.push( Math.round(perfilIn[i]  * 1180000 * rand(.9,1.1)) );
+    serieOut.push(Math.round(perfilOut[i] *  940000 * rand(.9,1.1)) );
+  }
+})();
+var corte = Math.max(new Date().getHours(), 9); /* siempre hay jornada que mostrar */
+$("chartCut").textContent = "corte " + pad(corte) + ":00 CDMX";
+
+var hoverIdx = -1, chartProgress = reduceMotion ? 1 : 0;
+var PADL = 54, PADR = 14, PADT = 16, PADB = 26;
+
+function chartMax(){
+  var m = 0;
+  for(var i=0;i<=corte;i++){ m = Math.max(m, serieIn[i], serieOut[i]); }
+  return m * 1.15;
+}
+function drawChart(){
+  var dpr = window.devicePixelRatio || 1;
+  var rect = chart.getBoundingClientRect();
+  if(rect.width === 0) return;
+  chart.width = Math.round(rect.width * dpr);
+  chart.height = Math.round(rect.height * dpr);
+  var ctx = chart.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var W = rect.width, H = rect.height;
+  var iw = W - PADL - PADR, ih = H - PADT - PADB;
+  var max = chartMax();
+  var lastIdx = corte;
+  function X(i){ return PADL + (i/lastIdx)*iw; }
+  function Y(v){ return PADT + ih - (v/max)*ih; }
+
+  ctx.clearRect(0,0,W,H);
+  ctx.font = "10px 'IBM Plex Mono',monospace";
+
+  /* Rejilla y ejes */
+  ctx.strokeStyle = "rgba(201,169,97,.12)";
+  ctx.fillStyle = "#A99F86";
+  ctx.lineWidth = 1;
+  ctx.textAlign = "right";
+  for(var g=0; g<=4; g++){
+    var v = max*g/4, y = Y(v);
+    ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W-PADR, y); ctx.stroke();
+    ctx.fillText(v >= 1000000 ? (v/1000000).toFixed(1)+" M" : Math.round(v/1000)+" k", PADL-8, y+3);
+  }
+  ctx.textAlign = "center";
+  for(var h=0; h<=lastIdx; h+=4){
+    ctx.fillText(pad(h)+":00", X(h), H-8);
+  }
+
+  var upto = Math.max(1, Math.floor(lastIdx*chartProgress));
+  function traza(serie, color, fill){
+    ctx.beginPath();
+    for(var i=0;i<=upto;i++){
+      var x = X(i), y = Y(serie[i]);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.lineTo(X(upto), Y(0)); ctx.lineTo(X(0), Y(0)); ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+  }
+  traza(serieOut, "rgba(217,210,190,.85)", "rgba(217,210,190,.05)");
+  traza(serieIn,  "#C9A961",               "rgba(201,169,97,.10)");
+
+  /* punto vivo al corte */
+  if(chartProgress >= 1){
+    ctx.beginPath(); ctx.arc(X(lastIdx), Y(serieIn[lastIdx]), 3.2, 0, Math.PI*2);
+    ctx.fillStyle = "#DDBE7A"; ctx.fill();
+  }
+  /* guía de hover */
+  if(hoverIdx >= 0 && hoverIdx <= lastIdx){
+    ctx.strokeStyle = "rgba(221,190,122,.5)";
+    ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(X(hoverIdx), PADT); ctx.lineTo(X(hoverIdx), PADT+ih); ctx.stroke();
+    ctx.setLineDash([]);
+    [ [serieIn,"#DDBE7A"], [serieOut,"#D9D2BE"] ].forEach(function(par){
+      ctx.beginPath(); ctx.arc(X(hoverIdx), Y(par[0][hoverIdx]), 3, 0, Math.PI*2);
+      ctx.fillStyle = par[1]; ctx.fill();
+    });
+  }
+}
+function animateChart(){
+  if(reduceMotion){ drawChart(); return; }
+  var t0 = null, dur = 1600;
+  function step(ts){
+    if(t0===null) t0 = ts;
+    chartProgress = Math.min((ts-t0)/dur, 1);
+    drawChart();
+    if(chartProgress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+chart.addEventListener("mousemove", function(ev){
+  var rect = chart.getBoundingClientRect();
+  var x = ev.clientX - rect.left;
+  var iw = rect.width - PADL - PADR;
+  var idx = Math.round((x - PADL)/iw * corte);
+  if(idx < 0 || idx > corte){ hoverIdx = -1; tip.style.display = "none"; drawChart(); return; }
+  hoverIdx = idx;
+  tip.innerHTML = "<b>"+pad(idx)+":00 h</b><br>Entradas&nbsp; $"+fmt(serieIn[idx])+"<br>Salidas&nbsp;&nbsp; $"+fmt(serieOut[idx]);
+  tip.style.display = "block";
+  var tx = PADL + (idx/corte)*iw;
+  tip.style.left = (chart.offsetLeft + tx) + "px";
+  tip.style.top = (chart.offsetTop + ev.clientY - rect.top) + "px";
+  drawChart();
+});
+chart.addEventListener("mouseleave", function(){
+  hoverIdx = -1; tip.style.display = "none"; drawChart();
+});
+window.addEventListener("resize", drawChart);
+animateChart();
+
+/* ══════════ Contrapartes / expedientes ══════════ */
+var BANCOS = ["STP","BBVA MEXICO","BANORTE","SANTANDER","CITIBANAMEX","HSBC","SCOTIABANK","BANBAJIO","INBURSA","BANCO AZTECA","AFIRME"];
+var CLIENTES = [
+  { nombre:"Comercializadora Tesoro del Bajío, S.A. de C.V.", rfc:"CTB150612QX4", clabe:"646180 2841 00 8417", score:12, alta:"14 mar 2024", limite:2500000, usado:412300.00 },
+  { nombre:"Despacho Rivas y Asociados, S.C.",                rfc:"DRA091103M28", clabe:"646180 2841 00 5590", score:8,  alta:"02 jun 2022", limite:1200000, usado:96500.00 },
+  { nombre:"Plataforma Andamio, S.A.P.I. de C.V.",            rfc:"PAN200421T77", clabe:"646180 2841 00 9036", score:31, alta:"09 ene 2025", limite:5000000, usado:1830420.50 },
+  { nombre:"Transportes La Cumbre, S.A. de C.V.",             rfc:"TLC110830HJ1", clabe:"646180 2841 00 2274", score:19, alta:"27 oct 2023", limite:3000000, usado:764900.00 },
+  { nombre:"Agroindustrias del Volcán, S.P.R. de R.L.",       rfc:"AVO180215K93", clabe:"646180 2841 00 6648", score:47, alta:"18 feb 2026", limite:1800000, usado:1102000.00 },
+  { nombre:"Muebles y Diseños Colima, S.A. de C.V.",          rfc:"MDC130504R55", clabe:"646180 2841 00 3311", score:15, alta:"11 ago 2021", limite:900000,  usado:88200.00 },
+  { nombre:"Servicios Médicos Providencia, S.C.",             rfc:"SMP160922B40", clabe:"646180 2841 00 7825", score:22, alta:"05 may 2023", limite:1500000, usado:230000.00 },
+  { nombre:"Grupo Ferretero Occidente, S.A. de C.V.",         rfc:"GFO071219D02", clabe:"646180 2841 00 1163", score:64, alta:"30 jun 2026", limite:800000,  usado:612400.00 }
+];
+var CONCEPTOS_OUT = ["Pago a proveedor 4417","Retiro de cliente","Comisión de plataforma","Pago de servicios","Anticipo obra 2201","Reembolso 1088"];
+
+/* ══════════ Feed de operaciones ══════════ */
+var feedBody = $("feedBody");
+var folioSeq = 173;
+var ksActivo = false;
+
+function nuevaOperacion(forzarTipo){
+  var d = new Date();
+  var tipo = forzarTipo || (Math.random() < .54 ? "abono" : "cargo");
+  var cliente = pick(CLIENTES);
+  var retenida = tipo === "cargo" && ksActivo;
+  var estado = retenida ? "retenida" : (Math.random() < .9 ? "liquidada" : "transito");
+  if(!retenida && tipo === "cargo" && Math.random() < .03) estado = "devuelta";
+  folioSeq++;
+  return {
+    hora: hora(d),
+    tipo: tipo,
+    clave: "MM"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+String(folioSeq).padStart(5,"0"),
+    banco: pick(BANCOS),
+    monto: Math.round(rand(1800, 480000)*100)/100,
+    estado: estado,
+    cliente: cliente
+  };
+}
+var ESTADO_TXT = { liquidada:"liquidada", transito:"en tránsito", retenida:"retenida", devuelta:"devuelta" };
+
+function pintaFila(op, fresh){
+  var tr = document.createElement("tr");
+  if(fresh && !reduceMotion) tr.className = "fresh";
+  var cepCell = op.estado === "liquidada"
+    ? '<a class="cep-link" href="https://www.banxico.org.mx/cep/" target="_blank" rel="noopener">folio ✓</a>'
+    : '<span class="mono-cell" style="color:var(--muted)">—</span>';
+  tr.innerHTML =
+    "<td>"+op.hora+"</td>"+
+    '<td class="'+(op.tipo==="abono"?"t-abono":"t-cargo")+'">'+(op.tipo==="abono"?"Abono ▲":"Cargo ▼")+"</td>"+
+    '<td class="mono-cell">'+op.clave+"</td>"+
+    "<td>"+op.banco+"</td>"+
+    '<td class="amt">$'+fmt(op.monto)+"</td>"+
+    '<td><span class="estado e-'+op.estado+'">'+ESTADO_TXT[op.estado]+"</span></td>"+
+    "<td>"+cepCell+"</td>"+
+    '<td><button class="mini-btn" type="button">Ver</button></td>';
+  tr.querySelector(".mini-btn").addEventListener("click", function(){
+    abrirExpediente(op.cliente, null, this);
+  });
+  feedBody.insertBefore(tr, feedBody.firstChild);
+  while(feedBody.children.length > 22) feedBody.removeChild(feedBody.lastChild);
+}
+/* siembra inicial */
+(function(){
+  for(var i=0;i<12;i++){
+    var op = nuevaOperacion();
+    var d = new Date(Date.now() - (12-i)*rand(30000,90000));
+    op.hora = hora(d);
+    pintaFila(op, false);
+  }
+})();
+/* latido del feed */
+var feedTimer = null;
+function programaFeed(){
+  feedTimer = setTimeout(function(){
+    if(!document.hidden){
+      var op = nuevaOperacion(ksActivo && Math.random()<.5 ? "abono" : null);
+      pintaFila(op, true);
+      var e = ENTIDADES[entidadActiva];
+      if(op.tipo==="abono" && op.estado==="liquidada"){ e.inHoy += op.monto; e.inOps++; e.saldo += op.monto; }
+      if(op.tipo==="cargo" && op.estado==="liquidada"){ e.outHoy += op.monto; e.outOps++; e.saldo -= op.monto; }
+      $("kpiSaldo").textContent = fmt(e.saldo);
+      $("kpiIn").textContent = fmt(e.inHoy);
+      $("kpiOut").textContent = fmt(e.outHoy);
+      $("kpiInOps").textContent = nfInt.format(e.inOps);
+      $("kpiOutOps").textContent = nfInt.format(e.outOps);
+    }
+    programaFeed();
+  }, rand(3800, 7200));
+}
+programaFeed();
+
+/* ══════════ Dispersión de nómina ══════════ */
+var dispTotal = 1482, dispOk = 861, dispDev = 2;
+function pintaDisp(){
+  var transit = ksActivo ? 0 : Math.min(24, dispTotal - dispOk - dispDev);
+  var pct = Math.round(dispOk/dispTotal*100);
+  $("dispOk").textContent = nfInt.format(dispOk);
+  $("dispTransit").textContent = nfInt.format(transit);
+  $("dispDev").textContent = nfInt.format(dispDev);
+  $("dispPct").textContent = pct + "%";
+  var bar = $("dispBar");
+  bar.setAttribute("aria-valuenow", String(dispOk));
+  bar.querySelector("i").style.width = pct + "%";
+  $("dispNote").textContent = ksActivo
+    ? "Lote en pausa por interruptor de emergencia. Se reanuda sin duplicados: cada instrucción conserva su llave de idempotencia."
+    : "Resultado individual por colaborador · conciliación automática al cierre del lote.";
+}
+pintaDisp();
+setInterval(function(){
+  if(document.hidden || ksActivo || dispOk + dispDev >= dispTotal) return;
+  dispOk = Math.min(dispTotal - dispDev, dispOk + Math.round(rand(6,18)));
+  if(Math.random() < .06) dispDev++;
+  pintaDisp();
+}, 2600);
+
+/* ══════════ Latencia de webhooks (vida) ══════════ */
+var hookLats = document.querySelectorAll("[data-hook-lat]");
+setInterval(function(){
+  if(document.hidden) return;
+  hookLats.forEach(function(el, i){
+    if(i===2) return; /* el degradado conserva su reintento */
+    el.textContent = Math.round(rand(70,140)) + " ms";
+  });
+}, 5200);
+
+/* ══════════ Alertas PLD ══════════ */
+var ALERTAS = [
+  { folio:"PLD-2026-0709-014", sev:"alta",  regla:"Monto inusual vs. perfil (× 6.2)",           cliente:CLIENTES[7], monto:612400.00, estado:"abierta" },
+  { folio:"PLD-2026-0709-011", sev:"media", regla:"Frecuencia atípica — 41 cargos en 2 h",      cliente:CLIENTES[4], monto:1102000.00, estado:"en revisión" },
+  { folio:"PLD-2026-0708-097", sev:"baja",  regla:"CLABE destino de alta reciente (< 72 h)",    cliente:CLIENTES[2], monto:98750.00, estado:"abierta" }
+];
+var alertBody = $("alertBody");
+function pintaAlertas(){
+  alertBody.innerHTML = "";
+  var abiertas = 0;
+  ALERTAS.forEach(function(al){
+    if(al.estado === "revisada") { /* asentada */ } else { abiertas++; }
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      "<td>"+al.folio+"</td>"+
+      '<td><span class="sev sev-'+al.sev+'">'+al.sev+"</span></td>"+
+      "<td style='white-space:normal;min-width:220px'>"+al.regla+"</td>"+
+      "<td style='white-space:normal;min-width:180px'>"+al.cliente.nombre.split(",")[0]+"</td>"+
+      '<td class="amt">$'+fmt(al.monto)+"</td>"+
+      '<td><span class="estado '+(al.estado==="revisada"?"e-liquidada":"e-transito")+'">'+al.estado+"</span></td>"+
+      '<td><button class="mini-btn" type="button">Abrir expediente</button></td>';
+    tr.querySelector(".mini-btn").addEventListener("click", function(){
+      abrirExpediente(al.cliente, al, this);
+    });
+    alertBody.appendChild(tr);
+  });
+  $("alertBadge").textContent = String(abiertas);
+}
+pintaAlertas();
+
+/* ══════════ Expediente (cajón) ══════════ */
+var drawer = $("drawer"), veil = $("drawerVeil");
+var LISTAS = ["OFAC — SDN","ONU — Consejo de Seguridad","UE — Sanciones","PPE — Personas políticamente expuestas","SAT — Lista 69-B"];
+var drawerOrigen = null, alertaActual = null;
+
+function abrirExpediente(cliente, alerta, origen){
+  drawerOrigen = origen || null;
+  alertaActual = alerta || null;
+  $("drawerTitle").textContent = alerta ? alerta.folio : "Contraparte";
+  $("dsName").textContent = cliente.nombre;
+  $("dsMeta").textContent = "RFC "+cliente.rfc+" · alta "+cliente.alta;
+  var score = alerta ? Math.min(96, cliente.score + 24) : cliente.score;
+  var nivel = score < 25 ? "Bajo" : score < 55 ? "Medio" : "Alto";
+  var bar = $("dsScoreBar");
+  bar.className = nivel==="Bajo" ? "" : nivel==="Medio" ? "mid" : "high";
+  bar.style.width = "0%";
+  $("dsScoreVal").textContent = score + " / 100";
+  $("dsScoreNivel").textContent = nivel + (alerta ? " · alerta activa" : "");
+  var tbody = $("dsListas");
+  tbody.innerHTML = "";
+  var d = new Date();
+  var fechaHoy = pad(d.getDate())+" "+MESES[d.getMonth()]+" "+d.getFullYear();
+  LISTAS.forEach(function(lista, i){
+    var esHit = alerta && alerta.sev === "alta" && i === 3;
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+lista+"</td><td class='"+(esHit?"hit":"clean")+"'>"+
+      (esHit ? "coincidencia parcial · en análisis" : "sin coincidencia · "+fechaHoy)+"</td>";
+    tbody.appendChild(tr);
+  });
+  $("dsClabe").textContent = cliente.clabe;
+  $("dsAlta").textContent = cliente.alta;
+  $("dsLimite").textContent = "$"+fmt(cliente.limite);
+  $("dsUsado").textContent = "$"+fmt(cliente.usado)+" ("+Math.round(cliente.usado/cliente.limite*100)+"%)";
+  $("dsUltima").textContent = "hoy · "+hora(new Date(Date.now()-rand(60000,900000)));
+  $("dsApprove").textContent = alerta ? "Marcar alerta como revisada" : "Marcar como revisado";
+
+  veil.hidden = false;
+  document.body.classList.add("drawer-open");
+  drawer.setAttribute("aria-hidden","false");
+  requestAnimationFrame(function(){
+    bar.style.width = score + "%";
+  });
+  $("drawerClose").focus();
+}
+function cerrarExpediente(){
+  document.body.classList.remove("drawer-open");
+  drawer.setAttribute("aria-hidden","true");
+  setTimeout(function(){ veil.hidden = true; }, reduceMotion ? 0 : 560);
+  if(drawerOrigen && document.contains(drawerOrigen)) drawerOrigen.focus();
+  drawerOrigen = null; alertaActual = null;
+}
+$("drawerClose").addEventListener("click", cerrarExpediente);
+veil.addEventListener("click", cerrarExpediente);
+$("dsApprove").addEventListener("click", function(){
+  if(alertaActual){
+    alertaActual.estado = "revisada";
+    pintaAlertas();
+    toast("Alerta "+alertaActual.folio+" asentada como revisada en la bitácora.");
+  }else{
+    toast("Expediente asentado como revisado. La consulta quedó en bitácora.");
+  }
+  cerrarExpediente();
+});
+$("dsEscalate").addEventListener("click", function(){
+  toast("Expediente escalado al oficial de cumplimiento con folio de seguimiento.");
+  cerrarExpediente();
+});
+
+/* ══════════ Kill switch ══════════ */
+var ksVeil = $("ksModalVeil"), ksModal = $("ksModal");
+var ksWord = $("ksWord"), ksCode = $("ksCode"), ksErr = $("ksErr");
+var ksConfirm = $("ksConfirm"), ksSwitch = $("ksSwitch");
+var ksModoDetener = true, ksOrigenFoco = null, ksFolioNum = 0;
+
+function validaKS(){
+  var okWord = !ksModoDetener || ksWord.value.trim().toUpperCase() === "DETENER";
+  var okCode = /^\d{6}$/.test(ksCode.value.trim());
+  ksConfirm.disabled = !(okWord && okCode);
+}
+ksWord.addEventListener("input", validaKS);
+ksCode.addEventListener("input", validaKS);
+
+function abrirModalKS(detener, origen){
+  ksModoDetener = detener;
+  ksOrigenFoco = origen || ksSwitch;
+  $("ksModalTitle").textContent = detener ? "Detener operación de salida" : "Reanudar operación de salida";
+  $("ksModalText").textContent = detener
+    ? "Se suspenderán de inmediato todos los cargos SPEI de la entidad en despacho. Las entradas continúan. La acción queda asentada en la bitácora con folio, usuario y hora."
+    : "Se reanudará la operación de salida. Las instrucciones retenidas se liberan en orden, sin duplicados, gracias a la llave de idempotencia.";
+  $("ksWordRow").style.display = detener ? "block" : "none";
+  ksConfirm.textContent = detener ? "Detener salida" : "Reanudar operación";
+  ksConfirm.className = detener ? "btn btn-danger" : "btn btn-solid";
+  ksWord.value = ""; ksCode.value = ""; ksErr.textContent = "";
+  ksConfirm.disabled = true;
+  ksVeil.classList.add("open");
+  (detener ? ksWord : ksCode).focus();
+}
+function cerrarModalKS(){
+  ksVeil.classList.remove("open");
+  if(ksOrigenFoco && document.contains(ksOrigenFoco)) ksOrigenFoco.focus();
+}
+$("ksCancel").addEventListener("click", cerrarModalKS);
+ksVeil.addEventListener("mousedown", function(e){ if(e.target === ksVeil) cerrarModalKS(); });
+
+ksConfirm.addEventListener("click", function(){
+  if(ksConfirm.disabled) return;
+  if(!/^\d{6}$/.test(ksCode.value.trim())){
+    ksErr.textContent = "El código 2FA debe tener 6 dígitos.";
+    return;
+  }
+  var d = new Date();
+  if(ksModoDetener){
+    ksActivo = true;
+    ksFolioNum++;
+    document.body.classList.add("ks-active");
+    ksSwitch.setAttribute("aria-pressed","true");
+    $("ksSwitchLabel").textContent = "Salida detenida";
+    $("ksState").textContent = "Activado: "+pad(d.getDate())+" "+MESES[d.getMonth()]+" · "+hora(d)+" · T. Aranda";
+    $("ksFolio").textContent = "Folio KS-"+d.getFullYear()+"-"+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(ksFolioNum)+" · activado por T. Aranda · 2FA verificado";
+    $("speiPill").className = "pill halted";
+    $("speiPill").innerHTML = '<span class="dot" aria-hidden="true"></span>SPEI SALIDA — DETENIDA';
+    $("feedNote").textContent = "cargos retenidos · entradas activas";
+    toast("Operación de salida detenida. Quedó asentado en bitácora.");
+  }else{
+    ksActivo = false;
+    document.body.classList.remove("ks-active");
+    ksSwitch.setAttribute("aria-pressed","false");
+    $("ksSwitchLabel").textContent = "Operación abierta";
+    $("ksState").textContent = "Reanudada: "+pad(d.getDate())+" "+MESES[d.getMonth()]+" · "+hora(d)+" · T. Aranda";
+    $("speiPill").className = "pill online";
+    $("speiPill").innerHTML = '<span class="dot" aria-hidden="true"></span>SPEI · STP — EN LÍNEA';
+    $("feedNote").textContent = "actualización continua";
+    toast("Operación de salida reanudada. Instrucciones retenidas liberadas en orden.");
+  }
+  pintaDisp();
+  cerrarModalKS();
+});
+ksSwitch.addEventListener("click", function(){ abrirModalKS(!ksActivo, ksSwitch); });
+$("ksResumeBtn").addEventListener("click", function(){ abrirModalKS(false, $("ksResumeBtn")); });
+
+/* ══════════ Teclado global (Esc + trampa de foco) ══════════ */
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    if(ksVeil.classList.contains("open")) cerrarModalKS();
+    else if(document.body.classList.contains("drawer-open")) cerrarExpediente();
+  }
+  if(e.key === "Tab"){
+    var contenedor = ksVeil.classList.contains("open") ? ksModal
+                   : document.body.classList.contains("drawer-open") ? drawer : null;
+    if(!contenedor) return;
+    var focos = contenedor.querySelectorAll("button,a[href],input,select,[tabindex]:not([tabindex='-1'])");
+    var visibles = Array.prototype.filter.call(focos, function(el){ return el.offsetParent !== null && !el.disabled; });
+    if(!visibles.length) return;
+    var primero = visibles[0], ultimo = visibles[visibles.length-1];
+    if(e.shiftKey && document.activeElement === primero){ e.preventDefault(); ultimo.focus(); }
+    else if(!e.shiftKey && document.activeElement === ultimo){ e.preventDefault(); primero.focus(); }
+  }
+});
+})();
+</script>
+</body>
+</html>

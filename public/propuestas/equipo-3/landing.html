@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASMOVIL — Infraestructura de pagos SPEI vía STP</title>
+<meta name="description" content="MASMOVIL, S.A. de C.V. Infraestructura de pagos SPEI por API con conexión vía STP a Banco de México: CLABEs ilimitadas, dispersión masiva, conciliación automática y CEP en cada operación.">
+<meta name="theme-color" content="#0A1428">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect width='26' height='26' fill='%230A1428'/%3E%3Cg fill='none' stroke='%23C9A961'%3E%3Ccircle cx='13' cy='13' r='10'/%3E%3Ccircle cx='13' cy='13' r='6'/%3E%3Cpath d='M13 3v20M3 13h20'/%3E%3C/g%3E%3Ccircle cx='13' cy='13' r='2' fill='%23C9A961'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   EQUIPO MUSEO · BANCA PRIVADA / GRABADO
+   Azul marino #0A1428 · Dorado champán #C9A961 · Marfil
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#0A1428;
+  --navy-deep:#060D1C;
+  --navy-panel:#0E1B36;
+  --line:rgba(201,169,97,.22);
+  --line-soft:rgba(201,169,97,.12);
+  --gold:#C9A961;
+  --gold-bright:#DDBE7A;
+  --ivory:#F3EDDD;
+  --ivory-body:#D9D2BE;
+  --muted:#A99F86;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Inter',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+[id]{scroll-margin-top:4.6rem}
+body{
+  background:var(--navy);
+  color:var(--ivory-body);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--gold);color:var(--navy)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px;border-radius:2px}
+img,svg,canvas{display:block;max-width:100%}
+a{color:var(--gold-bright);text-decoration:none}
+p a{text-decoration:underline;text-underline-offset:3px}
+abbr{text-decoration:none}
+
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:200;
+  background:var(--gold);color:var(--navy);padding:.7rem 1.2rem;
+  font-weight:600;font-size:.85rem;
+}
+.skip-link:focus{left:1rem;top:1rem}
+
+.wrap{max-width:1140px;margin:0 auto;padding:0 clamp(1.25rem,4vw,2.5rem)}
+
+/* ─── Tipografía ceremonial ─── */
+h1,h2,h3{font-family:var(--serif);color:var(--ivory);font-weight:600;line-height:1.15}
+h1{font-size:clamp(2.4rem,5.6vw,4.4rem);letter-spacing:.01em}
+h2{font-size:clamp(1.9rem,3.6vw,2.9rem)}
+h3{font-size:1.35rem}
+.eyebrow{
+  font-family:var(--sans);font-size:.72rem;font-weight:600;
+  letter-spacing:.34em;text-transform:uppercase;color:var(--gold);
+  display:flex;align-items:center;gap:1rem;
+}
+.eyebrow::before,.eyebrow.centered::after{
+  content:"";height:1px;width:2.6rem;background:var(--line);flex:none;
+}
+.eyebrow.centered{justify-content:center}
+.roman{
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  color:var(--gold);font-size:1rem;letter-spacing:.12em;
+}
+.lede{font-size:clamp(1.02rem,1.6vw,1.2rem);color:var(--ivory-body);max-width:44rem}
+
+/* ─── Ornamentos de grabado ─── */
+.rule-ornament{
+  display:flex;align-items:center;justify-content:center;gap:.9rem;
+  margin:0 auto;max-width:22rem;color:var(--gold);
+}
+.rule-ornament::before,.rule-ornament::after{
+  content:"";height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,var(--line) 40%,var(--line));
+}
+.rule-ornament::after{
+  background:linear-gradient(90deg,var(--line),var(--line) 60%,transparent);
+}
+.rule-ornament svg{width:26px;height:26px;flex:none}
+
+/* ─── Cabecera ─── */
+.site-header{
+  position:fixed;inset:0 0 auto 0;z-index:100;
+  border-bottom:1px solid transparent;
+  transition:background .6s var(--ease),border-color .6s var(--ease);
+}
+.site-header.scrolled{
+  background:rgba(6,13,28,.92);
+  border-bottom-color:var(--line-soft);
+  backdrop-filter:blur(10px);
+}
+.nav-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem clamp(1.25rem,4vw,2.5rem);max-width:1240px;margin:0 auto;
+}
+.wordmark{
+  font-family:var(--serif);font-weight:700;font-size:1.32rem;
+  letter-spacing:.22em;color:var(--ivory);display:flex;align-items:center;gap:.7rem;
+}
+.wordmark svg{width:30px;height:30px}
+.nav-links{display:flex;gap:2.1rem;list-style:none;align-items:center}
+.nav-links a{
+  color:var(--ivory-body);font-size:.82rem;font-weight:500;letter-spacing:.09em;
+  text-transform:uppercase;transition:color .4s var(--ease);
+}
+.nav-links a:hover{color:var(--gold-bright)}
+.btn{
+  display:inline-flex;align-items:center;gap:.6rem;
+  font-family:var(--sans);font-size:.82rem;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  padding:.85rem 1.9rem;border:1px solid var(--gold);
+  transition:background .5s var(--ease),color .5s var(--ease),border-color .5s var(--ease);
+}
+.btn-solid{background:var(--gold);color:var(--navy)}
+.btn-solid:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
+.btn-ghost{color:var(--gold-bright);background:transparent}
+.btn-ghost:hover{background:rgba(201,169,97,.1)}
+.nav-toggle{display:none;background:none;border:1px solid var(--line);color:var(--gold);padding:.5rem .7rem;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;font-family:var(--sans);cursor:pointer}
+
+/* ─── Héroe ─── */
+.hero{
+  position:relative;min-height:100vh;min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:8.5rem 0 5rem;overflow:hidden;
+  border-bottom:1px solid var(--line-soft);
+}
+#guilloche{
+  position:absolute;top:50%;right:min(-6vw,-40px);transform:translateY(-50%);
+  width:min(62vw,760px);height:min(62vw,760px);
+  opacity:.5;pointer-events:none;
+}
+.hero-inner{position:relative;z-index:2}
+.hero h1{max-width:15ch;margin:1.6rem 0 1.5rem}
+.hero .lede{margin-bottom:2.6rem}
+.hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
+.hero-frame{
+  position:absolute;inset:1.1rem;pointer-events:none;z-index:1;
+  border:1px solid var(--line-soft);
+}
+.hero-frame::before,.hero-frame::after,
+.hero-frame span::before,.hero-frame span::after{
+  content:"";position:absolute;width:14px;height:14px;
+  border:1px solid var(--gold);
+}
+.hero-frame::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.hero-frame::after{top:-1px;right:-1px;border-left:0;border-bottom:0}
+.hero-frame span::before{bottom:-1px;left:-1px;border-right:0;border-top:0}
+.hero-frame span::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.hero-note{
+  margin-top:3.2rem;display:flex;align-items:center;gap:.9rem;
+  font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+}
+.hero-note svg{width:34px;height:34px;flex:none}
+
+/* ─── Banda de cifras ─── */
+.stats{
+  background:var(--navy-deep);
+  border-bottom:1px solid var(--line-soft);
+  padding:3.4rem 0;
+}
+.stats-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;text-align:center;
+}
+.stat + .stat{border-left:1px solid var(--line-soft)}
+.stat-value{
+  font-family:var(--serif);font-weight:600;font-size:clamp(1.9rem,3.4vw,2.7rem);
+  color:var(--gold-bright);line-height:1.1;
+}
+.stat-label{
+  margin-top:.55rem;font-size:.72rem;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ─── Secciones ─── */
+section{padding:clamp(4.5rem,9vw,7.5rem) 0}
+.section-head{max-width:46rem;margin-bottom:clamp(2.6rem,5vw,4rem)}
+.section-head h2{margin:1.2rem 0 1rem}
+.section-head.centered{margin-left:auto;margin-right:auto;text-align:center}
+
+/* ─── Capacidades (bóveda) ─── */
+.cards{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--line-soft);
+}
+.card{
+  padding:2.4rem 2.1rem 2.6rem;
+  border-right:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
+  position:relative;background:transparent;
+  transition:background .6s var(--ease);
+}
+.card:nth-child(3n){border-right:0}
+.card:nth-child(n+4){border-bottom:0}
+.card:hover{background:rgba(201,169,97,.04)}
+.card-icon{width:44px;height:44px;margin-bottom:1.4rem;color:var(--gold)}
+.card h3{margin-bottom:.7rem}
+.card p{font-size:.94rem;color:var(--ivory-body)}
+.card .roman{position:absolute;top:1.4rem;right:1.6rem;opacity:.75}
+
+/* ─── Seguridad (cámara) ─── */
+.security{background:var(--navy-deep);border-block:1px solid var(--line-soft)}
+.security-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(2.5rem,6vw,5rem);align-items:center}
+.seal-figure{display:flex;justify-content:center}
+.seal-figure svg{width:min(100%,380px);height:auto}
+.sec-list{list-style:none;display:grid;gap:0}
+.sec-list li{
+  display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:start;
+  padding:1.35rem 0;border-bottom:1px solid var(--line-soft);
+}
+.sec-list li:first-child{border-top:1px solid var(--line-soft)}
+.sec-list .roman{padding-top:.15rem;min-width:2.4rem}
+.sec-list strong{display:block;color:var(--ivory);font-weight:600;font-size:1rem;margin-bottom:.2rem}
+.sec-list p{font-size:.92rem;color:var(--muted)}
+
+/* ─── Cumplimiento / libro mayor ─── */
+.ledger{border:1px solid var(--line);background:rgba(6,13,28,.55)}
+.ledger-head{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.1rem 1.6rem;border-bottom:1px solid var(--line);
+  font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);
+}
+.ledger table{width:100%;border-collapse:collapse;font-size:.92rem}
+.ledger th,.ledger td{padding:1.05rem 1.6rem;text-align:left;vertical-align:top}
+.ledger thead th{
+  font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;border-bottom:1px solid var(--line-soft);
+}
+.ledger tbody tr + tr td{border-top:1px solid var(--line-soft)}
+.ledger td:first-child{font-family:var(--serif);font-size:1.05rem;color:var(--ivory);white-space:nowrap}
+.ledger td:last-child{color:var(--muted)}
+.compliance-note{
+  margin-top:1.6rem;font-size:.85rem;color:var(--muted);max-width:52rem;
+}
+
+/* ─── API ─── */
+.api-grid{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:clamp(2.5rem,6vw,4.5rem);align-items:start}
+.terminal{
+  border:1px solid var(--line);background:var(--navy-deep);
+  font-family:var(--mono);font-size:.8rem;line-height:1.75;
+}
+.terminal-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1.2rem;border-bottom:1px solid var(--line-soft);
+  font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+}
+.terminal pre{padding:1.4rem 1.5rem;overflow-x:auto;color:var(--ivory-body)}
+.tk-k{color:var(--gold-bright)}
+.tk-s{color:#9FB98F}
+.tk-c{color:#8290AB}
+.api-points{list-style:none;display:grid;gap:1.1rem;margin-top:1.8rem}
+.api-points li{display:flex;gap:.9rem;font-size:.94rem}
+.api-points svg{width:18px;height:18px;flex:none;margin-top:.25rem;color:var(--gold)}
+
+/* ─── Otras líneas ─── */
+.lines-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.line-card{border:1px solid var(--line-soft);padding:2.2rem 2.1rem}
+.line-card h3{margin:.9rem 0 .6rem}
+.line-card p{font-size:.94rem;color:var(--muted)}
+
+/* ─── CTA final ─── */
+.closing{
+  background:var(--navy-deep);border-top:1px solid var(--line-soft);
+  text-align:center;position:relative;overflow:hidden;
+}
+.closing .wrap{position:relative;z-index:2}
+.closing h2{max-width:22ch;margin:1.6rem auto 1.2rem}
+.closing .lede{margin:0 auto 2.6rem}
+.closing-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.closing-mail{
+  display:block;margin-top:2rem;font-family:var(--serif);font-style:italic;
+  font-size:1.15rem;color:var(--gold-bright);
+}
+
+/* ─── Pie legal ─── */
+.site-footer{
+  border-top:1px solid var(--line);background:var(--navy-deep);
+  padding:3.4rem 0 2.6rem;font-size:.82rem;color:var(--muted);
+}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2.5rem;margin-bottom:2.6rem}
+.footer-grid h4{
+  font-family:var(--sans);font-size:.7rem;font-weight:600;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:1rem;
+}
+.footer-grid ul{list-style:none;display:grid;gap:.55rem}
+.footer-grid a{color:var(--muted)}
+.footer-grid a:hover{color:var(--gold-bright)}
+.footer-legal{
+  border-top:1px solid var(--line-soft);padding-top:1.8rem;
+  display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
+  font-size:.76rem;line-height:1.8;
+}
+.footer-legal p{max-width:46rem}
+
+/* ─── Revelado ceremonioso ─── */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity 1.1s var(--ease),transform 1.1s var(--ease)}
+.reveal.is-visible{opacity:1;transform:none}
+.reveal[data-delay="1"]{transition-delay:.15s}
+.reveal[data-delay="2"]{transition-delay:.3s}
+.reveal[data-delay="3"]{transition-delay:.45s}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+
+/* ─── Responsivo ─── */
+@media (max-width:1024px){
+  .cards{grid-template-columns:1fr 1fr}
+  .card:nth-child(3n){border-right:1px solid var(--line-soft)}
+  .card:nth-child(2n){border-right:0}
+  .card:nth-child(n+4){border-bottom:1px solid var(--line-soft)}
+  .card:nth-child(n+5){border-bottom:0}
+  .security-grid,.api-grid{grid-template-columns:1fr}
+  #guilloche{opacity:.28}
+}
+@media (max-width:768px){
+  .nav-links{
+    position:fixed;top:64px;right:0;left:0;
+    background:rgba(6,13,28,.97);border-bottom:1px solid var(--line);
+    flex-direction:column;padding:1.6rem;gap:1.3rem;
+    display:none;
+  }
+  .nav-links.open{display:flex}
+  .nav-toggle{display:block}
+  .nav-cta{width:100%;text-align:center}
+  .nav-cta .btn{width:100%;justify-content:center}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:2.2rem 0}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(-n+2){padding-bottom:2rem;border-bottom:1px solid var(--line-soft)}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .footer-grid > :first-child{grid-column:1/-1}
+  .lines-grid{grid-template-columns:1fr}
+  #guilloche{top:auto;bottom:-18vw;right:-24vw;transform:none;width:90vw;height:90vw;opacity:.2}
+}
+@media (max-width:520px){
+  .cards{grid-template-columns:1fr}
+  .card{border-right:0!important}
+  .card:nth-child(n){border-bottom:1px solid var(--line-soft)}
+  .card:last-child{border-bottom:0}
+  .ledger{overflow-x:auto}
+  .ledger table{min-width:520px}
+  .hero-frame{inset:.7rem}
+  .btn{width:100%;justify-content:center}
+  .hero-actions,.closing-actions{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<!-- ═══ SÍMBOLOS DE GRABADO ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="sym-rosette" viewBox="0 0 26 26">
+      <g fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="13" cy="13" r="11"/>
+        <circle cx="13" cy="13" r="6.5"/>
+        <path d="M13 2v22M2 13h22M5.2 5.2l15.6 15.6M20.8 5.2L5.2 20.8"/>
+        <circle cx="13" cy="13" r="2" fill="currentColor" stroke="none"/>
+      </g>
+    </symbol>
+    <symbol id="sym-check" viewBox="0 0 18 18">
+      <circle cx="9" cy="9" r="8" fill="none" stroke="currentColor"/>
+      <path d="M5.5 9.2l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="site-header" id="siteHeader">
+  <nav class="nav-bar" aria-label="Navegación principal">
+    <a class="wordmark" href="#inicio" aria-label="MASMOVIL, inicio">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><use href="#sym-rosette" style="color:var(--gold)"/></svg>
+      MASMOVIL
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks">Menú</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#infraestructura">Infraestructura</a></li>
+      <li><a href="#seguridad">Seguridad</a></li>
+      <li><a href="#cumplimiento">Cumplimiento</a></li>
+      <li><a href="#api">API</a></li>
+      <li class="nav-cta"><a class="btn btn-solid" href="mailto:direccion@masmovil.lat?subject=Solicitud%20de%20acceso%20%E2%80%94%20Infraestructura%20SPEI">Solicitar acceso</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="contenido">
+
+<!-- ═══ HÉROE ═══ -->
+<section class="hero" id="inicio">
+  <div class="hero-frame" aria-hidden="true"><span></span></div>
+  <canvas id="guilloche" width="760" height="760" aria-hidden="true"></canvas>
+  <div class="wrap hero-inner">
+    <p class="eyebrow reveal">Guadalajara · Conexión SPEI vía STP · Desde 2019</p>
+    <h1 class="reveal" data-delay="1">El dinero de su empresa, tratado como patrimonio.</h1>
+    <p class="lede reveal" data-delay="2">
+      MASMOVIL opera infraestructura de pagos <abbr title="Sistema de Pagos Electrónicos Interbancarios">SPEI</abbr>
+      con conexión vía <abbr title="Sistema de Transferencias y Pagos">STP</abbr> a Banco de México:
+      CLABEs ilimitadas por API, dispersión masiva y liquidación 24/7/365,
+      con el <abbr title="Comprobante Electrónico de Pago">CEP</abbr> de Banxico como acta de cada operación.
+    </p>
+    <div class="hero-actions reveal" data-delay="3">
+      <a class="btn btn-solid" href="mailto:direccion@masmovil.lat?subject=Solicitud%20de%20acceso%20%E2%80%94%20Infraestructura%20SPEI">Solicitar acceso</a>
+      <a class="btn btn-ghost" href="#infraestructura">Conocer la infraestructura</a>
+    </div>
+    <p class="hero-note reveal" data-delay="3">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><use href="#sym-rosette"/></svg>
+      MASMOVIL, S.A. de C.V. · RFC MAS191203EY6
+    </p>
+  </div>
+</section>
+
+<!-- ═══ CIFRAS ═══ -->
+<div class="stats" role="region" aria-label="Cifras de operación">
+  <div class="wrap stats-grid">
+    <div class="stat reveal"><div class="stat-value"><span data-counter="24">0</span>/7/365</div><div class="stat-label">Liquidación SPEI</div></div>
+    <div class="stat reveal" data-delay="1"><div class="stat-value"><span role="img" aria-label="Ilimitadas">∞</span></div><div class="stat-label">CLABEs por API</div></div>
+    <div class="stat reveal" data-delay="2"><div class="stat-value"><span data-counter="100">0</span>%</div><div class="stat-label">Operaciones con CEP</div></div>
+    <div class="stat reveal" data-delay="3"><div class="stat-value"><span data-counter="2019">1900</span></div><div class="stat-label">Operando desde</div></div>
+  </div>
+</div>
+
+<!-- ═══ INFRAESTRUCTURA ═══ -->
+<section id="infraestructura">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">I · La bóveda</p>
+      <h2>Infraestructura de pagos por API</h2>
+      <p class="lede">Cada capacidad está diseñada para tesorerías que exigen orden documental: nada se mueve sin registro, nada se registra sin comprobante.</p>
+    </div>
+    <div class="cards">
+      <article class="card reveal">
+        <span class="roman" aria-hidden="true">i</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><rect x="6" y="12" width="32" height="20" rx="1"/><path d="M6 19h32M12 26h8M26 26h6"/></svg>
+        <h3>CLABEs ilimitadas</h3>
+        <p>Emisión de cuentas CLABE por API, sin tope, para segmentar clientes, proyectos o unidades de negocio con trazabilidad individual.</p>
+      </article>
+      <article class="card reveal" data-delay="1">
+        <span class="roman" aria-hidden="true">ii</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><path d="M8 16h22m0 0-6-6m6 6-6 6M36 28H14m0 0 6-6m-6 6 6 6"/></svg>
+        <h3>SPEI de entrada y salida</h3>
+        <p>Recepción y envío 24 horas, todos los días del año, con confirmación en segundos y notificación inmediata por webhook.</p>
+      </article>
+      <article class="card reveal" data-delay="2">
+        <span class="roman" aria-hidden="true">iii</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="22" cy="10" r="3"/><circle cx="10" cy="30" r="3"/><circle cx="22" cy="34" r="3"/><circle cx="34" cy="30" r="3"/><path d="M22 13v6m0 0-10 8m10-8v12m0-12 10 8"/></svg>
+        <h3>Dispersión masiva</h3>
+        <p>Miles de pagos en una sola instrucción: proveedores, comisiones o retiros, con resultado individual por operación.</p>
+      </article>
+      <article class="card reveal">
+        <span class="roman" aria-hidden="true">iv</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><rect x="9" y="6" width="26" height="32" rx="1"/><path d="M15 14h14M15 20h14M15 26h9"/><circle cx="29" cy="30" r="4"/></svg>
+        <h3>Nóminas</h3>
+        <p>Pago de nómina programado y documentado, con comprobante por colaborador y conciliación automática al cierre.</p>
+      </article>
+      <article class="card reveal" data-delay="1">
+        <span class="roman" aria-hidden="true">v</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><path d="M8 34V12m0 22h28M14 28l6-7 5 4 8-11"/><circle cx="33" cy="14" r="2.5"/></svg>
+        <h3>Conciliación automática</h3>
+        <p>Cada abono llega identificado por CLABE de origen y destino. El estado de cuenta se concilia solo, en tiempo real.</p>
+      </article>
+      <article class="card reveal" data-delay="2">
+        <span class="roman" aria-hidden="true">vi</span>
+        <svg class="card-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><path d="M22 6l14 6v9c0 8-6 14-14 17-8-3-14-9-14-17v-9z"/><path d="M16 21l4 4 8-9"/></svg>
+        <h3>Multi-empresa</h3>
+        <p>Varias razones sociales bajo una misma consola, con saldos, permisos y auditoría separados por entidad.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SEGURIDAD ═══ -->
+<section class="security" id="seguridad">
+  <div class="wrap security-grid">
+    <figure class="seal-figure reveal" aria-hidden="true">
+      <svg viewBox="0 0 380 380" fill="none">
+        <g stroke="#C9A961" stroke-width="1" opacity=".9">
+          <circle cx="190" cy="190" r="180" opacity=".35"/>
+          <circle cx="190" cy="190" r="168"/>
+          <circle cx="190" cy="190" r="128" opacity=".6"/>
+          <circle cx="190" cy="190" r="88" opacity=".8"/>
+        </g>
+        <g stroke="#C9A961" stroke-width=".6" opacity=".55" id="sealRays"></g>
+        <path id="sealPathTop" d="M190 42a148 148 0 1 1-.01 0" fill="none"/>
+        <text font-family="Inter,Arial,sans-serif" font-size="14.5" letter-spacing="6" fill="#C9A961">
+          <textPath href="#sealPathTop" startOffset="0">MASMOVIL · GUADALAJARA · MMXIX · SPEI · STP · BANXICO ·</textPath>
+        </text>
+        <g font-family="Cormorant Garamond,Georgia,serif" fill="#F3EDDD" text-anchor="middle">
+          <text x="190" y="178" font-size="30" font-style="italic">Cámara de</text>
+          <text x="190" y="212" font-size="30" font-style="italic">seguridad</text>
+          <text x="190" y="248" font-size="13" fill="#C9A961" font-family="Inter,Arial,sans-serif" letter-spacing="3">2FA · HMAC · KILL SWITCH</text>
+        </g>
+      </svg>
+    </figure>
+    <div>
+      <div class="section-head reveal" style="margin-bottom:1.4rem">
+        <p class="eyebrow">II · La cámara</p>
+        <h2>Seguridad de grado institucional</h2>
+      </div>
+      <ul class="sec-list">
+        <li class="reveal"><span class="roman" aria-hidden="true">i.</span><div><strong>Autenticación HMAC con anti-replay</strong><p>Cada petición viaja firmada; una firma repetida o fuera de ventana temporal se rechaza sin excepción.</p></div></li>
+        <li class="reveal"><span class="roman" aria-hidden="true">ii.</span><div><strong>Idempotencia nativa</strong><p>Reintentar una instrucción jamás duplica un pago. La llave de idempotencia es obligatoria en operaciones de salida.</p></div></li>
+        <li class="reveal"><span class="roman" aria-hidden="true">iii.</span><div><strong>Webhooks firmados</strong><p>Toda notificación incluye firma verificable, para que su sistema distinga un aviso legítimo de una suplantación.</p></div></li>
+        <li class="reveal"><span class="roman" aria-hidden="true">iv.</span><div><strong>2FA obligatorio</strong><p>El segundo factor no es opcional: aplica a todo usuario de la consola, sin perfiles exentos.</p></div></li>
+        <li class="reveal"><span class="roman" aria-hidden="true">v.</span><div><strong>Kill switch</strong><p>Un interruptor de emergencia detiene la operación de salida en segundos, por cuenta o por empresa completa.</p></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CUMPLIMIENTO ═══ -->
+<section id="cumplimiento">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">III · El libro mayor</p>
+      <h2>Cumplimiento verificable, no declarativo</h2>
+      <p class="lede">Para el analista de riesgo, cada afirmación debe poder auditarse. Así queda asentado nuestro régimen de control:</p>
+    </div>
+    <div class="ledger reveal" data-delay="1">
+      <div class="ledger-head"><span>Registro de controles</span><span aria-hidden="true">Folio PLD/AML</span></div>
+      <table>
+        <thead><tr><th scope="col">Control</th><th scope="col">Alcance</th><th scope="col">Evidencia</th></tr></thead>
+        <tbody>
+          <tr><td>Screening de contrapartes</td><td>Listas nacionales e internacionales, en alta y en cada operación.</td><td>Bitácora con fecha, lista y resultado.</td></tr>
+          <tr><td>Scoring de riesgo</td><td>Calificación por cliente y por transacción, con umbrales configurables.</td><td>Expediente de riesgo consultable.</td></tr>
+          <tr><td>CEP de Banxico</td><td>Comprobante Electrónico de Pago en cada operación liquidada.</td><td>Folio y liga de validación en Banxico.</td></tr>
+          <tr><td>Monitoreo transaccional</td><td>Alertas por patrón inusual, monto y frecuencia, 24/7.</td><td>Historial de alertas y resoluciones.</td></tr>
+          <tr><td>Auditoría de accesos</td><td>Registro inmutable de cada acción de usuario y de API.</td><td>Exportable para revisión regulatoria.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="compliance-note reveal" data-delay="2">
+      La conexión al SPEI se realiza a través de STP (Sistema de Transferencias y Pagos), participante autorizado de Banco de México. MASMOVIL mantiene programas de prevención de lavado de dinero y financiamiento al terrorismo alineados a la regulación mexicana aplicable.
+    </p>
+  </div>
+</section>
+
+<!-- ═══ API ═══ -->
+<section class="security" id="api">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">IV · La pluma</p>
+      <h2>Una API que se lee como un contrato</h2>
+      <p class="lede">Explícita, versionada y predecible. Su equipo integra en días, no en trimestres.</p>
+    </div>
+    <div class="api-grid">
+      <div class="terminal reveal" data-delay="1">
+        <div class="terminal-bar"><span>POST /v1/transferencias</span><span aria-hidden="true">firmado · idempotente</span></div>
+        <pre><code><span class="tk-c">// Orden de pago SPEI de salida</span>
+{
+  <span class="tk-k">"clave_rastreo"</span>: <span class="tk-s">"MM2026070900017"</span>,
+  <span class="tk-k">"cuenta_origen"</span>:  <span class="tk-s">"646180xxxxxxxxxx70"</span>,
+  <span class="tk-k">"cuenta_destino"</span>: <span class="tk-s">"012320xxxxxxxxxx84"</span>,
+  <span class="tk-k">"monto"</span>: <span class="tk-s">"152000.00"</span>,
+  <span class="tk-k">"concepto"</span>: <span class="tk-s">"Pago a proveedor 4417"</span>,
+  <span class="tk-k">"llave_idempotencia"</span>: <span class="tk-s">"ord-9f31-a2c8"</span>
+}
+
+<span class="tk-c">// Respuesta — 202 Accepted · "estado": "enviada"</span>
+<span class="tk-c">// Webhook firmado al liquidar:</span>
+{
+  <span class="tk-k">"estado"</span>: <span class="tk-s">"liquidada"</span>,
+  <span class="tk-k">"clave_rastreo"</span>: <span class="tk-s">"MM2026070900017"</span>,
+  <span class="tk-k">"cep"</span>: <span class="tk-s">"https://www.banxico.org.mx/cep/…"</span>
+}</code></pre>
+      </div>
+      <div class="reveal" data-delay="2">
+        <ul class="api-points">
+          <li><svg aria-hidden="true"><use href="#sym-check"/></svg><span><strong style="color:var(--ivory)">Firmas HMAC por petición</strong> — cabeceras de autenticación con marca de tiempo y protección anti-replay.</span></li>
+          <li><svg aria-hidden="true"><use href="#sym-check"/></svg><span><strong style="color:var(--ivory)">Webhooks con firma verificable</strong> — abonos, liquidaciones y devoluciones notificados al instante.</span></li>
+          <li><svg aria-hidden="true"><use href="#sym-check"/></svg><span><strong style="color:var(--ivory)">Ambiente de pruebas completo</strong> — simule abonos, devoluciones y errores antes de operar en producción.</span></li>
+          <li><svg aria-hidden="true"><use href="#sym-check"/></svg><span><strong style="color:var(--ivory)">CEP en la respuesta</strong> — el comprobante de Banxico acompaña a cada operación liquidada.</span></li>
+        </ul>
+        <div style="margin-top:2.2rem">
+          <a class="btn btn-ghost" href="mailto:direccion@masmovil.lat?subject=Solicitud%20de%20documentaci%C3%B3n%20de%20API">Solicitar documentación</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ OTRAS LÍNEAS ═══ -->
+<section id="lineas">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">V · Las salas anexas</p>
+      <h2>Otras líneas de la casa</h2>
+    </div>
+    <div class="lines-grid">
+      <article class="line-card reveal">
+        <span class="roman" aria-hidden="true">i.</span>
+        <h3>Telecomunicaciones</h3>
+        <p>Servicios de conectividad para operaciones empresariales, con la misma disciplina de disponibilidad que exige un sistema de pagos.</p>
+      </article>
+      <article class="line-card reveal" data-delay="1">
+        <span class="roman" aria-hidden="true">ii.</span>
+        <h3>Software a la medida</h3>
+        <p>Desarrollo de sistemas para empresas que necesitan integrar pagos, conciliación y operación en una sola pieza de software.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CIERRE ═══ -->
+<section class="closing" id="contacto">
+  <div class="wrap">
+    <p class="eyebrow centered reveal">Solicitud de acceso</p>
+    <h2 class="reveal" data-delay="1">La puerta de la bóveda se abre con una carta.</h2>
+    <p class="lede reveal" data-delay="2">Escríbanos con una descripción de su operación. Respondemos con una propuesta de integración y acceso al ambiente de pruebas.</p>
+    <div class="closing-actions reveal" data-delay="3">
+      <a class="btn btn-solid" href="mailto:direccion@masmovil.lat?subject=Solicitud%20de%20acceso%20%E2%80%94%20Infraestructura%20SPEI&body=Nombre%20de%20la%20empresa%3A%0AGiro%3A%0AVolumen%20mensual%20estimado%3A%0A">Solicitar acceso</a>
+      <a class="btn btn-ghost" href="mailto:direccion@masmovil.lat?subject=Solicitud%20de%20prueba%20%E2%80%94%20Ambiente%20sandbox">Solicitar prueba en sandbox</a>
+    </div>
+    <a class="closing-mail reveal" data-delay="3" href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a>
+    <div style="margin-top:3rem" class="reveal" data-delay="3">
+      <div class="rule-ornament"><svg viewBox="0 0 26 26" aria-hidden="true"><use href="#sym-rosette"/></svg></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ═══ PIE LEGAL ═══ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>MASMOVIL, S.A. de C.V.</h4>
+        <p>Empresa tecnológica mexicana fundada en 2019. Infraestructura de pagos SPEI, telecomunicaciones y software a la medida.</p>
+      </div>
+      <div>
+        <h4>Índice</h4>
+        <ul>
+          <li><a href="#infraestructura">Infraestructura</a></li>
+          <li><a href="#seguridad">Seguridad</a></li>
+          <li><a href="#cumplimiento">Cumplimiento</a></li>
+          <li><a href="#api">API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a></li>
+          <li><a href="https://masmovil.lat" rel="noopener">masmovil.lat</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-legal">
+      <p>
+        MASMOVIL, S.A. de C.V. · RFC MAS191203EY6 · Pompeya 2775, Lomas de Guevara, C.P. 44657, Guadalajara, Jalisco, México.
+        Los servicios de envío y recepción de transferencias SPEI se prestan mediante conexión con STP (Sistema de Transferencias y Pagos),
+        participante autorizado de Banco de México. MASMOVIL no es una institución de crédito.
+      </p>
+      <p>© <span id="year">2026</span> MASMOVIL, S.A. de C.V. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ── Cabecera al hacer scroll ── */
+  var header = document.getElementById("siteHeader");
+  function onScroll(){ header.classList.toggle("scrolled", window.scrollY > 24); }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+  /* ── Menú móvil ── */
+  var toggle = document.getElementById("navToggle");
+  var links = document.getElementById("navLinks");
+  toggle.addEventListener("click", function(){
+    var open = links.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(open));
+  });
+  links.addEventListener("click", function(e){
+    if(e.target.tagName === "A"){
+      links.classList.remove("open");
+      toggle.setAttribute("aria-expanded","false");
+    }
+  });
+
+  /* ── Revelado ceremonioso ── */
+  var revealEls = document.querySelectorAll(".reveal");
+  if(!reduceMotion && "IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add("is-visible");
+          io.unobserve(entry.target);
+        }
+      });
+    }, {threshold:.15, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add("is-visible"); });
+  }
+
+  /* ── Contadores lentos ── */
+  var counters = document.querySelectorAll("[data-counter]");
+  function animateCounter(el){
+    var target = parseInt(el.getAttribute("data-counter"), 10);
+    if(reduceMotion){ el.textContent = String(target); return; }
+    var start = parseInt(el.textContent, 10) || 0;
+    var t0 = null, dur = 1800;
+    function step(ts){
+      if(t0 === null) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(start + (target - start) * eased));
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  if("IntersectionObserver" in window){
+    var cio = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          animateCounter(entry.target);
+          cio.unobserve(entry.target);
+        }
+      });
+    }, {threshold:.5});
+    counters.forEach(function(el){ cio.observe(el); });
+  } else {
+    counters.forEach(animateCounter);
+  }
+
+  /* ── Rayos del sello (grabado radial) ── */
+  var rays = document.getElementById("sealRays");
+  if(rays){
+    var NS = "http://www.w3.org/2000/svg";
+    for(var i = 0; i < 72; i++){
+      var a = (i / 72) * Math.PI * 2;
+      var l = document.createElementNS(NS, "line");
+      l.setAttribute("x1", String(190 + Math.cos(a) * 92));
+      l.setAttribute("y1", String(190 + Math.sin(a) * 92));
+      l.setAttribute("x2", String(190 + Math.cos(a) * (i % 2 ? 118 : 124)));
+      l.setAttribute("y2", String(190 + Math.sin(a) * (i % 2 ? 118 : 124)));
+      rays.appendChild(l);
+    }
+  }
+
+  /* ── Guilloché del héroe (hipotrocoides en canvas) ── */
+  var canvas = document.getElementById("guilloche");
+  if(canvas && canvas.getContext){
+    var ctx = canvas.getContext("2d");
+    var W = canvas.width, H = canvas.height;
+    var cx = W / 2, cy = H / 2;
+    var curves = [
+      {R:300, r:75,  d:140, hue:"rgba(201,169,97,.30)"},
+      {R:290, r:58,  d:120, hue:"rgba(201,169,97,.22)"},
+      {R:260, r:104, d:88,  hue:"rgba(201,169,97,.16)"},
+      {R:230, r:46,  d:150, hue:"rgba(243,237,221,.10)"}
+    ];
+    function drawCurve(c, phase){
+      ctx.beginPath();
+      ctx.strokeStyle = c.hue;
+      ctx.lineWidth = .7;
+      var steps = 1400;
+      for(var i = 0; i <= steps; i++){
+        var t = (i / steps) * Math.PI * 2 * (c.r / gcd(c.R, c.r));
+        var k = (c.R - c.r) / c.r;
+        var x = cx + ((c.R - c.r) * Math.cos(t + phase) + c.d * Math.cos(k * (t + phase))) * .78;
+        var y = cy + ((c.R - c.r) * Math.sin(t + phase) - c.d * Math.sin(k * (t + phase))) * .78;
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    function gcd(a, b){ return b ? gcd(b, a % b) : a; }
+    function render(phase){
+      ctx.clearRect(0, 0, W, H);
+      for(var i = 0; i < curves.length; i++){
+        drawCurve(curves[i], phase * (i % 2 ? 1 : -1) * (1 + i * .12));
+      }
+      ctx.beginPath();
+      ctx.arc(cx, cy, 236, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(201,169,97,.28)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    if(reduceMotion){
+      render(0);
+    } else {
+      var phase = 0, last = 0;
+      function tick(ts){
+        /* movimiento lento y ceremonioso: una vuelta cada ~8 minutos */
+        if(ts - last > 66){
+          phase += .00085;
+          render(phase);
+          last = ts;
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+
+  /* ── Año en curso ── */
+  var yearEl = document.getElementById("year");
+  if(yearEl) yearEl.textContent = String(new Date().getFullYear());
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MASMOVIL — Competencia de propuestas · 5 equipos</title>
+<meta name="robots" content="noindex" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#04060e; --panel:#090e1a; --line:rgba(242,240,233,.1); --txt:#F2F0E9; --dim:#9AA3B8; --verde:#34D399; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--txt); font-family:"IBM Plex Sans",sans-serif; padding:60px 5vw 80px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  h1 { font-size:clamp(28px,4vw,44px); letter-spacing:-.02em; margin-bottom:10px; }
+  .sub { color:var(--dim); max-width:60ch; margin-bottom:8px; }
+  .note { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); margin-bottom:40px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+  .card { border:1px solid var(--line); border-radius:12px; background:var(--panel); padding:24px; }
+  .card h2 { font-size:18px; margin-bottom:4px; }
+  .card .ideo { font-size:13px; color:var(--dim); margin-bottom:16px; min-height:3em; }
+  .links { display:flex; gap:10px; }
+  .links a { flex:1; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.06em;
+    border:1px solid var(--line); border-radius:8px; padding:11px 8px; color:var(--txt); text-decoration:none; transition:border-color .2s, background .2s; }
+  .links a:hover { border-color:var(--verde); background:rgba(52,211,153,.07); }
+  .tag { display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.18em; color:var(--verde); margin-bottom:10px; }
+</style>
+</head>
+<body>
+  <h1>Competencia de propuestas</h1>
+  <p class="sub">Cinco equipos de diseño trabajaron en aislamiento total sobre el mismo brief: la web de MASMOVIL y el dashboard de su core bancario. Mismo cliente, cinco ideologías.</p>
+  <p class="note">masmovil.lat/propuestas · interno · no indexable</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">EQUIPO 01</span>
+      <h2>Helvetia</h2>
+      <p class="ideo">Suizo editorial sobre papel: blanco, tipografía de informe anual, retícula visible, un solo rojo.</p>
+      <div class="links"><a href="/propuestas/equipo-1/landing.html">LANDING</a><a href="/propuestas/equipo-1/dashboard.html">DASHBOARD</a></div>
+    </div>
+    <div class="card">
+      <span class="tag">EQUIPO 02</span>
+      <h2>Neón</h2>
+      <p class="ideo">Terminal fosforescente: negro absoluto, fósforo verde y ámbar, ASCII art, todo se teclea.</p>
+      <div class="links"><a href="/propuestas/equipo-2/landing.html">LANDING</a><a href="/propuestas/equipo-2/dashboard.html">DASHBOARD</a></div>
+    </div>
+    <div class="card">
+      <span class="tag">EQUIPO 03</span>
+      <h2>Museo</h2>
+      <p class="ideo">Banca privada / grabado: azul marino, dorado champán, serif ceremonioso, guilloché de billete.</p>
+      <div class="links"><a href="/propuestas/equipo-3/landing.html">LANDING</a><a href="/propuestas/equipo-3/dashboard.html">DASHBOARD</a></div>
+    </div>
+    <div class="card">
+      <span class="tag">EQUIPO 04</span>
+      <h2>Kinético</h2>
+      <p class="ideo">Bauhaus kinético: crema cálido, geometría gigante en cobalto/amarillo/coral que se mueve con el scroll.</p>
+      <div class="links"><a href="/propuestas/equipo-4/landing.html">LANDING</a><a href="/propuestas/equipo-4/dashboard.html">DASHBOARD</a></div>
+    </div>
+    <div class="card">
+      <span class="tag">EQUIPO 05</span>
+      <h2>Aurora</h2>
+      <p class="ideo">Fintech consumer premium: grafito, gradientes aurora sutiles, glass, microinteracciones deliciosas.</p>
+      <div class="links"><a href="/propuestas/equipo-5/landing.html">LANDING</a><a href="/propuestas/equipo-5/dashboard.html">DASHBOARD</a></div>
+    </div>
+  </div>
+</body>
+</html>

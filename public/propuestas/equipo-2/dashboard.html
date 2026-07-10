@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASMOVIL — MM://CORE · Terminal operativa (propuesta)</title>
+<meta name="description" content="Dashboard del núcleo de pagos SPEI de MASMOVIL — propuesta de producto. Datos simulados.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=block" rel="stylesheet">
+<style>
+/* ═══════════════ TOKENS ═══════════════ */
+:root{
+  --bg:#000000;
+  --ph:#33FF66;
+  --ph-88:rgba(51,255,102,.88);
+  --ph-72:rgba(51,255,102,.72);
+  --ph-60:rgba(51,255,102,.6);
+  --ph-48:rgba(51,255,102,.48);
+  --ph-28:rgba(51,255,102,.28);
+  --ph-14:rgba(51,255,102,.14);
+  --ph-07:rgba(51,255,102,.07);
+  --amber:#FFB000;
+  --amber-16:rgba(255,176,0,.16);
+  --amber-08:rgba(255,176,0,.08);
+  --mono:'IBM Plex Mono',ui-monospace,'Courier New',monospace;
+  --disp:'VT323',var(--mono);
+  --top-h:52px;
+  --stat-h:34px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--ph);
+  font-family:var(--mono);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+::selection{background:var(--amber);color:#000}
+:focus{outline:none}
+:focus-visible{outline:2px dashed var(--amber);outline-offset:2px}
+a{color:var(--ph);text-decoration:none}
+a:hover{background:var(--ph);color:#000}
+button{font-family:var(--mono)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+a.skip-link:focus{position:fixed;top:calc(var(--top-h) + 8px);left:8px;z-index:9600;width:auto;height:auto;margin:0;padding:10px 16px;clip:auto;overflow:visible;background:#000;color:var(--amber);border:1px solid var(--amber);font-size:13px}
+
+/* ═══════════════ CRT ═══════════════ */
+.scanlines{position:fixed;inset:0;height:100dvh;pointer-events:none;z-index:9700;
+  background:repeating-linear-gradient(180deg,transparent 0 2px,rgba(0,0,0,.22) 2px 3px)}
+.vignette{position:fixed;inset:0;height:100dvh;pointer-events:none;z-index:9701;
+  background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.42) 100%)}
+@keyframes crtflick{0%,91%,95%,100%{opacity:1}92%{opacity:.965}93.5%{opacity:.99}}
+.crt{animation:crtflick 9s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){.crt{animation:none}}
+
+.dim{color:var(--ph-72)}
+.dim48{color:var(--ph-60)}
+.st-ok{color:var(--ph)}
+.st-transit{color:var(--amber)}
+.st-err{background:var(--amber);color:#000;padding:0 4px;font-weight:600}
+.st-hold{border:1px dashed var(--amber);color:var(--amber);padding:0 4px}
+.cursor{display:inline-block;width:.62em;height:1.05em;background:var(--amber);vertical-align:text-bottom;animation:blink 1.06s steps(1,end) infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none;opacity:1}}
+
+/* ═══════════════ BOOT ═══════════════ */
+#boot{position:fixed;inset:0;height:100dvh;z-index:9500;background:#000;
+  display:flex;align-items:center;justify-content:center;padding:24px;cursor:pointer}
+#boot pre{font-family:var(--mono);font-size:14px;color:var(--ph);max-width:640px;width:100%;overflow:hidden;line-height:1.5}
+#boot .hint{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:12px;color:var(--ph-72)}
+#boot.gone{display:none}
+
+/* ═══════════════ TOPBAR ═══════════════ */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:8000;height:var(--top-h);
+  background:rgba(0,0,0,.95);border-bottom:1px solid var(--ph-28);
+  display:flex;align-items:center;gap:14px;padding:0 16px;font-size:12.5px;white-space:nowrap}
+.topbar .logo{font-weight:700;letter-spacing:.06em;font-size:14px}
+.topbar .logo .sub{color:var(--ph-72);font-weight:400;font-size:11.5px;margin-left:8px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.tb-user{color:var(--ph-72)}
+.tb-clock{color:var(--ph);letter-spacing:.05em;min-width:8.5ch;text-align:right}
+.tb-net{color:var(--ph-72)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.tb-net::before{content:"●";color:var(--ph);margin-right:6px;display:inline-block;animation:pulse 2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.tb-net::before{animation:none}}
+.emp-sel{display:flex;align-items:center;gap:8px}
+.emp-sel label{color:var(--ph-72);font-size:11px;letter-spacing:.08em}
+.emp-sel select{font-family:var(--mono);font-size:12.5px;color:var(--ph);background:#000;
+  border:1px solid var(--ph-28);padding:5px 26px 5px 8px;border-radius:0;appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ph-48) 50%),linear-gradient(135deg,var(--ph-48) 50%,transparent 50%);
+  background-position:calc(100% - 14px) 55%,calc(100% - 9px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+.emp-sel select:hover{border-color:var(--ph-48)}
+.ks-chip{font-size:11px;letter-spacing:.08em;border:1px solid var(--ph-48);color:var(--ph);padding:4px 10px}
+.ks-chip.warn{border-color:var(--amber);color:var(--amber);background:var(--amber-08)}
+.ks-chip.hard{background:var(--amber);color:#000;border-color:var(--amber);font-weight:700}
+@media (max-width:1060px){.tb-user,.tb-net{display:none}}
+@media (max-width:760px){.topbar .logo .sub{display:none}.emp-sel label{display:none}}
+@media (max-width:560px){.tb-clock{display:none}.topbar{gap:8px}.emp-sel select{max-width:44vw;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width:480px){.topbar{gap:6px;padding:0 10px}.emp-sel select{max-width:32vw}.ks-chip{font-size:10px;padding:3px 7px;letter-spacing:.04em}}
+
+/* ═══════════════ SHELL ═══════════════ */
+.shell{max-width:1420px;margin:0 auto;padding:calc(var(--top-h) + 18px) 16px calc(var(--stat-h) + 22px)}
+.ks-banner{display:none;border:1px solid var(--amber);background:var(--amber-08);color:var(--amber);
+  padding:10px 14px;font-size:13px;letter-spacing:.03em;margin-bottom:14px}
+.ks-banner.show{display:block}
+
+/* KPI ROW */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+@media (max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:1px solid var(--ph-28);background:rgba(0,0,0,.5);padding:10px 12px;min-width:0}
+.kpi .k-label{font-size:10.5px;letter-spacing:.1em;color:var(--ph-72);text-transform:uppercase;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .k-value{font-family:var(--disp);font-size:clamp(22px,2.2vw,30px);line-height:1.05;color:var(--ph);white-space:nowrap;text-shadow:0 0 12px var(--ph-28)}
+.kpi .k-value.amberv{color:var(--amber);text-shadow:0 0 12px rgba(255,176,0,.28)}
+.kpi .k-foot{font-size:10.5px;color:var(--ph-72);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* PANEL */
+.panel{border:1px solid var(--ph-28);background:rgba(0,0,0,.5);position:relative}
+.panel::before{content:"╔";position:absolute;top:-7px;left:-4px;color:var(--ph-48);font-size:12px;line-height:1;pointer-events:none}
+.panel::after{content:"╝";position:absolute;bottom:-7px;right:-4px;color:var(--ph-48);font-size:12px;line-height:1;pointer-events:none}
+.p-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--ph-14)}
+.p-head h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ph-88)}
+.p-head h2::before{content:"▸ ";color:var(--ph-48)}
+.p-head .p-meta{font-size:11px;color:var(--ph-72);letter-spacing:.05em}
+.p-body{padding:12px 14px}
+.panel.amber{border-color:var(--amber)}
+.panel.amber::before,.panel.amber::after{color:var(--amber)}
+.panel.amber .p-head{border-bottom-color:var(--amber-16)}
+.panel.amber .p-head h2{color:var(--amber)}
+.panel.amber .p-head h2::before{color:var(--amber)}
+
+/* CHARTS */
+.chart-wrap{padding:10px 14px 4px}
+.chart-wrap canvas{display:block;width:100%;height:150px}
+.chart-legend{display:flex;gap:16px;flex-wrap:wrap;padding:6px 14px 12px;font-size:11px;color:var(--ph-72);letter-spacing:.05em}
+.chart-legend .sw{display:inline-block;width:10px;height:10px;vertical-align:-1px;margin-right:6px}
+.spark-row{display:flex;align-items:baseline;gap:10px;padding:0 14px 4px;font-size:11px;color:var(--ph-72)}
+.spark-row canvas{height:44px}
+
+/* FEED */
+.feed-scroll{overflow-x:auto}
+table.ops{width:100%;border-collapse:collapse;font-size:12.8px;min-width:720px}
+table.ops th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ph-72);font-weight:500;text-align:left;padding:8px 12px;border-bottom:1px solid var(--ph-14);white-space:nowrap}
+table.ops td{padding:6.5px 12px;border-bottom:1px solid var(--ph-07);white-space:nowrap;color:var(--ph-88)}
+table.ops .num{text-align:right}
+tr.oprow{cursor:pointer}
+tr.oprow:hover td{background:var(--ph-07)}
+tr.oprow:focus-visible{outline:2px dashed var(--amber);outline-offset:-2px}
+tr.transit td{color:var(--amber)}
+tr.hold td{color:var(--amber)}
+.feed-note{padding:8px 14px;font-size:11px;color:var(--ph-72);border-top:1px solid var(--ph-14)}
+.btn-mini{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.05em;
+  border:1px solid var(--ph);background:transparent;color:var(--ph);padding:5px 10px;cursor:pointer}
+.btn-mini:hover{background:var(--ph);color:#000}
+.btn-mini.amberb{border-color:var(--amber);color:var(--amber)}
+.btn-mini.amberb:hover{background:var(--amber);color:#000}
+
+/* KILL SWITCH */
+.ks-rows{display:flex;flex-direction:column;gap:10px}
+.ks-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px dashed var(--ph-28);padding:10px 12px}
+.ks-row .ks-name{font-size:12.5px;letter-spacing:.06em}
+.ks-row .ks-desc{font-size:11px;color:var(--ph-72);display:block}
+.ks-row.on{border-color:var(--amber);background:var(--amber-08)}
+.ks-row.on .ks-name,.ks-row.on .ks-desc{color:var(--amber)}
+.ks-note{font-size:11px;color:var(--ph-72);margin-top:10px;line-height:1.6}
+
+/* LISTS */
+.tlist{list-style:none;font-size:12.5px}
+.tlist li{padding:7px 0;border-bottom:1px dashed var(--ph-14);display:flex;gap:10px;align-items:baseline}
+.tlist li:last-child{border-bottom:none}
+.tlist .t-when{color:var(--ph-72);font-size:11px;white-space:nowrap}
+.tlist .t-tag{white-space:nowrap}
+.tlist .grow{flex:1;min-width:0}
+.score{display:inline-block;min-width:5.5ch;text-align:center;border:1px solid var(--ph-28);font-size:11px;padding:1px 4px}
+.score.hi{border-color:var(--amber);color:var(--amber);background:var(--amber-08)}
+.wh-ok{color:var(--ph)}
+.wh-lat{color:var(--ph-72);font-size:11px}
+
+/* BITÁCORA */
+#bitacora{max-height:220px;overflow-y:auto;font-size:12px;line-height:1.7}
+#bitacora div{border-bottom:1px dashed var(--ph-07);padding:3px 0}
+#bitacora .b-t{color:var(--ph-72)}
+#bitacora .b-amber{color:var(--amber)}
+
+/* STATUS BAR */
+.statbar{position:fixed;left:0;right:0;bottom:0;z-index:8000;height:var(--stat-h);
+  background:rgba(0,0,0,.95);border-top:1px solid var(--ph-28);
+  display:flex;align-items:center;gap:18px;padding:0 14px;
+  font-size:11.5px;letter-spacing:.05em;overflow:hidden;white-space:nowrap;color:var(--ph-72)}
+.statbar .sb-prompt{color:var(--ph)}
+.statbar .sb-keys span{border:1px solid var(--ph-28);padding:1px 6px;margin-right:8px;color:var(--ph-72)}
+@media (max-width:820px){.statbar .sb-keys{display:none}}
+@media (max-width:560px){.statbar .sb-lat{display:none}}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.82);
+  align-items:flex-start;justify-content:center;padding:8vh 16px 16px;overflow-y:auto}
+.overlay.show{display:flex}
+.modal{width:100%;max-width:640px;background:#000;border:1px solid var(--ph);position:relative;padding:0}
+.modal.amber{border-color:var(--amber)}
+.m-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ph-28)}
+.modal.amber .m-head{border-bottom-color:var(--amber-16)}
+.m-head h3{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.modal.amber .m-head h3{color:var(--amber)}
+.m-close{font-family:var(--mono);font-size:12px;background:transparent;border:1px solid var(--ph-48);color:var(--ph);padding:4px 10px;cursor:pointer}
+.m-close:hover{background:var(--ph);color:#000}
+.modal.amber .m-close{border-color:var(--amber);color:var(--amber)}
+.modal.amber .m-close:hover{background:var(--amber);color:#000}
+.m-body{padding:16px}
+.exp-tree{font-size:13px;line-height:1.9;margin-bottom:12px;white-space:pre-wrap}
+.exp-tree button{font-family:var(--mono);font-size:12px;background:transparent;border:1px dashed var(--ph-28);color:var(--ph);padding:1px 8px;cursor:pointer;margin-left:8px}
+.exp-tree button:hover,.exp-tree button[aria-pressed="true"]{background:var(--ph);color:#000}
+.exp-view{border:1px dashed var(--ph-28);padding:12px;font-size:12px;line-height:1.6;color:var(--ph-88);overflow-x:auto;min-height:120px}
+.exp-view pre{font-family:var(--mono);white-space:pre}
+.exp-view .cm{color:var(--ph-48)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ph-72);margin-bottom:6px}
+.field input,.field select{width:100%;font-family:var(--mono);font-size:14px;color:var(--ph);
+  background:rgba(51,255,102,.05);border:1px solid var(--ph-28);padding:10px 12px;border-radius:0;letter-spacing:.2em}
+.modal.amber .field input,.modal.amber .field select{color:var(--amber);border-color:rgba(255,176,0,.35);background:var(--amber-08);}
+.field select{letter-spacing:normal;appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ph-48) 50%),linear-gradient(135deg,var(--ph-48) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+.ferr{display:none;margin-top:6px;font-size:12px}
+.field.bad .ferr{display:block}
+.btn-send{width:100%;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.08em;
+  background:var(--amber);color:#000;border:1px solid var(--amber);padding:12px;cursor:pointer}
+.btn-send:hover{background:#000;color:var(--amber)}
+#ks-verif{display:none;font-size:13px;color:var(--amber);margin-top:12px;line-height:1.8;white-space:pre-line}
+#ks-verif.show{display:block}
+</style>
+<noscript><style>#boot{display:none}.jsonly{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="crt">
+
+<!-- ═══════ BOOT ═══════ -->
+<div id="boot" role="dialog" aria-label="Secuencia de arranque de la terminal. Presione cualquier tecla para omitir." tabindex="-1">
+  <pre id="boot-pre" aria-hidden="true"></pre>
+  <div class="hint">[ cualquier tecla o clic para omitir ]</div>
+</div>
+
+<a class="sr-only skip-link" href="#main">Saltar al contenido</a>
+
+<!-- ═══════ TOPBAR ═══════ -->
+<header class="topbar">
+  <div class="logo">▓▓ MASMOVIL<span class="sub">MM://CORE v4.2.1 · TERMINAL OPERATIVA</span></div>
+  <div class="emp-sel">
+    <label for="emp">EMPRESA▸</label>
+    <select id="emp" aria-label="Seleccionar empresa del grupo"></select>
+  </div>
+  <div class="tb-right">
+    <span class="ks-chip" id="ks-chip" role="status">SISTEMA: NORMAL</span>
+    <span class="tb-net">STP CONECTADO</span>
+    <span class="tb-user">op: ana.p · rol OPERADOR · 2FA ✓</span>
+    <span class="tb-clock" id="clock" aria-hidden="true">--:--:--</span>
+  </div>
+</header>
+
+<main class="shell" id="main">
+  <noscript><p style="border:1px solid var(--amber);color:var(--amber);padding:12px 14px;margin-bottom:14px;font-size:13px">Esta terminal de demostración requiere JavaScript: los datos del panel se simulan en el navegador. Active JavaScript para operar el prototipo.</p></noscript>
+  <div class="ks-banner" id="ks-banner" role="alert"></div>
+
+  <!-- ═══════ KPIs ═══════ -->
+  <section class="kpis" aria-label="Indicadores del día (datos simulados)">
+    <div class="kpi"><div class="k-label">Saldo operativo</div><div class="k-value" id="k-saldo">—</div><div class="k-foot">MXN · corte en vivo</div></div>
+    <div class="kpi"><div class="k-label">SPEI-IN hoy</div><div class="k-value" id="k-in">—</div><div class="k-foot" id="k-in-n">—</div></div>
+    <div class="kpi"><div class="k-label">SPEI-OUT hoy</div><div class="k-value" id="k-out">—</div><div class="k-foot" id="k-out-n">—</div></div>
+    <div class="kpi"><div class="k-label">CEP emitidos hoy</div><div class="k-value" id="k-cep">—</div><div class="k-foot">1 por operación liquidada</div></div>
+    <div class="kpi"><div class="k-label">Tasa de liquidación</div><div class="k-value" id="k-tasa">—</div><div class="k-foot">devoluciones incluidas</div></div>
+    <div class="kpi"><div class="k-label">CLABEs activas</div><div class="k-value" id="k-clabes">—</div><div class="k-foot">altas ilimitadas por API</div></div>
+  </section>
+
+  <div class="grid">
+    <!-- ═══════ COL IZQUIERDA ═══════ -->
+    <div class="col">
+      <section class="panel" aria-labelledby="h-vol">
+        <div class="p-head">
+          <h2 id="h-vol">Volumen por hora — hoy</h2>
+          <span class="p-meta">MXN · millones</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="cv-vol" role="img" aria-label="Gráfica de barras del volumen procesado por hora del día, en millones de pesos. La hora en curso se marca en ámbar."></canvas>
+        </div>
+        <div class="chart-legend">
+          <span><span class="sw" style="background:var(--ph)"></span>HORA CERRADA</span>
+          <span><span class="sw" style="background:var(--amber)"></span>HORA EN CURSO</span>
+          <span class="dim48" id="vol-total"></span>
+        </div>
+        <div class="spark-row">
+          <span style="white-space:nowrap">LATENCIA LIQ. (s)▸</span>
+          <canvas id="cv-lat" style="flex:1;min-width:0" role="img" aria-label="Serie de latencias de liquidación de las últimas operaciones, en segundos."></canvas>
+          <span id="lat-now" style="color:var(--ph);white-space:nowrap">p50 —</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-feed">
+        <div class="p-head">
+          <h2 id="h-feed">Monitor de operaciones</h2>
+          <span>
+            <span class="p-meta" id="feed-meta">tiempo real · simulación</span>
+            <button type="button" class="btn-mini jsonly" id="feed-refresh" hidden>[ ACTUALIZAR ]</button>
+          </span>
+        </div>
+        <div class="feed-scroll">
+          <table class="ops">
+            <caption class="sr-only">Operaciones SPEI simuladas. Active una fila con Enter para abrir su expediente.</caption>
+            <thead><tr>
+              <th scope="col">Hora</th><th scope="col">Clave de rastreo</th><th scope="col">Tipo</th>
+              <th scope="col">Contraparte</th><th scope="col" class="num">Monto (MXN)</th><th scope="col">Estado</th>
+            </tr></thead>
+            <tbody id="feed-body"></tbody>
+          </table>
+        </div>
+        <div class="feed-note">Datos simulados con fines de demostración. [ENTER] o clic sobre una fila abre el expediente de la operación.</div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-bit">
+        <div class="p-head"><h2 id="h-bit">Bitácora inmutable</h2><span class="p-meta">append-only · hash encadenado</span></div>
+        <div class="p-body"><div id="bitacora" aria-live="polite"></div></div>
+      </section>
+    </div>
+
+    <!-- ═══════ COL DERECHA ═══════ -->
+    <div class="col">
+      <section class="panel amber" aria-labelledby="h-ks">
+        <div class="p-head"><h2 id="h-ks">⏻ Kill switch</h2><span class="p-meta" style="color:var(--amber)">segunda firma + TOTP</span></div>
+        <div class="p-body">
+          <div class="ks-rows">
+            <div class="ks-row" id="ksr-salidas">
+              <span><span class="ks-name">PAUSAR SALIDAS</span><span class="ks-desc">retiene todo SPEI-OUT; SPEI-IN continúa</span></span>
+              <button type="button" class="btn-mini amberb" data-ks="salidas">[ ACTIVAR ]</button>
+            </div>
+            <div class="ks-row" id="ksr-empresa">
+              <span><span class="ks-name">PAUSAR EMPRESA</span><span class="ks-desc">retiene IN y OUT de la empresa seleccionada</span></span>
+              <button type="button" class="btn-mini amberb" data-ks="empresa">[ ACTIVAR ]</button>
+            </div>
+            <div class="ks-row" id="ksr-todo">
+              <span><span class="ks-name">CONGELAR TODO</span><span class="ks-desc">detiene la operación completa del núcleo</span></span>
+              <button type="button" class="btn-mini amberb" data-ks="todo">[ ACTIVAR ]</button>
+            </div>
+          </div>
+          <p class="ks-note">Activar o reanudar exige aprobador en turno + código TOTP. Cada acción queda firmada en la bitácora. Tecla rápida: [K].</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-pld">
+        <div class="p-head"><h2 id="h-pld">PLD/AML — cola de revisión</h2><span class="p-meta">screening + scoring</span></div>
+        <div class="p-body">
+          <ul class="tlist" id="pld-list"></ul>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-wh">
+        <div class="p-head"><h2 id="h-wh">Webhooks</h2><span class="p-meta">firmados · con reintentos</span></div>
+        <div class="p-body">
+          <ul class="tlist" id="wh-list"></ul>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-cl">
+        <div class="p-head"><h2 id="h-cl">CLABEs recientes</h2><span class="p-meta">prefijo 646180 · STP</span></div>
+        <div class="p-body">
+          <ul class="tlist" id="cl-list"></ul>
+          <p style="margin-top:10px"><button type="button" class="btn-mini jsonly" id="cl-new">[ ⏎ ALTA DE CLABE ]</button></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════ STATUS BAR ═══════ -->
+<div class="statbar" aria-hidden="true">
+  <span class="sb-prompt">MM://CORE ▸ <span class="cursor"></span></span>
+  <span class="sb-keys"><span>ENTER expediente</span><span>K kill switch</span><span>ESC cerrar</span></span>
+  <span class="sb-lat" id="sb-lat">STP rtt 18 ms</span>
+  <span style="margin-left:auto">DATOS SIMULADOS · PROTOTIPO</span>
+</div>
+
+<!-- ═══════ MODAL EXPEDIENTE ═══════ -->
+<div class="overlay" id="ov-exp" role="dialog" aria-modal="true" aria-labelledby="exp-title">
+  <div class="modal">
+    <div class="m-head">
+      <h3 id="exp-title">EXPEDIENTE</h3>
+      <button type="button" class="m-close" data-close="ov-exp">[ ESC CERRAR ]</button>
+    </div>
+    <div class="m-body">
+      <div class="exp-tree" id="exp-tree"></div>
+      <div class="exp-view" id="exp-view" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL KILL SWITCH ═══════ -->
+<div class="overlay" id="ov-ks" role="dialog" aria-modal="true" aria-labelledby="ks-title">
+  <div class="modal amber">
+    <div class="m-head">
+      <h3 id="ks-title">SEGUNDA FIRMA REQUERIDA</h3>
+      <button type="button" class="m-close" data-close="ov-ks">[ ESC CANCELAR ]</button>
+    </div>
+    <div class="m-body">
+      <p id="ks-action" style="color:var(--amber);font-size:13px;margin-bottom:14px"></p>
+      <form id="ks-form" novalidate>
+        <div class="field">
+          <label for="ks-aprob">Aprobador en turno</label>
+          <select id="ks-aprob">
+            <option value="c.mtz">c.mtz — DIRECCIÓN DE RIESGO</option>
+            <option value="l.rios">l.rios — DIRECCIÓN DE OPERACIÓN</option>
+          </select>
+        </div>
+        <div class="field" id="ks-totp-field">
+          <label for="ks-totp">Código TOTP del aprobador (6 dígitos)</label>
+          <input id="ks-totp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" aria-describedby="ks-totp-err">
+          <p class="ferr" id="ks-totp-err"><span class="st-err">[ERR] ✕ el TOTP son 6 dígitos</span></p>
+        </div>
+        <button type="submit" class="btn-send">[ ⏎ FIRMAR Y EJECUTAR ]</button>
+      </form>
+      <div id="ks-verif" role="status"></div>
+    </div>
+  </div>
+</div>
+
+<div class="scanlines" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+</div><!-- /.crt -->
+
+<script>
+(function(){
+"use strict";
+var RM=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ═══ PRNG determinista (misma familia que la landing) ═══ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+var seedParam=new URLSearchParams(location.search).get("seed");
+var rnd=mulberry32(seedParam?(parseInt(seedParam,10)||1):20260709);
+
+var HEX="0123456789ABCDEF";
+function claveRastreo(){var s="MM";for(var i=0;i<14;i++)s+=HEX[rnd()*16|0];return s}
+function makeClabe(){
+  var d="646180";for(var i=0;i<11;i++)d+=(rnd()*10|0);
+  var w=[3,7,1],s=0;for(var j=0;j<17;j++)s+=(+d[j]*w[j%3])%10;
+  return d+((10-s%10)%10);
+}
+function fmt(n,dec){return n.toLocaleString("es-MX",{minimumFractionDigits:dec==null?2:dec,maximumFractionDigits:dec==null?2:dec})}
+function pad2(x){return (x<10?"0":"")+x}
+function hhmmss(off){var d=new Date(Date.now()-(off||0));return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds())}
+
+/* ═══ BOOT ═══ */
+var boot=document.getElementById("boot"),bootPre=document.getElementById("boot-pre");
+var bootLines=[
+"MASMOVIL CORE v4.2.1 — TERMINAL OPERATIVA",
+"──────────────────────────────────────────",
+"> credenciales de operador .......... ana.p ✓ 2FA",
+"> canal STP (participante SPEI) ..... CONECTADO · rtt 18 ms",
+"> módulos IN/OUT · CLABE · CEP ...... CARGADOS",
+"> motor PLD/AML ..................... EN LÍNEA",
+"> bitácora inmutable ................ SELLADA · hash ✓",
+"> cargando panel de operación_"
+];
+var bootDone=false;
+function endBoot(){
+  if(bootDone)return;bootDone=true;
+  try{sessionStorage.setItem("mmDashBootSeen","1")}catch(e){}
+  boot.classList.add("gone");boot.setAttribute("aria-hidden","true");
+  document.removeEventListener("keydown",endBoot);
+}
+var skipBoot=RM;
+try{if(sessionStorage.getItem("mmDashBootSeen")==="1")skipBoot=true}catch(e){}
+if(skipBoot){boot.classList.add("gone");bootDone=true}
+else{
+  boot.addEventListener("click",endBoot);
+  document.addEventListener("keydown",endBoot);
+  (function(){
+    var li=0,ci=0;
+    (function tick(){
+      if(bootDone)return;
+      if(li>=bootLines.length){setTimeout(endBoot,600);return}
+      var line=bootLines[li];ci++;
+      if(ci>=line.length){bootPre.textContent=bootLines.slice(0,li+1).join("\n");li++;ci=0;setTimeout(tick,80)}
+      else{bootPre.textContent=bootLines.slice(0,li).join("\n")+(li?"\n":"")+line.slice(0,ci);setTimeout(tick,8)}
+    })();
+  })();
+}
+
+/* ═══ RELOJ ═══ */
+var clockEl=document.getElementById("clock");
+function tickClock(){clockEl.textContent=hhmmss(0)}
+tickClock();setInterval(tickClock,1000);
+
+/* ═══ EMPRESAS (multi-empresa) ═══ */
+var EMPRESAS=[
+ {id:"MM-GRUPO",nombre:"GRUPO DEMO HOLDING",saldo:48273941.22,clabes:4797,inHoy:23917204.10,inN:1841,outHoy:19406772.85,outN:1266,tasa:99.4,cep:3088},
+ {id:"MM-PAGOS",nombre:"DEMO PAGOS, S.A. de C.V.",saldo:12408112.90,clabes:3417,inHoy:9114530.44,inN:1512,outHoy:7930211.03,outN:918,tasa:99.2,cep:2411},
+ {id:"MM-TECH",nombre:"DEMO TECH, S.A. de C.V.",saldo:3980204.15,clabes:96,inHoy:1206841.66,inN:63,outHoy:2214906.12,outN:141,tasa:99.7,cep:203}
+];
+var empSel=document.getElementById("emp");
+EMPRESAS.forEach(function(e,i){
+  var o=document.createElement("option");o.value=i;o.textContent=e.id+" · "+e.nombre;empSel.appendChild(o);
+});
+var EMP=EMPRESAS[0];
+
+function renderKPIs(){
+  document.getElementById("k-saldo").textContent="$"+fmt(EMP.saldo);
+  document.getElementById("k-in").textContent="$"+fmt(EMP.inHoy,0);
+  document.getElementById("k-in-n").textContent=fmt(EMP.inN,0)+" abonos recibidos";
+  document.getElementById("k-out").textContent="$"+fmt(EMP.outHoy,0);
+  document.getElementById("k-out-n").textContent=fmt(EMP.outN,0)+" órdenes enviadas";
+  document.getElementById("k-cep").textContent=fmt(EMP.cep,0);
+  document.getElementById("k-tasa").textContent=EMP.tasa.toFixed(1)+"%";
+  document.getElementById("k-clabes").textContent=fmt(EMP.clabes,0);
+}
+renderKPIs();
+
+/* ═══ GRÁFICA: volumen por hora (canvas) ═══ */
+var cvVol=document.getElementById("cv-vol");
+var HOURS=[];
+(function(){
+  /* curva creíble: valle de madrugada, picos 10-13 y 17-19 h */
+  var base=[.5,.3,.25,.2,.25,.4,.9,1.6,2.6,3.4,4.2,4.6,4.4,4.1,3.6,3.2,3.5,4.0,3.7,2.8,2.1,1.6,1.1,.7];
+  for(var h=0;h<24;h++)HOURS.push(base[h]*(0.85+rnd()*0.3));
+})();
+function drawVol(){
+  var dpr=window.devicePixelRatio||1;
+  var w=cvVol.clientWidth,h=cvVol.clientHeight;
+  if(!w)return;
+  cvVol.width=w*dpr;cvVol.height=h*dpr;
+  var g=cvVol.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,w,h);
+  var padB=16,padT=6,curH=new Date().getHours();
+  var max=Math.max.apply(null,HOURS)*1.12;
+  var bw=w/24;
+  g.font='10px "IBM Plex Mono",monospace';
+  /* rejilla */
+  g.strokeStyle="rgba(51,255,102,.14)";g.beginPath();
+  for(var l=1;l<=3;l++){var y=padT+(h-padB-padT)*l/4;g.moveTo(0,y);g.lineTo(w,y)}
+  g.stroke();
+  for(var i=0;i<24;i++){
+    var v=HOURS[i];
+    /* la hora en curso se dibuja parcial (día no terminado) */
+    if(i>curH)v=0;
+    var frac=i===curH?(new Date().getMinutes()/60)*.9+.1:1;
+    var bh=(h-padB-padT)*(v*frac)/max;
+    var x=i*bw+2,y2=h-padB-bh;
+    if(i===curH){g.fillStyle="#FFB000"}
+    else{g.fillStyle=i%2?"rgba(51,255,102,.85)":"rgba(51,255,102,.65)"}
+    if(v>0)g.fillRect(x,y2,Math.max(2,bw-4),bh);
+    if(i%4===0){g.fillStyle="rgba(51,255,102,.6)";g.fillText(pad2(i),x,h-4)}
+  }
+  var tot=0;for(var k=0;k<24;k++)if(k<=curH)tot+=HOURS[k];
+  document.getElementById("vol-total").textContent="ACUM. HOY ≈ $"+fmt(tot,1)+" M MXN";
+}
+drawVol();
+
+/* ═══ SPARKLINE latencias ═══ */
+var cvLat=document.getElementById("cv-lat");
+var lats=[];
+(function(){for(var i=0;i<40;i++)lats.push(6+rnd()*18)})();
+function drawLat(){
+  var dpr=window.devicePixelRatio||1;
+  var w=cvLat.clientWidth,h=cvLat.clientHeight;
+  if(!w)return;
+  cvLat.width=w*dpr;cvLat.height=h*dpr;
+  var g=cvLat.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,w,h);
+  var max=30,n=lats.length;
+  g.strokeStyle="rgba(51,255,102,.2)";g.beginPath();g.moveTo(0,h-1);g.lineTo(w,h-1);g.stroke();
+  g.strokeStyle="#33FF66";g.lineWidth=1.4;g.beginPath();
+  for(var i=0;i<n;i++){
+    var x=n>1?(i/(n-1))*w:0,y=h-4-((Math.min(lats[i],max))/max)*(h-8);
+    if(i===0)g.moveTo(x,y);else g.lineTo(x,y);
+  }
+  g.stroke();
+  /* último punto en ámbar */
+  var lx=w,ly=h-4-((Math.min(lats[n-1],max))/max)*(h-8);
+  g.fillStyle="#FFB000";g.fillRect(lx-3,ly-1.5,3,3);
+  var sorted=lats.slice().sort(function(a,b){return a-b});
+  var p50=sorted[Math.floor(sorted.length/2)];
+  document.getElementById("lat-now").textContent="p50 "+p50.toFixed(0)+" s";
+}
+drawLat();
+var rsT;
+window.addEventListener("resize",function(){clearTimeout(rsT);rsT=setTimeout(function(){drawVol();drawLat()},150)});
+if(!RM)setInterval(drawVol,60000);
+
+/* ═══ KILL SWITCH: estado ═══ */
+var KS={salidas:false,empresa:false,todo:false};
+var ksEmpresaId=null;/* empresa a la que aplica PAUSAR EMPRESA */
+var ksChip=document.getElementById("ks-chip");
+var ksBanner=document.getElementById("ks-banner");
+function ksLevel(){return KS.todo?2:(KS.salidas||KS.empresa?1:0)}
+function renderKS(){
+  var lvl=ksLevel();
+  ksChip.className="ks-chip"+(lvl===2?" hard":lvl===1?" warn":"");
+  ksChip.textContent=lvl===2?"SISTEMA: CONGELADO ⏸":lvl===1?"SISTEMA: RESTRINGIDO":"SISTEMA: NORMAL";
+  var msgs=[];
+  if(KS.todo)msgs.push("CONGELAR TODO");
+  else{if(KS.salidas)msgs.push("PAUSAR SALIDAS");if(KS.empresa)msgs.push("PAUSAR EMPRESA ("+(ksEmpresaId||EMP.id)+")")}
+  if(msgs.length){
+    ksBanner.textContent="⏸ KILL SWITCH ACTIVO — "+msgs.join(" · ")+". Las operaciones afectadas se retienen; nada se pierde. Reanudar exige segunda firma.";
+    ksBanner.classList.add("show");
+  }else ksBanner.classList.remove("show");
+  ["salidas","empresa","todo"].forEach(function(k){
+    var row=document.getElementById("ksr-"+k);
+    var btn=row.querySelector("button");
+    row.classList.toggle("on",KS[k]);
+    btn.textContent=KS[k]?"[ REANUDAR ]":"[ ACTIVAR ]";
+  });
+  document.querySelector("#ksr-empresa .ks-desc").textContent=
+    KS.empresa?"retiene IN y OUT de "+(ksEmpresaId||EMP.id):"retiene IN y OUT de la empresa seleccionada";
+}
+renderKS();
+
+/* ═══ FEED de operaciones ═══ */
+var BANKS=["BBVA","BANORTE","SANTANDER","HSBC","CITIBANAMEX","BANREGIO","AZTECA","SCOTIABANK","INBURSA","AFIRME"];
+var CONCEPTOS=["NOMINA Q1 JUL","PAGO PROVEEDOR","DISPERSION 0042","COBRANZA REF 8817","FONDEO OPERATIVO","REEMBOLSO CLIENTE","LIQUIDACION COMISIONES","PAGO SERVICIOS"];
+var feedBody=document.getElementById("feed-body");
+var MAXROWS=14;
+var OPS={};/* clave → op, para el expediente */
+var settledCount=118,errCount=1;
+
+function newOp(off){
+  var out=rnd()<.56;
+  return{
+    hora:hhmmss(off),clave:claveRastreo(),out:out,
+    banco:BANKS[rnd()*BANKS.length|0],
+    concepto:CONCEPTOS[rnd()*CONCEPTOS.length|0],
+    monto:1500+Math.floor(rnd()*478500)+Math.floor(rnd()*100)/100,
+    err:rnd()<.03,lat:5+Math.round(rnd()*20),
+    estado:"transit"
+  };
+}
+function estadoHTML(op){
+  if(op.estado==="hold")return '<span class="st-hold">⏸ RETENIDA · KILL SWITCH</span>';
+  if(op.estado==="err")return '<span class="st-err">[ERR] ✕ DEVUELTA · CLABE INEXISTENTE</span>';
+  if(op.estado==="ok")return '<span class="st-ok">LIQUIDADA · CEP ✓</span>';
+  return '<span class="st-transit">⧗ EN TRÁNSITO</span>';
+}
+function buildRow(op){
+  var tr=document.createElement("tr");
+  tr.className="oprow "+op.estado;
+  tr.tabIndex=0;
+  tr.setAttribute("data-clave",op.clave);
+  tr.setAttribute("aria-label","Abrir expediente de la operación "+op.clave);
+  tr.innerHTML=
+    "<td>"+op.hora+"</td><td>"+op.clave+"</td><td>"+(op.out?"OUT ▶":"IN ◀")+"</td>"+
+    "<td>"+op.banco+"</td>"+'<td class="num">'+fmt(op.monto)+"</td>"+
+    "<td>"+estadoHTML(op)+"</td>";
+  return tr;
+}
+function pushRow(tr){
+  feedBody.insertBefore(tr,feedBody.firstChild);
+  while(feedBody.rows.length>MAXROWS){
+    var last=feedBody.lastChild;
+    delete OPS[last.getAttribute("data-clave")];
+    feedBody.removeChild(last);
+  }
+}
+function settle(op,tr){
+  op.estado=op.err?"err":"ok";
+  if(!tr.isConnected)return;
+  tr.className="oprow "+op.estado;
+  tr.cells[5].innerHTML=estadoHTML(op);
+  settledCount++;if(op.err)errCount++;
+  if(!op.err){
+    EMP.cep++;
+    if(op.out){EMP.outHoy+=op.monto;EMP.outN++}else{EMP.inHoy+=op.monto;EMP.inN++;EMP.saldo+=op.monto}
+    if(op.out)EMP.saldo-=op.monto;
+    EMP.tasa=100*(1-errCount/settledCount);
+    lats.push(op.lat);if(lats.length>40)lats.shift();
+    drawLat();
+  }
+  renderKPIs();
+}
+/* siembra: historial ya liquidado (se re-siembra al cambiar de empresa) */
+function seedFeed(){
+  feedBody.innerHTML="";OPS={};
+  var seedOps=[];
+  for(var i=0;i<12;i++)seedOps.push(newOp((12-i)*9000+5000));
+  seedOps.forEach(function(op){
+    op.estado=op.err?"err":"ok";
+    OPS[op.clave]=op;
+    pushRow(buildRow(op));
+  });
+}
+seedFeed();
+function retainedBy(op){
+  if(KS.todo)return true;
+  if(KS.salidas&&op.out)return true;
+  if(KS.empresa&&EMP.id===ksEmpresaId)return true;/* solo la empresa pausada */
+  return false;
+}
+function liveOp(){
+  var op=newOp(0);
+  if(retainedBy(op))op.estado="hold";
+  OPS[op.clave]=op;
+  var tr=buildRow(op);
+  pushRow(tr);
+  if(op.estado==="transit"){
+    setTimeout(function(){settle(op,tr)},RM?0:(1800+rnd()*2600));
+  }
+}
+/* al reanudar, las operaciones retenidas vuelven a tránsito y liquidan */
+function releaseHeld(){
+  Array.prototype.forEach.call(feedBody.querySelectorAll("tr.hold"),function(tr){
+    var op=OPS[tr.getAttribute("data-clave")];
+    if(!op||op.estado!=="hold"||retainedBy(op))return;
+    op.estado="transit";
+    tr.className="oprow transit";
+    tr.cells[5].innerHTML=estadoHTML(op);
+    setTimeout(function(){settle(op,tr)},RM?0:(900+rnd()*1800));
+  });
+}
+var refreshBtn=document.getElementById("feed-refresh");
+if(RM){
+  refreshBtn.hidden=false;
+  document.getElementById("feed-meta").textContent="modo estático · [ACTUALIZAR]";
+  refreshBtn.addEventListener("click",function(){
+    var op=newOp(0);
+    if(retainedBy(op))op.estado="hold";
+    OPS[op.clave]=op;
+    var tr=buildRow(op);
+    pushRow(tr);
+    if(op.estado==="transit")settle(op,tr);/* liquida al instante y actualiza KPIs/latencia */
+  });
+}else{
+  setInterval(liveOp,3800);
+  setTimeout(liveOp,1200);
+}
+
+/* ═══ BITÁCORA ═══ */
+var bit=document.getElementById("bitacora");
+function logBit(txt,amber){
+  var d=document.createElement("div");
+  d.innerHTML='<span class="b-t">'+hhmmss(0)+'</span> · <span class="b-t">#'+String(bitSeq++).padStart(5,"0")+'</span> '+(amber?'<span class="b-amber">':"")+txt+(amber?"</span>":"");
+  bit.insertBefore(d,bit.firstChild);
+  while(bit.children.length>30)bit.removeChild(bit.lastChild);
+}
+var bitSeq=40412;
+logBit("sesión iniciada · ana.p (OPERADOR) · 2FA TOTP ✓ · ip 187.190.··.··");
+logBit("canal STP verificado · certificado vigente · firma de canal ✓");
+logBit("corte de conciliación 06:00 · 3,412 expedientes · diferencias: 0");
+
+/* ═══ PLD/AML ═══ */
+var pldList=document.getElementById("pld-list");
+var PLD=[
+ {t:"-4 min",score:87,hi:true,txt:"OUT $412,800.00 → BANORTE · monto atípico vs. perfil · <b>RETENIDA PARA REVISIÓN</b>"},
+ {t:"-18 min",score:74,hi:true,txt:"IN $96,500.00 · contraparte con coincidencia parcial en lista PEP · en análisis"},
+ {t:"-41 min",score:31,hi:false,txt:"OUT $52,000.00 · screening listas OFAC/ONU/bloqueadas: sin coincidencias · liberada"},
+ {t:"-1 h",score:22,hi:false,txt:"batch dispersión 0042 (1,214 órdenes) · screening completo · liberado"},
+ {t:"-2 h",score:19,hi:false,txt:"alta de contraparte · verificación CLABE/titular ✓ · liberada"}
+];
+PLD.forEach(function(a){
+  var li=document.createElement("li");
+  li.innerHTML='<span class="t-when">'+a.t+'</span><span class="score'+(a.hi?" hi":"")+'">'+a.score+"</span><span class=\"grow\""+(a.hi?' style="color:var(--amber)"':"")+">"+a.txt+"</span>";
+  pldList.appendChild(li);
+});
+
+/* ═══ WEBHOOKS ═══ */
+var whList=document.getElementById("wh-list");
+var WH=[
+ {url:"erp.cliente.mx/hooks/spei",ok:true,lat:14,note:"último: abono.liquidado · 200 OK"},
+ {url:"tesoreria.grupo.mx/mm",ok:true,lat:22,note:"último: orden.liquidada · 200 OK"},
+ {url:"backup.cliente.mx/hooks",ok:false,lat:0,note:"timeout · reintento 2/8 en 40 s"}
+];
+WH.forEach(function(w){
+  var li=document.createElement("li");
+  li.innerHTML='<span class="t-tag '+(w.ok?"wh-ok":"st-transit")+'">'+(w.ok?"[✓]":"[⧗]")+'</span><span class="grow">'+w.url+'<span class="wh-lat"> · HMAC ✓ · '+(w.ok?w.lat+" ms":w.note)+"</span></span>";
+  whList.appendChild(li);
+});
+
+/* ═══ CLABEs recientes ═══ */
+var clList=document.getElementById("cl-list");
+function addClabe(when){
+  var c=makeClabe();
+  var li=document.createElement("li");
+  li.innerHTML='<span class="t-when">'+when+'</span><span class="grow">'+c.slice(0,3)+" "+c.slice(3,6)+" "+c.slice(6,17)+" "+c.slice(17)+'<span class="wh-lat"> · dígito de control ✓</span></span>';
+  clList.insertBefore(li,clList.firstChild);
+  while(clList.children.length>5)clList.removeChild(clList.lastChild);
+}
+addClabe("-3 h");addClabe("-52 min");addClabe("-9 min");
+document.getElementById("cl-new").addEventListener("click",function(){
+  addClabe(hhmmss(0));
+  EMP.clabes++;renderKPIs();
+  logBit("alta de CLABE por API · empresa "+EMP.id+" · dígito de control validado ✓");
+});
+
+/* ═══ MODALES (foco + ESC) ═══ */
+var lastFocus=null;
+function openModal(id){
+  lastFocus=document.activeElement;
+  var ov=document.getElementById(id);
+  ov.classList.add("show");
+  var f=ov.querySelector(".m-body select,.m-body input")||ov.querySelector("button.m-close");
+  if(f)f.focus();
+}
+function closeModal(id){
+  var ov=document.getElementById(id);
+  ov.classList.remove("show");
+  if(lastFocus&&lastFocus.focus)lastFocus.focus();
+}
+document.querySelectorAll(".m-close").forEach(function(b){
+  b.addEventListener("click",function(){closeModal(b.getAttribute("data-close"))});
+});
+document.querySelectorAll(".overlay").forEach(function(ov){
+  ov.addEventListener("mousedown",function(e){if(e.target===ov)closeModal(ov.id)});
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    document.querySelectorAll(".overlay.show").forEach(function(ov){closeModal(ov.id)});
+  }
+  /* trampa de foco básica */
+  if(e.key==="Tab"){
+    var ov=document.querySelector(".overlay.show");
+    if(!ov)return;
+    var f=Array.prototype.filter.call(ov.querySelectorAll('button,select,input,[tabindex="0"]'),function(el){return el.offsetParent!==null&&!el.disabled});
+    if(!f.length)return;
+    var first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+  }
+  if((e.key==="k"||e.key==="K")&&!document.querySelector(".overlay.show")&&bootDone){
+    var tag=(document.activeElement&&document.activeElement.tagName)||"";
+    if(tag!=="INPUT"&&tag!=="SELECT"&&tag!=="TEXTAREA")askKS(ksLevel()?resumeTarget():"salidas");
+  }
+});
+
+/* ═══ EXPEDIENTE ═══ */
+var expTree=document.getElementById("exp-tree"),expView=document.getElementById("exp-view");
+var expOp=null;
+function expFiles(op){
+  var ok=op.estado==="ok",err=op.estado==="err",hold=op.estado==="hold";
+  return[
+   {k:"orden",name:"orden.json",ready:true},
+   {k:"acuse",name:"acuse_stp.xml",ready:ok||err},
+   {k:"cep",name:"cep_banxico.xml",ready:ok}
+  ].map(function(f){f.mark=f.ready?"✓":(hold?"⏸":"⧗");return f});
+}
+function expContent(op,k){
+  if(k==="orden")return'<pre><span class="cm">// orden firmada por el cliente</span>\n{\n  "clave_rastreo": "'+op.clave+'",\n  "tipo":          "'+(op.out?"SPEI-OUT":"SPEI-IN")+'",\n  "empresa":       "'+EMP.id+'",\n  "contraparte":   "'+op.banco+'",\n  "monto_mxn":     "'+fmt(op.monto)+'",\n  "concepto":      "'+op.concepto+'",\n  "firma_hmac":    "6b04a1…✓",\n  "aprobador":     "c.mtz + TOTP ✓"\n}</pre>';
+  if(k==="acuse"){
+    if(op.estado==="transit"||op.estado==="hold")return'<pre><span class="cm">⧗ acuse de STP pendiente — la operación aún no liquida.</span></pre>';
+    return'<pre>&lt;acuse participante="STP" clave="'+op.clave+'"&gt;\n  &lt;estado&gt;'+(op.estado==="err"?"DEVUELTA cod=13 CLABE_INEXISTENTE":"LIQUIDADA")+'&lt;/estado&gt;\n  &lt;latencia_s&gt;'+op.lat+'&lt;/latencia_s&gt;\n  &lt;sello&gt;SHA256:1f9c…✓&lt;/sello&gt;\n&lt;/acuse&gt;</pre>';
+  }
+  if(k==="cep"){
+    if(op.estado!=="ok")return'<pre><span class="cm">'+(op.estado==="err"?"✕ operación devuelta: Banxico no emite CEP.":"⧗ el CEP de Banxico se adjunta al liquidar la operación.")+'</span></pre>';
+    var hoy=new Date(),fecha=hoy.getFullYear()+"-"+pad2(hoy.getMonth()+1)+"-"+pad2(hoy.getDate());
+    return'<pre>&lt;cep emisor="BANCO DE MÉXICO"&gt;\n  &lt;claveRastreo&gt;'+op.clave+'&lt;/claveRastreo&gt;\n  &lt;fechaLiquidacion&gt;'+fecha+' '+op.hora+'&lt;/fechaLiquidacion&gt;\n  &lt;monto&gt;'+fmt(op.monto)+'&lt;/monto&gt;\n  &lt;estado&gt;LIQUIDADA ✓&lt;/estado&gt;\n&lt;/cep&gt;\n<span class="cm">verificable por terceros en banxico.org.mx/cep</span></pre>';
+  }
+  return"";
+}
+function openExp(clave){
+  var op=OPS[clave];if(!op)return;
+  expOp=op;
+  document.getElementById("exp-title").textContent="EXPEDIENTE "+op.clave;
+  var files=expFiles(op);
+  var estadoTxt=op.estado==="ok"?"LIQUIDADA · CEP ✓":op.estado==="err"?"DEVUELTA ✕":op.estado==="hold"?"RETENIDA ⏸ KILL SWITCH":"EN TRÁNSITO ⧗";
+  var html='<span class="dim">estado</span> '+estadoTxt+' · <span class="dim">monto</span> $'+fmt(op.monto)+" MXN<br>";
+  files.forEach(function(f,i){
+    html+=(i===files.length-1?"└─ ":"├─ ")+f.name.padEnd(16," ")+f.mark+
+      (f.ready?' <button type="button" data-file="'+f.k+'" aria-pressed="false">[ver]</button>':"")+"<br>";
+  });
+  expTree.innerHTML=html;
+  expView.innerHTML='<span class="cm">seleccione [ver] para abrir un documento del expediente_</span>';
+  expTree.querySelectorAll("button[data-file]").forEach(function(b){
+    b.addEventListener("click",function(){
+      expTree.querySelectorAll("button[data-file]").forEach(function(x){x.setAttribute("aria-pressed","false")});
+      b.setAttribute("aria-pressed","true");
+      expView.innerHTML=expContent(expOp,b.getAttribute("data-file"));
+    });
+  });
+  openModal("ov-exp");
+  logBit("consulta de expediente "+op.clave+" · ana.p");
+}
+feedBody.addEventListener("click",function(e){
+  var tr=e.target.closest("tr.oprow");if(tr)openExp(tr.getAttribute("data-clave"));
+});
+feedBody.addEventListener("keydown",function(e){
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  var tr=e.target.closest("tr.oprow");
+  if(tr){e.preventDefault();openExp(tr.getAttribute("data-clave"))}
+});
+
+/* ═══ KILL SWITCH: flujo de segunda firma ═══ */
+var ksTarget=null;
+var KS_LABEL={salidas:"PAUSAR SALIDAS",empresa:"PAUSAR EMPRESA ("+EMPRESAS[0].id+")",todo:"CONGELAR TODO"};
+function resumeTarget(){return KS.todo?"todo":KS.empresa?"empresa":"salidas"}
+function askKS(key){
+  ksTarget=key;
+  var activating=!KS[key];
+  var empId=key==="empresa"?(activating?EMP.id:(ksEmpresaId||EMP.id)):null;
+  document.getElementById("ks-action").textContent=
+    "ACCIÓN▸ "+(activating?"ACTIVAR":"REANUDAR (desactivar)")+" — "+
+    (key==="empresa"?"PAUSAR EMPRESA ("+empId+")":KS_LABEL[key])+
+    ". Esta acción es inmediata y quedará firmada en la bitácora.";
+  var form=document.getElementById("ks-form");
+  form.style.display="";
+  document.getElementById("ks-totp").value="";
+  document.getElementById("ks-totp-field").classList.remove("bad");
+  var v=document.getElementById("ks-verif");v.classList.remove("show");v.textContent="";
+  openModal("ov-ks");
+}
+document.querySelectorAll("button[data-ks]").forEach(function(b){
+  b.addEventListener("click",function(){askKS(b.getAttribute("data-ks"))});
+});
+document.getElementById("ks-form").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var totp=document.getElementById("ks-totp").value.trim();
+  var fld=document.getElementById("ks-totp-field");
+  if(!/^\d{6}$/.test(totp)){fld.classList.add("bad");document.getElementById("ks-totp").setAttribute("aria-invalid","true");document.getElementById("ks-totp").focus();return}
+  fld.classList.remove("bad");document.getElementById("ks-totp").removeAttribute("aria-invalid");
+  var aprob=document.getElementById("ks-aprob").value;
+  var v=document.getElementById("ks-verif");
+  var form=document.getElementById("ks-form");
+  form.style.display="none";
+  v.classList.add("show");
+  v.textContent="> verificando TOTP de "+aprob+" ...";
+  var apply=function(){
+    var key=ksTarget,activating=!KS[key];
+    var scope=key==="empresa"?"EMPRESA "+(activating?EMP.id:(ksEmpresaId||EMP.id)):KS_LABEL[key];
+    KS[key]=activating;
+    if(key==="empresa")ksEmpresaId=activating?EMP.id:null;
+    if(key==="todo"&&activating){KS.salidas=false;KS.empresa=false;ksEmpresaId=null}
+    renderKS();
+    if(!activating)releaseHeld();
+    v.textContent="> verificando TOTP de "+aprob+" ... ✓ FIRMA VÁLIDA\n> "+(activating?"KILL SWITCH ACTIVADO":"OPERACIÓN REANUDADA")+" — alcance: "+scope+"\n> sellado en bitácora ✓";
+    logBit((activating?"⏻ KILL SWITCH ACTIVADO":"⏵ KILL SWITCH DESACTIVADO")+" · "+scope+" · solicitó ana.p · firmó "+aprob+" + TOTP ✓",true);
+    setTimeout(function(){closeModal("ov-ks")},RM?400:1400);
+  };
+  if(RM)apply();else setTimeout(apply,900);
+});
+
+/* ═══ cambio de empresa ═══ */
+empSel.addEventListener("change",function(){
+  EMP=EMPRESAS[+empSel.value];
+  renderKPIs();renderKS();seedFeed();
+  logBit("cambio de vista → empresa "+EMP.id+" · saldos y feed segmentados");
+});
+
+/* ═══ rtt decorativo ═══ */
+var sbLat=document.getElementById("sb-lat");
+if(!RM)setInterval(function(){sbLat.textContent="STP rtt "+(14+Math.floor(rnd()*14))+" ms"},5000);
+})();
+</script>
+</body>
+</html>

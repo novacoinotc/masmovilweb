@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>MASMOVIL — Core SPEI · Consola de operación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ============ HELVETIA · SUIZO EDITORIAL SOBRE PAPEL ============ */
+:root{
+  --paper:#FAFAF7;
+  --card:#FFFFFF;
+  --ink:#111110;
+  --ink-2:#4A4A45;
+  --ink-3:#6B6B66;
+  --hair:#D9D8D2;
+  --hair-soft:#E8E7E1;
+  --red:#E30613;
+  --red-dim:#B3050F;
+  --wash:#F1F0EB;
+  --sans:"Archivo",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--red);color:#fff}
+a{color:var(--ink)}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+.up{text-transform:uppercase;letter-spacing:.14em}
+
+/* ---- banner kill switch ---- */
+#killBanner{
+  display:none;background:var(--red);color:#fff;
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;
+  padding:9px 24px;text-align:center;
+}
+body.killed #killBanner{display:block}
+#killBanner strong{font-weight:600}
+
+/* ---- header ---- */
+header{
+  border-bottom:2px solid var(--ink);
+  padding:0 24px;
+  display:flex;align-items:stretch;flex-wrap:wrap;gap:0 28px;
+  background:var(--paper);
+}
+.brand{display:flex;align-items:baseline;gap:10px;padding:16px 0 12px}
+.brand h1{
+  font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;
+}
+.brand h1 .dot{color:var(--red)}
+.brand .sys{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--ink-3);
+  text-transform:uppercase;
+}
+.head-mid{
+  flex:1;display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:10px 0;min-width:200px;
+}
+.env{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  border:1px solid var(--ink);padding:5px 10px;
+}
+.env i{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block}
+@media (prefers-reduced-motion: no-preference){
+  .env i{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+}
+.meta-mini{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.05em}
+.meta-mini b{color:var(--ink);font-weight:600}
+.head-right{display:flex;align-items:center;gap:14px;padding:10px 0;margin-left:auto}
+.opr{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right;line-height:1.5}
+.opr b{color:var(--ink);font-weight:600;letter-spacing:.04em}
+.tfa{
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink);
+  border:1px solid var(--hair);padding:3px 7px;background:var(--card);
+}
+#killBtn{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;font-weight:600;
+  color:var(--red);background:var(--card);border:1.5px solid var(--red);
+  padding:10px 16px;transition:background .15s,color .15s;
+  text-transform:uppercase;
+}
+#killBtn:hover{background:var(--red);color:#fff}
+body.killed #killBtn{background:var(--red);color:#fff}
+
+/* ---- filter row ---- */
+.filters{
+  border-bottom:1px solid var(--hair);
+  padding:12px 24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;
+  background:var(--paper);
+}
+.fgroup{display:flex;align-items:center;gap:9px}
+.fgroup label{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--ink-3);
+  text-transform:uppercase;
+}
+.seg{display:inline-flex;border:1px solid var(--ink)}
+.seg button{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  background:var(--card);color:var(--ink);border:0;border-right:1px solid var(--hair);
+  padding:7px 13px;
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+select{
+  font-family:var(--mono);font-size:12px;color:var(--ink);
+  background:var(--card);border:1px solid var(--ink);padding:7px 10px;
+  appearance:none;-webkit-appearance:none;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="6"><path d="M0 0l4.5 6L9 0z" fill="%23111110"/></svg>');
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+}
+.f-note{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-left:auto;letter-spacing:.05em}
+
+/* ---- retícula editorial ---- */
+main{max-width:1440px;margin:0 auto;padding:0 24px 40px}
+.sec-head{
+  display:flex;align-items:baseline;gap:14px;
+  border-bottom:1px solid var(--ink);
+  margin-top:34px;padding-bottom:8px;
+}
+.sec-head .no{
+  font-family:var(--mono);font-size:11px;color:var(--red);font-weight:600;letter-spacing:.1em;
+}
+.sec-head h2{font-size:19px;font-weight:700;letter-spacing:-.015em}
+.sec-head .side{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em}
+
+/* board = grid con retícula visible (gap de 1px sobre hairline) */
+.board{display:grid;gap:1px;background:var(--hair);border:1px solid var(--hair);border-top:0}
+.cell{background:var(--card);padding:18px 20px;min-width:0}
+
+/* KPI */
+.kpis{grid-template-columns:repeat(5,1fr)}
+.kpi .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--ink-3);text-transform:uppercase;margin-bottom:10px}
+.kpi .val{font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.kpi .val .cur{font-size:14px;font-weight:600;color:var(--ink-3);margin-right:2px}
+.kpi .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:7px}
+.kpi .delta{font-family:var(--mono);font-size:11px;margin-top:7px;color:var(--ink-2)}
+.kpi .delta.neg{color:var(--red)}
+.kpi svg.spark{display:block;margin-top:12px;width:100%;height:26px}
+.kpi.hero .val{font-size:clamp(18px,1.8vw,26px);white-space:nowrap}
+
+/* flujo + corte */
+.flowgrid{grid-template-columns:2.2fr 1fr}
+.chart-head{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.chart-head h3{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.legend{display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);letter-spacing:.06em}
+.legend .k{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:10px;height:10px;display:inline-block}
+.legend .sw.in{background:var(--ink)}
+.legend .sw.out{background:var(--red)}
+.tbl-toggle{
+  margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  background:none;border:1px solid var(--hair);color:var(--ink-2);padding:4px 9px;
+}
+.tbl-toggle[aria-expanded="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chart-wrap{position:relative}
+#flowChart{display:block;width:100%;height:auto}
+#flowChart:focus-visible{outline:2px solid var(--red);outline-offset:4px}
+.tip{
+  position:absolute;pointer-events:none;display:none;z-index:5;
+  background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-size:11px;line-height:1.7;
+  padding:8px 11px;min-width:150px;
+}
+.tip .t-h{color:#B9B8B2;letter-spacing:.1em;font-size:9.5px;text-transform:uppercase;margin-bottom:2px}
+.tip .row{display:flex;align-items:center;gap:7px;justify-content:space-between}
+.tip .key{display:inline-block;width:10px;height:2px}
+.tip .row b{font-weight:600}
+#flowTableBox{display:none;margin-top:14px;border-top:1px solid var(--hair);padding-top:10px;max-height:230px;overflow:auto}
+#flowTableBox.open{display:block}
+table.data{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
+table.data th{
+  text-align:left;font-weight:500;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-3);border-bottom:1px solid var(--ink);padding:6px 8px;white-space:nowrap;
+  background:var(--card);position:sticky;top:0;
+}
+table.data td{border-bottom:1px solid var(--hair-soft);padding:7px 8px;vertical-align:top}
+table.data td.r,table.data th.r{text-align:right}
+table.data tr:hover td{background:var(--wash)}
+
+/* corte del día */
+.cut-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--hair-soft);font-family:var(--mono);font-size:12px}
+.cut-row:last-of-type{border-bottom:0}
+.cut-row .l{color:var(--ink-2)}
+.cut-row b{font-weight:600}
+.cut-row .bad{color:var(--red)}
+.meter{margin-top:16px}
+.meter .m-l{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;margin-bottom:6px}
+.meter .track{height:8px;background:var(--wash);position:relative}
+.meter .fill{height:100%;background:var(--ink);width:0;transition:width .6s ease}
+.meter .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--red)}
+.meter .m-cap{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:6px}
+
+/* feed */
+.feedgrid{grid-template-columns:2.2fr 1fr}
+.feed-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.feed-head h3{font-size:14px;font-weight:700}
+.live{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--red);
+}
+.live i{width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block}
+@media (prefers-reduced-motion: no-preference){
+  .live i{animation:pulse 1.6s ease-in-out infinite}
+}
+body.killed .live, .feed-paused .live{color:var(--ink-3)}
+body.killed .live i, .feed-paused .live i{background:var(--ink-3);animation:none}
+#pauseFeed{
+  margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  background:none;border:1px solid var(--hair);color:var(--ink-2);padding:4px 10px;
+}
+.feed-scroll{overflow-x:auto}
+#feedTable{min-width:780px}
+#feedTable tbody tr{cursor:pointer}
+#feedTable tbody tr:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+@media (prefers-reduced-motion: no-preference){
+  tr.new-row td{animation:inkIn .5s ease}
+  @keyframes inkIn{from{background:var(--wash)}to{background:transparent}}
+}
+.chip{
+  display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  padding:2px 7px;border:1px solid var(--ink);white-space:nowrap;
+}
+.chip.ok{background:var(--ink);color:var(--paper)}
+.chip.transit{background:var(--card);color:var(--ink)}
+.chip.dev{background:var(--card);color:var(--red);border-color:var(--red)}
+.chip.hold{background:var(--red);color:#fff;border-color:var(--red)}
+.cep{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  border:1px solid var(--hair);background:none;color:var(--ink-2);padding:2px 7px;
+}
+.cep:hover{border-color:var(--ink);color:var(--ink)}
+
+/* PLD */
+.pld-item{border-bottom:1px solid var(--hair-soft);padding:12px 0}
+.pld-item:last-child{border-bottom:0;padding-bottom:0}
+.pld-top{display:flex;align-items:baseline;gap:10px}
+.pld-top .who{font-weight:600;font-size:13.5px;letter-spacing:-.01em}
+.score{
+  margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;
+  padding:1px 7px;border:1px solid var(--ink);
+}
+.score.hi{background:var(--red);border-color:var(--red);color:#fff}
+.pld-sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:3px}
+.pld-why{font-size:12px;color:var(--ink-2);margin-top:6px}
+.pld-actions{margin-top:9px;display:flex;gap:8px;flex-wrap:wrap}
+.btn-s{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  border:1px solid var(--ink);background:var(--card);color:var(--ink);padding:5px 11px;
+}
+.btn-s:hover{background:var(--ink);color:var(--paper)}
+.pld-item.done{opacity:.45}
+.pld-item.done .pld-actions{display:none}
+.pld-res{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;margin-top:8px}
+.pld-item.done .pld-res{display:block}
+
+/* cuentas + webhooks */
+.opsgrid{grid-template-columns:1.4fr 1fr}
+.wh-row{display:flex;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--hair-soft);font-family:var(--mono);font-size:11.5px;flex-wrap:wrap}
+.wh-row:last-of-type{border-bottom:0}
+.wh-row .ep{font-weight:600;letter-spacing:0}
+.wh-row .st{margin-left:auto;color:var(--ink-2)}
+.okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ink);margin-right:6px;vertical-align:1px}
+.okdot.err{background:var(--red)}
+.h3s{font-size:14px;font-weight:700;margin-bottom:8px}
+.cell .foot-note{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:12px;letter-spacing:.05em}
+
+/* footer */
+footer{
+  border-top:2px solid var(--ink);margin-top:44px;
+  padding:22px 24px 30px;display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;
+  max-width:1440px;margin-left:auto;margin-right:auto;
+}
+footer b{color:var(--ink);font-weight:600}
+footer a{color:var(--ink)}
+footer .r{margin-left:auto}
+
+/* ---- modales ---- */
+.overlay{
+  position:fixed;inset:0;background:rgba(17,17,16,.42);
+  display:none;z-index:50;
+}
+.overlay.open{display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px}
+.modal{
+  background:var(--paper);border:2px solid var(--ink);max-width:520px;width:100%;
+  padding:26px 28px;position:relative;max-height:86vh;overflow:auto;
+}
+.modal .m-tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--red);text-transform:uppercase;font-weight:600}
+.modal h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:8px 0 12px;line-height:1.1}
+.modal p{font-size:13.5px;color:var(--ink-2);margin-bottom:12px}
+.modal .x{
+  position:absolute;top:12px;right:12px;background:none;border:1px solid var(--hair);
+  font-family:var(--mono);font-size:12px;width:28px;height:28px;color:var(--ink-2);
+}
+.modal .x:hover{border-color:var(--ink);color:var(--ink)}
+.field{margin:14px 0}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
+.field input{
+  width:100%;font-family:var(--mono);font-size:14px;letter-spacing:.12em;
+  border:1px solid var(--ink);background:var(--card);padding:10px 12px;color:var(--ink);
+}
+.field .err{display:none;font-family:var(--mono);font-size:10.5px;color:var(--red);margin-top:5px}
+.field.bad input{border-color:var(--red)}
+.field.bad .err{display:block}
+.btn-danger{
+  width:100%;font-family:var(--mono);font-size:12px;letter-spacing:.14em;font-weight:600;
+  background:var(--red);color:#fff;border:1.5px solid var(--red);padding:13px;text-transform:uppercase;
+}
+.btn-danger:hover{background:var(--red-dim)}
+.btn-ink{
+  width:100%;font-family:var(--mono);font-size:12px;letter-spacing:.14em;font-weight:600;
+  background:var(--ink);color:var(--paper);border:1.5px solid var(--ink);padding:13px;text-transform:uppercase;
+}
+.m-note{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:12px;line-height:1.7}
+
+/* expediente drawer */
+#expOverlay.open{justify-content:flex-end;padding:0}
+.drawer{
+  background:var(--paper);border-left:2px solid var(--ink);height:100%;
+  width:min(480px,100%);padding:26px 28px 40px;overflow:auto;position:relative;
+}
+.exp-kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-family:var(--mono);font-size:11.5px;margin:14px 0;border-top:1px solid var(--ink);padding-top:12px}
+.exp-kv dt{color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;font-size:9.5px;padding-top:2px}
+.exp-kv dd{color:var(--ink);word-break:break-all}
+.rulebar{display:flex;align-items:center;gap:10px;margin:7px 0;font-family:var(--mono);font-size:11px}
+.rulebar .rl{flex:0 0 168px;color:var(--ink-2)}
+.rulebar .rt{flex:1;height:6px;background:var(--wash);position:relative}
+.rulebar .rf{position:absolute;inset:0 auto 0 0;background:var(--red)}
+.rulebar .rv{flex:0 0 34px;text-align:right;font-weight:600}
+.screen-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11.5px;padding:7px 0;border-bottom:1px solid var(--hair-soft)}
+.screen-row .res{font-weight:600}
+.screen-row .res.hit{color:var(--red)}
+.exp-sec{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:20px 0 6px;border-bottom:1px solid var(--ink);padding-bottom:5px}
+.exp-actions{display:flex;gap:8px;margin-top:22px}
+.exp-actions .btn-s{flex:1;padding:11px 8px;text-align:center}
+.exp-actions .btn-s.red{border-color:var(--red);color:var(--red)}
+.exp-actions .btn-s.red:hover{background:var(--red);color:#fff}
+
+/* ---- responsive ---- */
+@media (max-width:1100px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .kpi.hero{grid-column:1/-1}
+  .kpi.hero .val{font-size:30px}
+  .flowgrid,.feedgrid,.opsgrid{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  header{padding:0 16px}
+  .brand h1{font-size:22px}
+  .head-mid{gap:12px}
+  .filters,main{padding-left:16px;padding-right:16px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi .val{font-size:22px}
+  .kpi.hero .val{font-size:24px}
+  .f-note{display:none}
+  footer{padding:20px 16px 28px}
+  footer .r{margin-left:0}
+}
+@media (max-width:430px){
+  .kpis{grid-template-columns:1fr 1fr}
+  .head-right{width:100%;justify-content:space-between;border-top:1px solid var(--hair);padding-top:10px}
+  .exp-kv{grid-template-columns:110px 1fr}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<div id="killBanner" role="alert">
+  ■ OPERACIÓN SUSPENDIDA — kill switch activado por <strong>I. Ramírez</strong> a las <strong id="killTime">—</strong>. La emisión SPEI está detenida; los abonos entrantes continúan recibiéndose.
+</div>
+
+<header>
+  <div class="brand">
+    <h1>MASMOVIL<span class="dot">.</span></h1>
+    <span class="sys">Core SPEI · STP → Banxico</span>
+  </div>
+  <div class="head-mid">
+    <span class="env"><i aria-hidden="true"></i>PRODUCCIÓN</span>
+    <span class="meta-mini num" id="clock" aria-label="Hora del sistema">—</span>
+    <span class="meta-mini">Sesión: <b>SPEI-OPS</b> · certificado <b>vigente</b></span>
+  </div>
+  <div class="head-right">
+    <span class="opr"><b>I. RAMÍREZ</b><br />Operadora · Tesorería</span>
+    <span class="tfa" title="Segundo factor activo en esta sesión">2FA ✓</span>
+    <button id="killBtn" aria-haspopup="dialog">Kill switch</button>
+  </div>
+</header>
+
+<div class="filters" role="group" aria-label="Filtros del tablero">
+  <div class="fgroup">
+    <label for="empresaSel">Empresa</label>
+    <select id="empresaSel">
+      <option value="all">Todas las empresas (4)</option>
+      <option value="gfo">Grupo Farmacéutico Occidente</option>
+      <option value="log">Logística Cuervo, S.A.P.I.</option>
+      <option value="pay">Paytek Servicios Digitales</option>
+      <option value="mm">MASMOVIL (operativa)</option>
+    </select>
+  </div>
+  <div class="fgroup">
+    <label id="rangoLbl">Rango</label>
+    <div class="seg" role="group" aria-labelledby="rangoLbl">
+      <button data-range="hoy" aria-pressed="true">HOY</button>
+      <button data-range="7d" aria-pressed="false">7 D</button>
+      <button data-range="30d" aria-pressed="false">30 D</button>
+    </div>
+  </div>
+  <span class="f-note num" id="lastSync">Última conciliación: —</span>
+</div>
+
+<main>
+
+  <!-- ===== 01 · POSICIÓN ===== -->
+  <div class="sec-head">
+    <span class="no">01</span><h2>Posición consolidada</h2>
+    <span class="side num" id="kpiScope">Todas las empresas · hoy</span>
+  </div>
+  <div class="board kpis" id="kpiBoard">
+    <div class="cell kpi hero">
+      <div class="lbl">Saldo consolidado</div>
+      <div class="val" id="kSaldo"><span class="cur">MX$</span>—</div>
+      <div class="sub num" id="kSaldoSub">— cuentas CLABE</div>
+    </div>
+    <div class="cell kpi">
+      <div class="lbl">SPEI enviados</div>
+      <div class="val num" id="kOutN">—</div>
+      <div class="sub num" id="kOutM">—</div>
+      <svg class="spark" id="spOut" aria-hidden="true"></svg>
+    </div>
+    <div class="cell kpi">
+      <div class="lbl">SPEI recibidos</div>
+      <div class="val num" id="kInN">—</div>
+      <div class="sub num" id="kInM">—</div>
+      <svg class="spark" id="spIn" aria-hidden="true"></svg>
+    </div>
+    <div class="cell kpi">
+      <div class="lbl">Tasa de liquidación</div>
+      <div class="val num" id="kRate">—</div>
+      <div class="delta num" id="kRateD">—</div>
+      <svg class="spark" id="spRate" aria-hidden="true"></svg>
+    </div>
+    <div class="cell kpi">
+      <div class="lbl">Devoluciones</div>
+      <div class="val num" id="kDev">—</div>
+      <div class="delta num" id="kDevD">—</div>
+      <svg class="spark" id="spDev" aria-hidden="true"></svg>
+    </div>
+  </div>
+
+  <!-- ===== 02 · FLUJO ===== -->
+  <div class="sec-head">
+    <span class="no">02</span><h2 id="flowTitle">Flujo horario SPEI</h2>
+    <span class="side">montos liquidados · millones de MXN</span>
+  </div>
+  <div class="board flowgrid">
+    <div class="cell">
+      <div class="chart-head">
+        <div class="legend" aria-hidden="true">
+          <span class="k"><span class="sw in"></span>RECIBIDOS</span>
+          <span class="k"><span class="sw out"></span>ENVIADOS</span>
+        </div>
+        <button class="tbl-toggle" id="flowTblBtn" aria-expanded="false" aria-controls="flowTableBox">VER TABLA</button>
+      </div>
+      <div class="chart-wrap">
+        <svg id="flowChart" viewBox="0 0 960 300" role="img" tabindex="0"
+             aria-label="Gráfica de columnas: montos SPEI recibidos y enviados. Use las flechas izquierda y derecha para recorrer los periodos; la tabla de datos está disponible con el botón Ver tabla."></svg>
+        <div class="tip" id="flowTip" role="status"></div>
+      </div>
+      <div id="flowTableBox" tabindex="0" aria-label="Tabla de flujo SPEI">
+        <table class="data num" id="flowTable">
+          <thead><tr><th id="flowThPeriod">Hora</th><th class="r">Recibidos (MDP)</th><th class="r">Enviados (MDP)</th><th class="r">Neto (MDP)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="cell">
+      <h3 class="h3s">Corte del periodo</h3>
+      <div id="cutRows"></div>
+      <div class="meter">
+        <div class="m-l"><span>LÍMITE DIARIO DE EMISIÓN</span><span class="num" id="meterPct">—</span></div>
+        <div class="track"><div class="fill" id="meterFill"></div><div class="mark" style="left:85%" title="Umbral de alerta 85%"></div></div>
+        <div class="m-cap num" id="meterCap">—</div>
+      </div>
+      <p class="foot-note">Cada operación liquidada genera su CEP de Banxico y su asiento de conciliación automática.</p>
+    </div>
+  </div>
+
+  <!-- ===== 03 · OPERACIONES ===== -->
+  <div class="sec-head">
+    <span class="no">03</span><h2>Operaciones en vivo</h2>
+    <span class="side">webhook firmado (HMAC-SHA256) por evento</span>
+  </div>
+  <div class="board feedgrid">
+    <div class="cell">
+      <div class="feed-head" id="feedHead">
+        <h3>Feed de liquidación</h3>
+        <span class="live" id="liveLbl"><i aria-hidden="true"></i>EN VIVO</span>
+        <button id="pauseFeed" aria-pressed="false">PAUSAR</button>
+      </div>
+      <div class="feed-scroll">
+        <table class="data num" id="feedTable">
+          <thead>
+            <tr>
+              <th>Hora</th><th>Clave de rastreo</th><th>Tipo</th><th>Contraparte</th>
+              <th class="r">Monto (MXN)</th><th>Estado</th><th>CEP</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="foot-note">Clic en cualquier operación para abrir su expediente. Idempotencia por <span class="mono">Idempotency-Key</span>; anti-replay con ventana de 30 s.</p>
+    </div>
+    <div class="cell">
+      <h3 class="h3s">Cola de revisión PLD <span class="mono" style="font-size:10px;color:var(--ink-3)">· screening + scoring</span></h3>
+      <div id="pldList"></div>
+      <p class="foot-note">Listas verificadas en cada operación: OFAC-SDN, ONU, SAT 69-B, PPE nacionales. Reglas de la UIF/CNBV parametrizadas por empresa.</p>
+    </div>
+  </div>
+
+  <!-- ===== 04 · INFRAESTRUCTURA ===== -->
+  <div class="sec-head">
+    <span class="no">04</span><h2>Cuentas e infraestructura</h2>
+    <span class="side">CLABEs ilimitadas por API · multi-empresa</span>
+  </div>
+  <div class="board opsgrid">
+    <div class="cell">
+      <h3 class="h3s">Cuentas CLABE</h3>
+      <div class="feed-scroll">
+        <table class="data num" id="clabeTable">
+          <thead><tr><th>Empresa</th><th>Alias</th><th>CLABE</th><th class="r">Saldo (MXN)</th><th>Estado</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="cell">
+      <h3 class="h3s">Webhooks y API</h3>
+      <div class="wh-row"><span class="okdot" aria-hidden="true"></span><span class="ep">POST /webhooks/tesoreria-gfo</span><span class="st">200 × 4,182 · p95 96 ms</span></div>
+      <div class="wh-row"><span class="okdot" aria-hidden="true"></span><span class="ep">POST /webhooks/erp-logcuervo</span><span class="st">200 × 2,914 · p95 141 ms</span></div>
+      <div class="wh-row"><span class="okdot err" aria-hidden="true"></span><span class="ep">POST /webhooks/paytek-conciliacion</span><span class="st">3 reintentos · backoff 2º</span></div>
+      <div class="wh-row"><span class="okdot" aria-hidden="true"></span><span class="ep">API núcleo · spei-out</span><span class="st">p95 187 ms · 0 err/1h</span></div>
+      <div class="wh-row"><span class="okdot" aria-hidden="true"></span><span class="ep">Conexión STP (prod)</span><span class="st">sesión estable · 6 h 12 min</span></div>
+      <p class="foot-note">Firma HMAC-SHA256 en cada entrega, con reintentos exponenciales y re-firmado. Rotación de secretos: 90 días.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span><b>MASMOVIL, S.A. de C.V.</b> · RFC MAS191203EY6</span>
+  <span>Pompeya 2775, Lomas de Guevara, C.P. 44657, Guadalajara, Jalisco</span>
+  <span class="r"><a href="mailto:direccion@masmovil.lat">direccion@masmovil.lat</a> · masmovil.lat</span>
+</footer>
+
+<!-- ===== MODAL KILL SWITCH ===== -->
+<div class="overlay" id="killOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="killTitle">
+    <button class="x" id="killClose" aria-label="Cerrar">✕</button>
+    <span class="m-tag" id="killTag">Acción irreversible hasta reautorización</span>
+    <h3 id="killTitle">Detener toda la emisión SPEI</h3>
+    <p id="killDesc">Se suspende de inmediato la emisión de órdenes SPEI (dispersiones, nóminas y traspasos) de <b>todas las empresas</b>. Los abonos entrantes continúan recibiéndose y conciliándose. La acción queda en bitácora con sello de tiempo.</p>
+    <div class="field" id="fWord">
+      <label for="killWord">Escriba DETENER para confirmar</label>
+      <input id="killWord" type="text" autocomplete="off" spellcheck="false" />
+      <span class="err">Debe escribir exactamente DETENER.</span>
+    </div>
+    <div class="field" id="fCode">
+      <label for="killCode">Código 2FA (6 dígitos)</label>
+      <input id="killCode" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" />
+      <span class="err">Código de 6 dígitos requerido.</span>
+    </div>
+    <button class="btn-danger" id="killConfirm">Activar kill switch</button>
+    <p class="m-note">Bitácora: la activación notifica a dirección y al oficial de cumplimiento. Reactivar requiere nuevamente 2FA.</p>
+  </div>
+</div>
+
+<!-- ===== DRAWER EXPEDIENTE ===== -->
+<div class="overlay" id="expOverlay">
+  <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+    <button class="x" id="expClose" aria-label="Cerrar expediente">✕</button>
+    <span class="m-tag" id="expTag">Expediente PLD</span>
+    <h3 id="expTitle">—</h3>
+    <dl class="exp-kv" id="expKv"></dl>
+    <div class="exp-sec">Scoring de riesgo · <span id="expScoreLbl">—</span></div>
+    <div id="expRules"></div>
+    <div class="exp-sec">Screening de listas</div>
+    <div id="expScreen"></div>
+    <div class="exp-sec">Resolución</div>
+    <p style="font-size:12.5px;color:var(--ink-2)" id="expReso">—</p>
+    <div class="exp-actions" id="expActions">
+      <button class="btn-s" data-act="aprobar">APROBAR</button>
+      <button class="btn-s" data-act="escalar">ESCALAR</button>
+      <button class="btn-s red" data-act="rechazar">RECHAZAR</button>
+    </div>
+  </div>
+</div>
+
+<noscript><p style="padding:20px;font-family:monospace">Este prototipo requiere JavaScript para simular los datos del core.</p></noscript>
+
+<script>
+"use strict";
+/* ================= utilidades ================= */
+const $ = (s, c) => (c || document).querySelector(s);
+const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
+const fmtMXN = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+const fmtN = new Intl.NumberFormat("es-MX");
+const fmt1 = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* PRNG determinista para densidad creíble y estable */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ================= estado ================= */
+const EMPRESAS = {
+  all:{nombre:"Todas las empresas", mult:1, cuentas:57, seed:11},
+  gfo:{nombre:"Grupo Farmacéutico Occidente", mult:.41, cuentas:18, seed:23},
+  log:{nombre:"Logística Cuervo, S.A.P.I.", mult:.27, cuentas:14, seed:37},
+  pay:{nombre:"Paytek Servicios Digitales", mult:.24, cuentas:21, seed:53},
+  mm:{nombre:"MASMOVIL (operativa)", mult:.08, cuentas:4, seed:71}
+};
+const state = { empresa:"all", range:"hoy", killed:false, paused:false, selHour:-1 };
+const HOY = new Date();
+const HH_NOW = HOY.getHours();
+
+/* ================= reloj ================= */
+function tickClock(){
+  const d = new Date();
+  $("#clock").textContent =
+    d.toLocaleDateString("es-MX",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}).replace(/\./g,"")
+    + " · " + d.toLocaleTimeString("es-MX",{hour12:false}) + " CDMX";
+}
+tickClock(); setInterval(tickClock, 1000);
+
+/* contador vivo de conciliación (ciclo de 60 s) */
+let syncAge = 42;
+function tickSync(){
+  syncAge = (syncAge + 1) % 60;
+  $("#lastSync").textContent = "Última conciliación: hace " + syncAge + " s · sin diferencias";
+}
+tickSync(); setInterval(tickSync, 1000);
+
+/* ================= generación de datos ================= */
+function genFlow(){
+  const emp = EMPRESAS[state.empresa];
+  const rnd = mulberry32(emp.seed * (state.range==="hoy"?1:state.range==="7d"?2:3));
+  const shape = h => { // curva de negocio: valles nocturnos, picos 10-13 y 17-19
+    const bump=(c,w,a)=>a*Math.exp(-((h-c)**2)/(2*w*w));
+    return 3 + bump(11,2.1,46) + bump(18,1.9,34) + bump(1,1.4,6);
+  };
+  let pts;
+  if(state.range==="hoy"){
+    pts = Array.from({length:24},(_,h)=>{
+      const base = shape(h)*emp.mult;
+      const fut = h > HH_NOW;
+      return {
+        label: String(h).padStart(2,"0")+":00",
+        in:  fut?0: base*(0.92+rnd()*0.5),
+        out: fut?0: base*(0.78+rnd()*0.5)
+      };
+    });
+  } else {
+    const n = state.range==="7d"?7:30;
+    pts = Array.from({length:n},(_,i)=>{
+      const d = new Date(HOY); d.setDate(d.getDate()-(n-1-i));
+      const dow = d.getDay(); const wk = (dow===0||dow===6)?0.38:1;
+      const base = 320*emp.mult*wk;
+      return {
+        label: d.toLocaleDateString("es-MX",{day:"2-digit",month:"short"}).replace(".",""),
+        in:  base*(0.86+rnd()*0.5),
+        out: base*(0.74+rnd()*0.5)
+      };
+    });
+  }
+  return pts;
+}
+
+function genKpis(flow){
+  const emp = EMPRESAS[state.empresa];
+  const rnd = mulberry32(emp.seed+7);
+  const sumIn = flow.reduce((a,p)=>a+p.in,0), sumOut = flow.reduce((a,p)=>a+p.out,0);
+  const scale = state.range==="hoy"?1:state.range==="7d"?7:30;
+  return {
+    saldo: 184203118.42*emp.mult*(0.97+rnd()*0.06),
+    cuentas: emp.cuentas,
+    outN: Math.round(2140*emp.mult*scale*(0.9+rnd()*0.25)),
+    outM: sumOut*1e6,
+    inN: Math.round(1730*emp.mult*scale*(0.9+rnd()*0.25)),
+    inM: sumIn*1e6,
+    rate: Math.min(99.99, 99.996 - rnd()*0.03),
+    dev: Math.round(3*emp.mult*scale + rnd()*2),
+    spark: k => Array.from({length:12},()=>k*(0.6+rnd()*0.8))
+  };
+}
+
+/* ================= sparklines ================= */
+function sparkline(svg, data, lastRed){
+  const W=120,H=26,P=3;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const mx=Math.max(...data), mn=Math.min(...data), rg=(mx-mn)||1;
+  const xy=i=>[P+i*(W-2*P)/(data.length-1), H-P-(data[i]-mn)/rg*(H-2*P)];
+  const d=data.map((_,i)=>{const[x,y]=xy(i);return (i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join(" ");
+  const [lx,ly]=xy(data.length-1);
+  svg.innerHTML =
+    `<path d="${d}" fill="none" stroke="#9C9B95" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${lx}" cy="${ly}" r="4" fill="#FFFFFF"/>`+
+    `<circle cx="${lx}" cy="${ly}" r="2.6" fill="${lastRed?"#E30613":"#111110"}"/>`;
+}
+
+/* ================= gráfica de flujo (SVG) ================= */
+const chart = { svg:$("#flowChart"), tip:$("#flowTip"), data:[], geom:null };
+
+function roundTop(x,y,w,h,r){
+  if(h<=0.6) return "";
+  r=Math.min(r,w/2,h);
+  return `M${x} ${y+h} L${x} ${y+r} Q${x} ${y} ${x+r} ${y} L${x+w-r} ${y} Q${x+w} ${y} ${x+w} ${y+r} L${x+w} ${y+h} Z`;
+}
+
+function drawFlow(){
+  const data = chart.data;
+  const W=960,H=300, L=52,R=10,T=18,B=34;
+  const iw=W-L-R, ih=H-T-B;
+  const maxV=Math.max(1,...data.map(p=>Math.max(p.in,p.out)));
+  // ticks limpios
+  const step=Math.pow(10,Math.floor(Math.log10(maxV)));
+  const niceMax=Math.ceil(maxV/(step/2))*(step/2);
+  const ticks=[0,niceMax/2,niceMax];
+  const y=v=>T+ih-(v/niceMax)*ih;
+  const band=iw/data.length;
+  const barW=Math.min(14,(band-8)/2); // marcas delgadas, tope 14px
+  const gap=2;
+  let s="";
+  // grid hairline
+  ticks.forEach(t=>{ s+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="#E8E7E1" stroke-width="1"/>`;
+    s+=`<text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#6B6B66">${fmtN.format(Math.round(t))}</text>`; });
+  // barras
+  let peakIdx=0,peakV=0;
+  data.forEach((p,i)=>{
+    const cx=L+band*i+band/2;
+    const x1=cx-gap/2-barW, x2=cx+gap/2;
+    s+=`<path d="${roundTop(x1,y(p.in),barW,T+ih-y(p.in),4)}" fill="#111110"/>`;
+    s+=`<path d="${roundTop(x2,y(p.out),barW,T+ih-y(p.out),4)}" fill="#E30613"/>`;
+    if(p.in>peakV){peakV=p.in;peakIdx=i}
+    // etiquetas x selectivas
+    const n=data.length;
+    const every=n<=7?1:(n<=24?6:7);
+    if(i===n-1||(i%every===0&&(n-1-i)>every/2)){
+      s+=`<text x="${cx}" y="${H-12}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#6B6B66">${p.label}</text>`;
+    }
+  });
+  // etiqueta directa solo en el pico
+  if(peakV>0){
+    const cx=L+band*peakIdx+band/2-gap/2-barW/2;
+    s+=`<text x="${cx}" y="${y(peakV)-6}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#111110">${fmt1.format(peakV)}</text>`;
+  }
+  // eje base
+  s+=`<line x1="${L}" x2="${W-R}" y1="${T+ih}" y2="${T+ih}" stroke="#111110" stroke-width="1"/>`;
+  // crosshair (oculto)
+  s+=`<line id="xhair" x1="0" x2="0" y1="${T}" y2="${T+ih}" stroke="#111110" stroke-width="1" opacity="0"/>`;
+  // captura
+  s+=`<rect id="hitrect" x="${L}" y="${T}" width="${iw}" height="${ih+B}" fill="transparent"/>`;
+  chart.svg.innerHTML=s;
+  chart.geom={W,H,L,T,ih,iw,band};
+  bindChart();
+}
+
+function showHour(i, fromKb){
+  const {L,T,ih,band,W}=chart.geom;
+  const data=chart.data;
+  if(i<0||i>=data.length){hideTip();return}
+  state.selHour=i;
+  const p=data[i];
+  const cx=L+band*i+band/2;
+  const xh=chart.svg.querySelector("#xhair");
+  xh.setAttribute("x1",cx);xh.setAttribute("x2",cx);xh.setAttribute("opacity","1");
+  const tip=chart.tip;
+  tip.innerHTML="";
+  const h=document.createElement("div");h.className="t-h";h.textContent=(state.range==="hoy"?"Hora ":"")+p.label;
+  tip.appendChild(h);
+  [["#111110","Recibidos",p.in],["#E30613","Enviados",p.out]].forEach(([c,l,v])=>{
+    const r=document.createElement("div");r.className="row";
+    const left=document.createElement("span");
+    const k=document.createElement("span");k.className="key";k.style.background=c;
+    left.appendChild(k);left.appendChild(document.createTextNode(" "+l));
+    const b=document.createElement("b");b.textContent=fmt1.format(v)+" MDP";
+    r.appendChild(left);r.appendChild(b);tip.appendChild(r);
+  });
+  const wrap=$(".chart-wrap");
+  const rect=chart.svg.getBoundingClientRect();
+  const px=cx/chart.geom.W*rect.width;
+  tip.style.display="block";
+  const tw=tip.offsetWidth;
+  tip.style.left=Math.min(Math.max(px-tw/2,0),rect.width-tw)+"px";
+  tip.style.top=(T/300*rect.height-2)+"px";
+  if(fromKb) tip.setAttribute("aria-live","polite");
+}
+function hideTip(){
+  chart.tip.style.display="none";
+  const xh=chart.svg.querySelector("#xhair");
+  if(xh) xh.setAttribute("opacity","0");
+}
+function bindChart(){
+  /* el hitrect se recrea en cada render: se re-liga aquí */
+  const hit=chart.svg.querySelector("#hitrect");
+  hit.addEventListener("pointermove",e=>{
+    const rect=chart.svg.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width*chart.geom.W;
+    const i=Math.floor((x-chart.geom.L)/chart.geom.band);
+    showHour(Math.max(0,Math.min(chart.data.length-1,i)));
+  });
+  hit.addEventListener("pointerleave",hideTip);
+}
+/* listeners del propio <svg>: una sola vez (evita duplicados al re-render) */
+(function bindChartOnce(){
+  chart.svg.addEventListener("keydown",e=>{
+    if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+      e.preventDefault();
+      const d=e.key==="ArrowRight"?1:-1;
+      const i=state.selHour<0?(state.range==="hoy"?Math.min(HH_NOW,chart.data.length-1):chart.data.length-1):state.selHour+d;
+      showHour(Math.max(0,Math.min(chart.data.length-1,i)),true);
+    } else if(e.key==="Escape"){ hideTip(); }
+  });
+  chart.svg.addEventListener("blur",hideTip);
+})();
+
+/* tabla gemela de la gráfica */
+function fillFlowTable(){
+  const tb=$("#flowTable tbody");tb.innerHTML="";
+  $("#flowThPeriod").textContent=state.range==="hoy"?"Hora":"Día";
+  chart.data.forEach(p=>{
+    const tr=document.createElement("tr");
+    [[p.label],[fmt1.format(p.in),"r"],[fmt1.format(p.out),"r"],[fmt1.format(p.in-p.out),"r"]].forEach(([t,cls])=>{
+      const td=document.createElement("td");td.textContent=t;if(cls)td.className=cls;tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+$("#flowTblBtn").addEventListener("click",()=>{
+  const box=$("#flowTableBox"), btn=$("#flowTblBtn");
+  const open=box.classList.toggle("open");
+  btn.setAttribute("aria-expanded",open?"true":"false");
+  btn.textContent=open?"OCULTAR TABLA":"VER TABLA";
+});
+
+/* ================= corte + medidor ================= */
+function fillCut(k, flow){
+  const liq=k.outN+k.inN-k.dev-2;
+  const rows=[
+    ["Órdenes liquidadas", fmtN.format(Math.max(0,liq)), false],
+    ["En tránsito (STP)", "2", false],
+    ["Devueltas", fmtN.format(k.dev), k.dev>0],
+    ["Retenidas por PLD", "3", true],
+    ["CEP emitidos", fmtN.format(Math.max(0,liq)), false],
+    ["Diferencias de conciliación", "0", false]
+  ];
+  const box=$("#cutRows");box.innerHTML="";
+  rows.forEach(([l,v,bad])=>{
+    const d=document.createElement("div");d.className="cut-row";
+    const s1=document.createElement("span");s1.className="l";s1.textContent=l;
+    const s2=document.createElement("b");s2.className="num"+(bad?" bad":"");s2.textContent=v;
+    d.appendChild(s1);d.appendChild(s2);box.appendChild(d);
+  });
+  const limit=750e6*EMPRESAS[state.empresa].mult*(state.range==="hoy"?1:state.range==="7d"?7:30);
+  const pct=Math.min(98,Math.round(k.outM/limit*100));
+  $("#meterPct").textContent=pct+" %";
+  $("#meterFill").style.width=pct+"%";
+  $("#meterCap").textContent=fmtMXN.format(k.outM)+" de "+fmtMXN.format(limit)+" · umbral de alerta: 85 %";
+}
+
+/* ================= KPIs ================= */
+function money(n){ return fmtMXN.format(n).replace("$","").trim(); }
+function fillKpis(){
+  const flow=chart.data, k=genKpis(flow);
+  $("#kSaldo").innerHTML='<span class="cur">MX$</span>'+money(k.saldo);
+  $("#kSaldoSub").textContent=k.cuentas+" cuentas CLABE activas";
+  $("#kOutN").textContent=fmtN.format(k.outN);
+  $("#kOutM").textContent=fmtMXN.format(k.outM)+" dispersados";
+  $("#kInN").textContent=fmtN.format(k.inN);
+  $("#kInM").textContent=fmtMXN.format(k.inM)+" recibidos";
+  $("#kRate").textContent=k.rate.toFixed(2).replace(".",",")+" %";
+  $("#kRateD").textContent="0 órdenes fuera de SLA";
+  $("#kDev").textContent=fmtN.format(k.dev);
+  const devD=$("#kDevD");
+  devD.textContent=k.dev>0?"motivo principal: CLABE inexistente":"sin devoluciones en el periodo";
+  devD.className="delta num"+(k.dev>3?" neg":"");
+  sparkline($("#spOut"),k.spark(8),true);
+  sparkline($("#spIn"),k.spark(7),false);
+  sparkline($("#spRate"),k.spark(2).map(v=>99.9+v/40),false);
+  sparkline($("#spDev"),k.spark(1),k.dev>3);
+  $("#kpiScope").textContent=EMPRESAS[state.empresa].nombre+" · "+(state.range==="hoy"?"hoy":state.range==="7d"?"últimos 7 días":"últimos 30 días");
+  fillCut(k,flow);
+}
+
+/* ================= feed en vivo ================= */
+const BANCOS=["BBVA MÉXICO","BANORTE","SANTANDER","BANAMEX","HSBC","BANBAJÍO","AFIRME","INBURSA","BANCO AZTECA","SCOTIABANK"];
+const NOMBRES=[
+  "Distribuidora Ferre-Mayoreo SA de CV","Karla Sofía Mendoza Ruiz","Transportes del Bajío SAPI",
+  "Alimentos Selectos de Jalisco SA","José Antonio Preciado Luna","Comercializadora Vitalia SA de CV",
+  "Refaccionaria El Cedro","María Fernanda Ortiz Gallo","Grupo Textil Occidente SA",
+  "Servicios Contables Anaya y Asoc.","Héctor Raúl Camarena Ibarra","Química Industrial Pacífico SA"
+];
+const CONCEPTOS=["Pago a proveedor","Nómina quincenal","Reembolso cliente","Anticipo de obra","Liquidación factura A-", "Traspaso entre cuentas","Comisiones periodo","Devolución de saldo"];
+let feedSeq=48211, feedTimer=null;
+/* el feed no necesita determinismo: Math.random da variedad real entre cargas */
+const feedRnd=Math.random;
+
+function claveRastreo(){
+  const d=new Date();
+  return "MAS"+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+String(feedSeq++).padStart(8,"0");
+}
+function newOp(init){
+  const r=feedRnd;
+  const tipo=r()<0.56?"ENVÍO":"ABONO";
+  const roll=r();
+  const estado= roll<0.06?"DEVUELTA" : roll<0.17?"EN TRÁNSITO" : "LIQUIDADA";
+  const monto= r()<0.12 ? 150000+r()*2400000 : 800+r()*95000;
+  const d=new Date(Date.now()-(init? r()*3.2e6 :0));
+  return {
+    ts:d.getTime(),
+    hora:d.toLocaleTimeString("es-MX",{hour12:false}),
+    clave:claveRastreo(),
+    tipo, estado,
+    nombre:NOMBRES[Math.floor(r()*NOMBRES.length)],
+    banco:BANCOS[Math.floor(r()*BANCOS.length)],
+    concepto:CONCEPTOS[Math.floor(r()*CONCEPTOS.length)]+(r()<.3?String(1000+Math.floor(r()*9000)):""),
+    monto
+  };
+}
+function chipFor(op){
+  const c=document.createElement("span");c.className="chip";
+  if(op.estado==="LIQUIDADA"){c.classList.add("ok");c.textContent="LIQUIDADA"}
+  else if(op.estado==="EN TRÁNSITO"){c.classList.add("transit");c.textContent="EN TRÁNSITO"}
+  else if(op.estado==="RETENIDA"){c.classList.add("hold");c.textContent="RETENIDA PLD"}
+  else{c.classList.add("dev");c.textContent="DEVUELTA"}
+  return c;
+}
+function feedRow(op,isNew){
+  const tr=document.createElement("tr");
+  tr.tabIndex=0;
+  tr.title="Abrir expediente de la operación "+op.clave;
+  if(isNew&&!reduceMotion)tr.className="new-row";
+  const tds=[op.hora,op.clave,op.tipo,op.nombre+" · "+op.banco,fmtMXN.format(op.monto)];
+  tds.forEach((t,i)=>{
+    const td=document.createElement("td");td.textContent=t;
+    if(i===4)td.className="r";
+    if(i===1)td.style.letterSpacing="0";
+    tr.appendChild(td);
+  });
+  const tdE=document.createElement("td");tdE.appendChild(chipFor(op));tr.appendChild(tdE);
+  const tdC=document.createElement("td");
+  if(op.estado==="LIQUIDADA"){
+    const b=document.createElement("button");b.className="cep";b.textContent="CEP ↓";
+    b.setAttribute("aria-label","Descargar CEP de Banxico de la operación "+op.clave);
+    b.addEventListener("click",e=>{e.stopPropagation();b.textContent="CEP ✓";b.disabled=true;});
+    tdC.appendChild(b);
+  } else tdC.textContent="—";
+  tr.appendChild(tdC);
+  const open=()=>openExpediente({tipo:"op",op});
+  tr.addEventListener("click",open);
+  tr.addEventListener("keydown",e=>{if(e.target!==tr)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
+  return tr;
+}
+function pushOp(op,isNew){
+  const tb=$("#feedTable tbody");
+  tb.insertBefore(feedRow(op,isNew),tb.firstChild);
+  while(tb.children.length>16)tb.removeChild(tb.lastChild);
+}
+function startFeed(){
+  stopFeed();
+  feedTimer=setInterval(()=>{
+    if(state.paused)return;
+    const op=newOp(false);
+    /* con kill switch activo la emisión se detiene; los abonos entrantes continúan */
+    if(state.killed&&op.tipo==="ENVÍO")return;
+    pushOp(op,true);
+  }, reduceMotion?6000:3400);
+}
+function stopFeed(){if(feedTimer){clearInterval(feedTimer);feedTimer=null}}
+$("#pauseFeed").addEventListener("click",()=>{
+  state.paused=!state.paused;
+  const b=$("#pauseFeed");
+  b.textContent=state.paused?"REANUDAR":"PAUSAR";
+  b.setAttribute("aria-pressed",state.paused?"true":"false");
+  $("#feedHead").classList.toggle("feed-paused",state.paused);
+  $("#liveLbl").lastChild.textContent=state.killed?"SUSPENDIDO":(state.paused?"PAUSADO":"EN VIVO");
+});
+
+/* ================= PLD ================= */
+const PLD_ITEMS=[
+  {id:"pld1",who:"Comercializadora Ébano del Norte SA",clave:"MAS20260709 00048177",score:82,
+   monto:1875000,banco:"BANCO AZTECA",cuenta:"127180013300412209",
+   why:"Monto 6.4× arriba del promedio de la contraparte; primera operación con esta CLABE; horario 03:12.",
+   rules:[["Monto atípico vs. histórico",34],["Contraparte de alta nueva",18],["Horario fuera de patrón",12],["Fragmentación en 48 h",18]],
+   screen:[["OFAC-SDN","SIN COINCIDENCIA",false],["ONU / consolidada","SIN COINCIDENCIA",false],["SAT 69-B (definitivos)","COINCIDENCIA PARCIAL 71 %",true],["PPE nacionales","SIN COINCIDENCIA",false]],
+   reso:"Retenida en firme. Requiere resolución del oficial de cumplimiento antes del corte de las 17:00."},
+  {id:"pld2",who:"Héctor Raúl Camarena Ibarra",clave:"MAS20260709 00048102",score:64,
+   monto:249800,banco:"HSBC",cuenta:"021180550098331172",
+   why:"Tres dispersiones consecutivas justo debajo del umbral de reporte (fragmentación probable).",
+   rules:[["Fragmentación bajo umbral",29],["Frecuencia inusual",21],["Monto atípico",14]],
+   screen:[["OFAC-SDN","SIN COINCIDENCIA",false],["ONU / consolidada","SIN COINCIDENCIA",false],["SAT 69-B (definitivos)","SIN COINCIDENCIA",false],["PPE nacionales","SIN COINCIDENCIA",false]],
+   reso:"Retención preventiva de 24 h. Puede liberarse con doble autorización."},
+  {id:"pld3",who:"Servicios Logísticos Meridiano SAPI",clave:"MAS20260709 00047961",score:47,
+   monto:96400,banco:"BANORTE",cuenta:"072320004411097265",
+   why:"Cambio de cuenta beneficiaria registrado hace menos de 72 h.",
+   rules:[["Cambio reciente de beneficiario",26],["Concepto genérico",11],["Historial corto",10]],
+   screen:[["OFAC-SDN","SIN COINCIDENCIA",false],["ONU / consolidada","SIN COINCIDENCIA",false],["SAT 69-B (definitivos)","SIN COINCIDENCIA",false],["PPE nacionales","SIN COINCIDENCIA",false]],
+   reso:"Riesgo medio-bajo. Elegible para liberación con una sola autorización."}
+];
+function renderPld(){
+  const box=$("#pldList");box.innerHTML="";
+  PLD_ITEMS.forEach(item=>{
+    const d=document.createElement("div");d.className="pld-item";d.id=item.id;
+    const top=document.createElement("div");top.className="pld-top";
+    const who=document.createElement("span");who.className="who";who.textContent=item.who;
+    const sc=document.createElement("span");sc.className="score num"+(item.score>=75?" hi":"");sc.textContent=item.score+"/100";
+    top.appendChild(who);top.appendChild(sc);
+    const sub=document.createElement("div");sub.className="pld-sub num";
+    sub.textContent=item.clave.replace(" ","")+" · "+fmtMXN.format(item.monto)+" · "+item.banco;
+    const why=document.createElement("p");why.className="pld-why";why.textContent=item.why;
+    const act=document.createElement("div");act.className="pld-actions";
+    const b=document.createElement("button");b.className="btn-s";b.textContent="ABRIR EXPEDIENTE";
+    b.addEventListener("click",()=>openExpediente({tipo:"pld",item}));
+    act.appendChild(b);
+    const res=document.createElement("p");res.className="pld-res";
+    d.appendChild(top);d.appendChild(sub);d.appendChild(why);d.appendChild(act);d.appendChild(res);
+    box.appendChild(d);
+  });
+}
+
+/* ================= expediente (drawer) ================= */
+let expReturn=null,expCurrent=null;
+function kv(dl,k,v){
+  const dt=document.createElement("dt");dt.textContent=k;
+  const dd=document.createElement("dd");dd.className="num";dd.textContent=v;
+  dl.appendChild(dt);dl.appendChild(dd);
+}
+function openExpediente(ctx){
+  expReturn=document.activeElement;expCurrent=ctx;
+  const kvBox=$("#expKv"),rules=$("#expRules"),scr=$("#expScreen");
+  kvBox.innerHTML="";rules.innerHTML="";scr.innerHTML="";
+  let score,ruleList,screenList,reso,title,tag;
+  if(ctx.tipo==="pld"){
+    const it=ctx.item;
+    title=it.who;tag="Expediente PLD · operación retenida";
+    kv(kvBox,"Clave de rastreo",it.clave.replace(" ",""));
+    kv(kvBox,"Monto",fmtMXN.format(it.monto));
+    kv(kvBox,"Banco receptor",it.banco);
+    kv(kvBox,"CLABE destino",it.cuenta);
+    kv(kvBox,"Tipo","SPEI out · dispersión");
+    kv(kvBox,"Estado","RETENIDA — pendiente de resolución");
+    score=it.score;ruleList=it.rules;screenList=it.screen;reso=it.reso;
+    $("#expActions").style.display="flex";
+  } else {
+    const op=ctx.op;
+    title=op.nombre;tag="Expediente de operación · "+op.estado.toLowerCase();
+    kv(kvBox,"Clave de rastreo",op.clave);
+    kv(kvBox,"Monto",fmtMXN.format(op.monto));
+    kv(kvBox,"Contraparte",op.banco);
+    kv(kvBox,"Tipo",op.tipo==="ENVÍO"?"SPEI out":"SPEI in");
+    kv(kvBox,"Concepto",op.concepto);
+    kv(kvBox,"Estado",op.estado+(op.estado==="LIQUIDADA"?" · CEP disponible":""));
+    kv(kvBox,"Webhook",op.estado==="EN TRÁNSITO"?"pendiente · se firma al liquidar":"entregado · firma HMAC verificada");
+    score=Math.floor(4+Math.random()*14);
+    ruleList=[["Sin reglas disparadas",0]];
+    screenList=[["OFAC-SDN","SIN COINCIDENCIA",false],["ONU / consolidada","SIN COINCIDENCIA",false],["SAT 69-B (definitivos)","SIN COINCIDENCIA",false],["PPE nacionales","SIN COINCIDENCIA",false]];
+    reso= op.estado==="DEVUELTA"
+      ? "Devuelta por el banco receptor (motivo 02: cuenta inexistente). El abono de regreso quedó conciliado automáticamente."
+      : op.estado==="EN TRÁNSITO"
+      ? "Orden aceptada por STP; en espera de confirmación de liquidación de Banxico. El CEP se emite al liquidar."
+      : "Liberada automáticamente por el motor de reglas. Sin intervención requerida.";
+    $("#expActions").style.display="none";
+  }
+  $("#expTitle").textContent=title;
+  $("#expTag").textContent=tag;
+  $("#expScoreLbl").textContent=score+"/100 "+(score>=75?"ALTO":score>=40?"MEDIO":"BAJO");
+  ruleList.forEach(([l,v])=>{
+    const r=document.createElement("div");r.className="rulebar";
+    const a=document.createElement("span");a.className="rl";a.textContent=l;
+    const t=document.createElement("span");t.className="rt";
+    const f=document.createElement("span");f.className="rf";f.style.width=Math.min(100,v*2.4)+"%";
+    t.appendChild(f);
+    const n=document.createElement("span");n.className="rv num";n.textContent=v?("+"+v):"—";
+    r.appendChild(a);r.appendChild(t);r.appendChild(n);rules.appendChild(r);
+  });
+  screenList.forEach(([l,res,hit])=>{
+    const r=document.createElement("div");r.className="screen-row";
+    const a=document.createElement("span");a.textContent=l;
+    const b=document.createElement("span");b.className="res"+(hit?" hit":"");b.textContent=res;
+    r.appendChild(a);r.appendChild(b);scr.appendChild(r);
+  });
+  $("#expReso").textContent=reso;
+  $("#expOverlay").classList.add("open");
+  document.body.style.overflow="hidden";
+  $("#expClose").focus();
+}
+function closeExpediente(){
+  $("#expOverlay").classList.remove("open");
+  document.body.style.overflow="";
+  if(expReturn&&document.contains(expReturn))expReturn.focus();
+}
+$("#expClose").addEventListener("click",closeExpediente);
+$("#expOverlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeExpediente()});
+$$("#expActions .btn-s").forEach(b=>b.addEventListener("click",()=>{
+  if(!expCurrent||expCurrent.tipo!=="pld")return;
+  const act=b.dataset.act;
+  const item=expCurrent.item;
+  const node=$("#"+item.id);
+  if(node){
+    node.classList.add("done");
+    const res=node.querySelector(".pld-res");
+    const now=new Date().toLocaleTimeString("es-MX",{hour12:false});
+    res.textContent= act==="aprobar" ? "✓ LIBERADA · doble autorización registrada · "+now
+      : act==="escalar" ? "→ ESCALADA al oficial de cumplimiento · "+now
+      : "✕ RECHAZADA · orden cancelada y reportada · "+now;
+    if(act==="rechazar")res.style.color="var(--red)";
+  }
+  closeExpediente();
+}));
+
+/* ================= kill switch ================= */
+const killOv=$("#killOverlay");
+let killReturn=null;
+function openKill(){
+  killReturn=document.activeElement;
+  const isKilled=state.killed;
+  $("#killTitle").textContent=isKilled?"Reanudar la emisión SPEI":"Detener toda la emisión SPEI";
+  $("#killTag").textContent=isKilled?"Reautorización con 2FA":"Acción irreversible hasta reautorización";
+  $("#killDesc").innerHTML=isKilled
+    ?"Se restablece la emisión de órdenes SPEI de todas las empresas. La reactivación queda en bitácora y notifica a dirección."
+    :"Se suspende de inmediato la emisión de órdenes SPEI (dispersiones, nóminas y traspasos) de <b>todas las empresas</b>. Los abonos entrantes continúan recibiéndose y conciliándose. La acción queda en bitácora con sello de tiempo.";
+  $("#killWord").value="";$("#killCode").value="";
+  $("#fWord").classList.remove("bad");$("#fCode").classList.remove("bad");
+  $("#fWord").style.display=isKilled?"none":"block";
+  $("#killConfirm").textContent=isKilled?"Reanudar operación":"Activar kill switch";
+  $("#killConfirm").className=isKilled?"btn-ink":"btn-danger";
+  killOv.classList.add("open");
+  document.body.style.overflow="hidden";
+  (isKilled?$("#killCode"):$("#killWord")).focus();
+}
+function closeKill(){
+  killOv.classList.remove("open");
+  document.body.style.overflow="";
+  if(killReturn&&document.contains(killReturn))killReturn.focus();
+}
+$("#killBtn").addEventListener("click",openKill);
+$("#killClose").addEventListener("click",closeKill);
+killOv.addEventListener("click",e=>{if(e.target===killOv)closeKill()});
+$("#killConfirm").addEventListener("click",()=>{
+  const word=$("#killWord").value.trim().toUpperCase();
+  const code=$("#killCode").value.trim();
+  let ok=true;
+  if(!state.killed && word!=="DETENER"){$("#fWord").classList.add("bad");ok=false}else $("#fWord").classList.remove("bad");
+  if(!/^\d{6}$/.test(code)){$("#fCode").classList.add("bad");ok=false}else $("#fCode").classList.remove("bad");
+  if(!ok)return;
+  state.killed=!state.killed;
+  document.body.classList.toggle("killed",state.killed);
+  if(state.killed){
+    $("#killTime").textContent=new Date().toLocaleTimeString("es-MX",{hour12:false});
+    $("#killBtn").textContent="REANUDAR OPERACIÓN";
+    $("#liveLbl").lastChild.textContent="SUSPENDIDO";
+  }else{
+    $("#killBtn").textContent="KILL SWITCH";
+    $("#liveLbl").lastChild.textContent=state.paused?"PAUSADO":"EN VIVO";
+  }
+  closeKill();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  if(killOv.classList.contains("open"))closeKill();
+  else if($("#expOverlay").classList.contains("open"))closeExpediente();
+});
+
+/* trampa de foco: Tab no sale del diálogo abierto */
+function trapTab(container){
+  container.addEventListener("keydown",e=>{
+    if(e.key!=="Tab")return;
+    const f=$$('button,input,select,a[href],[tabindex="0"]',container).filter(el=>el.offsetParent!==null&&!el.disabled);
+    if(!f.length)return;
+    const first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+  });
+}
+trapTab($("#killOverlay .modal"));
+trapTab($("#expOverlay .drawer"));
+
+/* ================= cuentas CLABE ================= */
+const CLABES=[
+  ["Grupo Farmacéutico Occidente","Tesorería central","646180 1112 4400 5821 09",28914502.18,"ACTIVA"],
+  ["Grupo Farmacéutico Occidente","Nómina",           "646180 1112 4400 5902 44",4120800.00,"ACTIVA"],
+  ["Logística Cuervo, S.A.P.I.","Cobranza flete",     "646180 1112 4401 1287 31",11207449.83,"ACTIVA"],
+  ["Logística Cuervo, S.A.P.I.","Proveedores diésel", "646180 1112 4401 1305 77",1988203.55,"ACTIVA"],
+  ["Paytek Servicios Digitales","Fondos de clientes", "646180 1112 4402 0916 62",73441960.12,"ACTIVA"],
+  ["Paytek Servicios Digitales","Comisiones",         "646180 1112 4402 0998 05",862114.90,"ACTIVA"],
+  ["MASMOVIL (operativa)","Gastos corporativos",      "646180 1112 4400 0001 18",1204338.27,"ACTIVA"],
+  ["MASMOVIL (operativa)","Cuenta puente (retiro)",   "646180 1112 4400 0002 26",0.00,"BLOQUEADA"]
+];
+function renderClabes(){
+  const tb=$("#clabeTable tbody");tb.innerHTML="";
+  CLABES.forEach(([emp,alias,cl,saldo,st])=>{
+    const tr=document.createElement("tr");
+    const c1=document.createElement("td");c1.textContent=emp;
+    const c2=document.createElement("td");c2.textContent=alias;
+    const c3=document.createElement("td");c3.textContent=cl;c3.style.whiteSpace="nowrap";
+    const c4=document.createElement("td");c4.className="r";c4.textContent=fmtMXN.format(saldo);
+    const c5=document.createElement("td");
+    const chip=document.createElement("span");chip.className="chip "+(st==="ACTIVA"?"ok":"dev");chip.textContent=st;
+    c5.appendChild(chip);
+    [c1,c2,c3,c4,c5].forEach(c=>tr.appendChild(c));
+    tb.appendChild(tr);
+  });
+}
+
+/* ================= filtros ================= */
+function rerender(){
+  chart.data=genFlow();
+  state.selHour=-1;
+  $("#flowTitle").textContent=state.range==="hoy"?"Flujo horario SPEI":"Flujo diario SPEI";
+  drawFlow();
+  fillFlowTable();
+  fillKpis();
+}
+$("#empresaSel").addEventListener("change",e=>{state.empresa=e.target.value;rerender()});
+$$(".seg button").forEach(b=>b.addEventListener("click",()=>{
+  $$(".seg button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  state.range=b.dataset.range;
+  rerender();
+}));
+addEventListener("resize",hideTip);
+
+/* ================= arranque ================= */
+rerender();
+renderPld();
+renderClabes();
+/* feed inicial ordenado cronológicamente (el más reciente queda arriba) */
+Array.from({length:10},()=>newOp(true))
+  .sort((a,b)=>a.ts-b.ts)
+  .forEach(op=>pushOp(op,false));
+startFeed();
+</script>
+</body>
+</html>

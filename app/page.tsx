@@ -10,7 +10,7 @@ import ActoEnVivo from "@/components/scenes/ActoEnVivo";
 import Operadores from "@/components/scenes/Operadores";
 import Acceso from "@/components/scenes/Acceso";
 import TierraLegal from "@/components/scenes/TierraLegal";
-import CoreScene from "@/components/CoreScene";
+import ParticleField from "@/components/ParticleField";
 import SmoothScroll from "@/components/SmoothScroll";
 import Preloader from "@/components/Preloader";
 import Spotlight from "@/components/Spotlight";
@@ -21,7 +21,7 @@ export default function Page() {
     <TimeProvider>
       <Preloader />
       <SmoothScroll />
-      <CoreScene />
+      <ParticleField />
       <div className="vignette" aria-hidden="true" />
       <Spotlight />
       <CustomCursor />

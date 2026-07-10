@@ -111,9 +111,11 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .pre-pct { font-size: clamp(56px, 9vw, 110px); font-weight: 500; letter-spacing: -0.02em; color: var(--text-primario); font-variant-numeric: tabular-nums; }
 .pre-lines { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-secundario); }
 .pre-lines span { transition: opacity 0.3s ease; }
+/* CoreScene escribe --vig por frame en su rAF (sin transition: un solo suavizado) */
 .vignette {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.4) 100%);
+  background: radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  opacity: var(--vig, 0.75);
 }
 .spotlight { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
 .freeze-frame {

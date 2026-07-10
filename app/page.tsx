@@ -10,7 +10,7 @@ import ActoEnVivo from "@/components/scenes/ActoEnVivo";
 import Operadores from "@/components/scenes/Operadores";
 import Acceso from "@/components/scenes/Acceso";
 import TierraLegal from "@/components/scenes/TierraLegal";
-import Scene3D from "@/components/Scene3D";
+import CoreScene from "@/components/CoreScene";
 import SmoothScroll from "@/components/SmoothScroll";
 import Preloader from "@/components/Preloader";
 import Spotlight from "@/components/Spotlight";
@@ -21,7 +21,7 @@ export default function Page() {
     <TimeProvider>
       <Preloader />
       <SmoothScroll />
-      <Scene3D />
+      <CoreScene />
       <div className="vignette" aria-hidden="true" />
       <Spotlight />
       <CustomCursor />

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useSceneMs, useTime } from "@/lib/time";
+import ActFlow from "../ui/ActFlow";
 
 const CHECKS = [
   ["screening listas negras", "sin coincidencias", "00.291.220", 0.18],
@@ -25,7 +26,7 @@ export default function ActoEscrutinio() {
     <section className="scene" id="escrutinio" ref={ref} style={{ height: "330vh" }}>
       <div className="stick">
         <div className="theatre">
-          <div className="rings-wrap">
+          <ActFlow progress={progress} className="rings-wrap" enter={[0.02, 0.1]} exit={[0.9, 0.99]} drift={40} blur={false}>
             <svg className="rings" viewBox="0 0 400 400" aria-hidden="true">
               {/* retícula polar estática: la regla de medición */}
               {Array.from({ length: 12 }, (_, i) => {
@@ -59,9 +60,9 @@ export default function ActoEscrutinio() {
               <text x="200" y="62" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">SCREENING DE LISTAS</text>
               <text x="200" y="22" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">VIGILANCIA IA</text>
             </svg>
-          </div>
+          </ActFlow>
 
-          <div>
+          <ActFlow progress={progress} enter={[0.04, 0.13]} exit={[0.88, 0.98]}>
             <p className="kicker hueso">ACTO II · T=00.290</p>
             <h2 className="h2" style={{ fontSize: "clamp(24px, 3vw, 34px)" }}>
               245 milisegundos de escrutinio. Cero excepciones.
@@ -109,7 +110,7 @@ export default function ActoEscrutinio() {
                 MANTÉN PRESIONADO PARA SUSPENDER
               </button>
             </div>
-          </div>
+          </ActFlow>
         </div>
       </div>
 

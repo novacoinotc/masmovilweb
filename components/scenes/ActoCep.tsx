@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useMotionValueEvent, useTransform, useReducedM
 import { useSceneMs, useTime } from "@/lib/time";
 import TiltCard from "../ui/TiltCard";
 import SelloNotarial from "../SelloNotarial";
+import ActFlow from "../ui/ActFlow";
 
 const CAMPOS = [
   ["EMISOR", "MASMOVIL, S.A. DE C.V. (vía STP)", 0.16],
@@ -38,7 +39,7 @@ export default function ActoCep() {
     <section className="scene" id="cep" ref={ref} style={{ height: "300vh" }}>
       <div className="stick">
         <div className="acto">
-          <div>
+          <ActFlow progress={progress} enter={[0.03, 0.12]} exit={[0.76, 0.84]} drift={70}>
             <TiltCard className="cep-card">
               <div className="cep-head">COMPROBANTE ELECTRÓNICO DE PAGO · BANCO DE MÉXICO</div>
               {CAMPOS.map(([k, v], i) => (
@@ -66,9 +67,9 @@ export default function ActoCep() {
                 </motion.span>
               </div>
             </TiltCard>
-          </div>
+          </ActFlow>
 
-          <div className="narr">
+          <ActFlow progress={progress} className="narr" enter={[0.05, 0.14]} exit={[0.78, 0.85]}>
             <p className="kicker azul">ACTO IV · T=00.870</p>
             <h2 className="h2">La prueba no se solicita. Se genera sola.</h2>
             <p className="lead" style={{ marginBottom: 6 }}>
@@ -97,7 +98,7 @@ export default function ActoCep() {
             </AnimatePresence>
             <p className="ts mono">Trazabilidad: un documento de Banxico, por operación, disponible por API.</p>
             <p className="transito" style={{ textAlign: "left" }}>T=01.000 · soltando el tiempo</p>
-          </div>
+          </ActFlow>
         </div>
       </div>
       {/* EL BEAT: la única interrupción del chrome */}

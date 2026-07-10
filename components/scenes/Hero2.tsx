@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import TiltCard from "../ui/TiltCard";
 import MagneticButton from "../ui/MagneticButton";
 
@@ -20,10 +21,18 @@ const PAYLOAD: Array<[string, string, boolean?]> = [
 
 export default function Hero2() {
   const reduce = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
+  // salida acoplada a la cámara: el hero se despide, no se queda
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end 35%"] });
+  const exitY = useTransform(scrollYProgress, [0, 1], [0, -70]);
+  const exitOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
+  const exitBlur = useTransform(scrollYProgress, [0.3, 1], ["blur(0px)", "blur(6px)"]);
+
   return (
-    <section className="hero2" id="hero">
+    <section className="hero2" id="hero" ref={ref}>
       <motion.div
         className="container hero2-grid"
+        style={reduce ? undefined : { y: exitY, opacity: exitOpacity, filter: exitBlur }}
         variants={container}
         initial={reduce ? false : "hidden"}
         animate="visible"

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useTransform, useReducedMotion } from "framer-motion";
 import { useSceneMs } from "@/lib/time";
 import SelloNotarial from "../SelloNotarial";
+import ActFlow from "../ui/ActFlow";
 
 type Tok = { t: string; c?: "c" | "k" | "s" | "n" };
 const TOKENS: Tok[] = [
@@ -43,7 +44,7 @@ export default function ActoFirma() {
     <section className="scene" id="firma" ref={ref} style={{ height: "300vh" }}>
       <div className="stick">
         <div className="acto">
-          <div className="narr">
+          <ActFlow progress={progress} className="narr" enter={[0.02, 0.11]} exit={[0.86, 0.96]}>
             <p className="kicker">ACTO I · T=00.045</p>
             <h2 className="h2">Cada operación entra firmada. O no entra.</h2>
             <p className="lead">
@@ -56,8 +57,9 @@ export default function ActoFirma() {
               Así se ve una API cuando el que la audita es un banco.
             </p>
             <p className="ts mono">firmada · T=00.045.310</p>
-          </div>
+          </ActFlow>
 
+          <ActFlow progress={progress} enter={[0.05, 0.15]} exit={[0.83, 0.94]} drift={80}>
           <motion.div style={reduce ? undefined : { scale: zoom }}>
             <div className="term2">
               <div className="term2-top">
@@ -106,6 +108,7 @@ export default function ActoFirma() {
               </motion.div>
             )}
           </motion.div>
+          </ActFlow>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useMotionValueEvent } from "framer-motion";
 import { useSceneMs } from "@/lib/time";
+import ActFlow from "../ui/ActFlow";
 
 const CAPAS = [
   {
@@ -38,7 +39,7 @@ export default function Stack() {
   return (
     <section className="scene" id="stack" ref={ref} style={{ height: "230vh" }}>
       <div className="stick" style={{ display: "flex", alignItems: "center" }}>
-        <div className="container">
+        <ActFlow progress={progress} className="container" enter={[0.01, 0.09]} exit={[0.9, 0.99]}>
           <p className="kicker">ANTES DE SOLTAR EL PULSO</p>
           <h2 className="h2">Tres capas sostienen este segundo.</h2>
           <p className="lead">
@@ -66,7 +67,7 @@ export default function Stack() {
             ))}
           </div>
           <p className="transito">acelerando · 00.000 → 00.045</p>
-        </div>
+        </ActFlow>
       </div>
     </section>
   );

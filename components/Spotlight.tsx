@@ -10,7 +10,7 @@ export default function Spotlight() {
   const y = useMotionValue(-600);
   const sx = useSpring(x, { stiffness: 120, damping: 24 });
   const sy = useSpring(y, { stiffness: 120, damping: 24 });
-  const bg = useMotionTemplate`radial-gradient(560px circle at ${sx}px ${sy}px, rgba(34, 211, 238, 0.055), transparent 70%)`;
+  const bg = useMotionTemplate`radial-gradient(480px circle at ${sx}px ${sy}px, rgba(34, 211, 238, 0.04), transparent 70%)`;
 
   useEffect(() => {
     if (reduce) return;

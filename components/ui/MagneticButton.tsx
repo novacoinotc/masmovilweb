@@ -7,7 +7,7 @@ import type { ReactNode, PointerEvent } from "react";
 export default function MagneticButton({
   children,
   href,
-  className = "btn btn-primary",
+  className = "btn",
   onClick,
   type,
 }: {

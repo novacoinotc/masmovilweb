@@ -1,43 +1,40 @@
-import Nav from "@/components/Nav";
-import Hero from "@/components/Hero";
-import Marquee from "@/components/Marquee";
-import Statement from "@/components/Statement";
-import Solutions from "@/components/Solutions";
-import Platform from "@/components/Platform";
-import Journey from "@/components/Journey";
-import ApiSection from "@/components/ApiSection";
-import { Capabilities, Security, Compliance, UseCases } from "@/components/Sections";
-import ContactForm from "@/components/ContactForm";
-import Footer from "@/components/Footer";
+import { TimeProvider } from "@/lib/time";
+import { Nav2, MillisecondScrubber } from "@/components/Chrome";
+import Hero2 from "@/components/scenes/Hero2";
+import Stack from "@/components/scenes/Stack";
+import ActoFirma from "@/components/scenes/ActoFirma";
+import ActoEscrutinio from "@/components/scenes/ActoEscrutinio";
+import ActoFrontera from "@/components/scenes/ActoFrontera";
+import ActoCep from "@/components/scenes/ActoCep";
+import ActoEnVivo from "@/components/scenes/ActoEnVivo";
+import Operadores from "@/components/scenes/Operadores";
+import Acceso from "@/components/scenes/Acceso";
+import TierraLegal from "@/components/scenes/TierraLegal";
 import ParticleField from "@/components/ParticleField";
 import Spotlight from "@/components/Spotlight";
 import CustomCursor from "@/components/CustomCursor";
-import ScrollProgress from "@/components/ScrollProgress";
 
 export default function Page() {
   return (
-    <>
+    <TimeProvider>
       <ParticleField />
+      <div className="vignette" aria-hidden="true" />
       <Spotlight />
-      <div className="noise" aria-hidden="true" />
-      <ScrollProgress />
       <CustomCursor />
-      <Nav />
-      <main id="top">
-        <Hero />
-        <Marquee />
-        <Statement />
-        <Solutions />
-        <Platform />
-        <Journey />
-        <Capabilities />
-        <ApiSection />
-        <Security />
-        <Compliance />
-        <UseCases />
-        <ContactForm />
+      <Nav2 />
+      <main>
+        <Hero2 />
+        <Stack />
+        <ActoFirma />
+        <ActoEscrutinio />
+        <ActoFrontera />
+        <ActoCep />
+        <ActoEnVivo />
+        <Operadores />
+        <Acceso />
       </main>
-      <Footer />
-    </>
+      <TierraLegal />
+      <MillisecondScrubber />
+    </TimeProvider>
   );
 }

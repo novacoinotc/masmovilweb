@@ -24,7 +24,6 @@ export default function ParticleField() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const COUNT = isMobile ? 30 : 72;
     const LINK = isMobile ? 100 : 150;
-    const HUES = [195, 210, 222, 205, 160];
 
     let W = 0;
     let H = 0;
@@ -38,15 +37,6 @@ export default function ParticleField() {
     let particles: P[] = [];
     const sparks: S[] = [];
     const mouse = { x: -9999, y: -9999 };
-
-    function themeHue() {
-      const doc = document.documentElement;
-      const max = Math.max(1, doc.scrollHeight - window.innerHeight);
-      const p = Math.min(1, Math.max(0, window.scrollY / max));
-      const seg = Math.min(HUES.length - 2, Math.floor(p * (HUES.length - 1)));
-      const segP = p * (HUES.length - 1) - seg;
-      return HUES[seg] + (HUES[seg + 1] - HUES[seg]) * segP;
-    }
 
     function resize() {
       W = window.innerWidth;
@@ -72,10 +62,11 @@ export default function ParticleField() {
     function step() {
       raf = requestAnimationFrame(step);
       if (!running) return;
+      // el kill switch congela también la interferencia de fondo
+      if (document.documentElement.dataset.frozen === "true") return;
       const y = window.scrollY;
       scrollVel += (y - lastScroll - scrollVel) * 0.18;
       lastScroll = y;
-      const hue = themeHue();
       const streak = Math.min(Math.abs(scrollVel) * 0.35, 18);
 
       ctx!.clearRect(0, 0, W, H);
@@ -97,18 +88,18 @@ export default function ParticleField() {
         if (p.y < -30) p.y = H + 30;
         if (p.y > H + 30) p.y = -30;
 
-        const h = (hue + p.dh) % 360;
+        
         if (streak > 4) {
           ctx!.beginPath();
           ctx!.moveTo(p.x, p.y);
           ctx!.lineTo(p.x, p.y + (scrollVel > 0 ? streak : -streak));
-          ctx!.strokeStyle = `hsla(${h},85%,66%,0.5)`;
+          ctx!.strokeStyle = "rgba(242,240,233,0.28)";
           ctx!.lineWidth = p.r;
           ctx!.stroke();
         } else {
           ctx!.beginPath();
           ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx!.fillStyle = `hsla(${h},85%,66%,0.55)`;
+          ctx!.fillStyle = "rgba(242,240,233,0.30)";
           ctx!.fill();
         }
 
@@ -119,7 +110,7 @@ export default function ParticleField() {
             ctx!.beginPath();
             ctx!.moveTo(p.x, p.y);
             ctx!.lineTo(q.x, q.y);
-            ctx!.strokeStyle = `hsla(${hue},60%,72%,${0.1 * (1 - d / LINK)})`;
+            ctx!.strokeStyle = `rgba(242,240,233,${0.055 * (1 - d / LINK)})`;
             ctx!.lineWidth = 1;
             ctx!.stroke();
           }
@@ -139,7 +130,7 @@ export default function ParticleField() {
         }
         ctx!.beginPath();
         ctx!.arc(sp.x, sp.y, 2.4 * sp.life + 0.4, 0, Math.PI * 2);
-        ctx!.fillStyle = `hsla(${(hue + sp.dh) % 360},90%,70%,${sp.life})`;
+        ctx!.fillStyle = `rgba(242,240,233,${sp.life * 0.7})`;
         ctx!.fill();
       }
     }

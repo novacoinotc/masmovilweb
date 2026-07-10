@@ -17,13 +17,13 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MASMOVIL — Tecnología, telecomunicaciones e infraestructura de pagos",
+  title: "MASMOVIL — Infraestructura de pagos SPEI para México",
   description:
-    "MASMOVIL, S.A. de C.V. es una empresa mexicana de tecnología: telecomunicaciones, software e infraestructura de pagos en tiempo real conectada a SPEI. Guadalajara, Jalisco. Desde 2019.",
+    "CLABEs ilimitadas, SPEI 24/7, dispersión masiva y CEP de Banxico en cada operación. API firmada con HMAC, PLD/AML integrado y kill switch. Guadalajara, desde 2019.",
   openGraph: {
-    title: "MASMOVIL — Tecnología que mueve datos y mueve dinero",
+    title: "MASMOVIL — Una transferencia SPEI tarda un segundo. Vamos a estirarlo.",
     description:
-      "Telecomunicaciones, software e infraestructura de pagos SPEI en tiempo real. Empresa 100% mexicana, operando desde 2019.",
+      "Infraestructura de pagos SPEI: CLABEs ilimitadas, dispersión masiva, CEP de Banxico en cada operación. Guadalajara, desde 2019.",
     type: "website",
     locale: "es_MX",
   },

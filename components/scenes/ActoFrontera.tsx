@@ -6,14 +6,14 @@ import { useSceneMs } from "@/lib/time";
 import Counter from "../ui/Counter";
 
 const BENTO = [
-  { k: "∞", t: "CLABEs ilimitadas", p: "Emisión programática. Una CLABE por cliente, por proyecto o por empleado — al costo de una llamada a la API.", hi: true },
+  { k: "∞", t: "CLABEs ilimitadas", p: "Crea cuentas CLABE al instante: una por cliente, por proyecto o por empleado. Sabrás exactamente quién te pagó, sin preguntar.", hi: true },
   { k: "24/7/365", t: "SPEI in/out", p: "Entrada y salida sin horario bancario. La madrugada del 25 de diciembre opera igual que un martes." },
-  { k: "1 → N", t: "Dispersión masiva", p: "Miles de abonos en una sola instrucción, con validación previa y reporte por operación." },
+  { k: "1 → N", t: "Dispersión masiva", p: "Paga a miles de personas en una sola instrucción, con revisión previa y comprobante de cada pago." },
   { k: "quincena sin filas", t: "Nóminas", p: "Dispersión programada con calendario, reintentos controlados y comprobante por empleado." },
   { k: "0 hojas de cálculo", t: "Conciliación automática", p: "Cada movimiento se casa solo contra su orden, su CEP y su webhook. Las diferencias se señalan, no se buscan.", hi: true },
-  { k: "N razones · 1 panel", t: "Multi-empresa", p: "Opera varias entidades con libros separados, permisos separados y una sola integración." },
-  { k: "evento → tu sistema", t: "Webhooks", p: "Notificación firmada por cada cambio de estado. Tu backend se entera antes que tu equipo." },
-  { k: "1 acción · pausa", t: "Kill switch por cliente", p: "Suspensión inmediata y reversible, por cuenta o global. Ya lo probaste hace 200 milisegundos." },
+  { k: "N razones · 1 panel", t: "Multi-empresa", p: "Maneja varias empresas desde un solo lugar, cada una con sus cuentas y permisos separados." },
+  { k: "evento → tu sistema", t: "Webhooks", p: "Tu sistema recibe aviso automático de cada movimiento, al instante. Nadie tiene que estar revisando." },
+  { k: "1 acción · pausa", t: "Botón de emergencia", p: "Pausa tus pagos al instante y reactívalos cuando decidas. Ya lo probaste hace 200 milisegundos." },
 ];
 
 const spring = { type: "spring" as const, stiffness: 260, damping: 32, mass: 0.9 };

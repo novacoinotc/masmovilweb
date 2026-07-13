@@ -68,9 +68,10 @@ export default function ActoEscrutinio() {
               245 milisegundos de escrutinio. Cero excepciones.
             </h2>
             <p className="lead" style={{ fontSize: 14.5, marginBottom: 18 }}>
-              El pulso no avanza por confianza: avanza porque tres sistemas independientes lo
-              dejaron pasar. PLD/AML, screening de listas y vigilancia con IA, en cada
-              operación, sin muestreo.
+              Tu dinero no avanza por confianza: avanza porque tres filtros independientes
+              lo dejaron pasar — prevención de lavado de dinero, revisión contra listas
+              negras y vigilancia con inteligencia artificial. En cada operación, sin
+              excepciones.
             </p>
             <div className="checklist">
               {CHECKS.map(([name, res, ts], i) => (
@@ -94,9 +95,9 @@ export default function ActoEscrutinio() {
               <p className="kk">T=00.400 · CONTROL OPERATIVO</p>
               <h3>Tú tienes la última palabra.</h3>
               <p>
-                Kill switch por cliente, por cuenta o global. No es un ícono de candado:
-                mantén presionado y detén esta página completa — igual que detendrías tu
-                operación.
+                Un botón de emergencia real: pausa toda tu operación al instante, por
+                cuenta o completa. Pruébalo — mantén presionado y detén esta página
+                entera, igual que detendrías tus pagos.
               </p>
               <button
                 className="kbtn"

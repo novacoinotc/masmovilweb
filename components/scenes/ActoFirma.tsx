@@ -48,13 +48,14 @@ export default function ActoFirma() {
             <p className="kicker">ACTO I · T=00.045</p>
             <h2 className="h2">Cada operación entra firmada. O no entra.</h2>
             <p className="lead">
-              Antes de mover un peso, el request se firma con HMAC, se sella contra
-              repetición y se ancla a una llave de idempotencia. La API rechaza todo lo demás.
+              Cada orden de pago llega con una firma digital imposible de falsificar.
+              Si alguien intenta copiarla, repetirla o alterarla, el sistema la rechaza
+              antes de tocar un peso.
             </p>
             <p className="lead" style={{ marginTop: 14, fontSize: 15 }}>
-              No hay endpoint abierto, no hay retry ambiguo, no hay operación duplicada. La
-              firma es criptográfica, el reloj es del servidor y la llave es de un solo uso.
-              Así se ve una API cuando el que la audita es un banco.
+              Nada entra dos veces, nada entra sin identidad: cada pago es único e
+              irrepetible, aunque el internet falle o alguien reintente. Es el mismo
+              estándar de seguridad que exige un banco.
             </p>
             <p className="ts mono">firmada · T=00.045.310</p>
           </ActFlow>

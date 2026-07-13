@@ -201,25 +201,21 @@ export default function ActoEnVivo() {
       <RamificacionCanvas active={inView && live} />
       <div className="flow envivo-in">
         <div className="container">
-          <p className="kicker">ACTO V · T=01.000 · TIEMPO REAL</p>
+          <p className="kicker">ACTO V · T=01.000 · DEMO EN VIVO DEL CORE</p>
           <h2 className="h2">
-            Esto acaba de pasar{" "}
-            <span className="mono" style={{ color: "var(--verde)" }}>
-              {opsCount.toLocaleString("es-MX")}
-            </span>{" "}
-            veces mientras leías esta página.
+            Así corre el segundo cuando nadie lo dilata.
           </h2>
           <p className="lead">
-            El segundo que auditaste no era una demo: era el procedimiento estándar. Así se ve
-            cuando corre a escala, sin dilatar.
+            Lo que auditaste es el procedimiento estándar de nuestro core. Esta es una
+            demostración en vivo del panel de operación — cada fila sigue siendo auditable.
           </p>
 
           <div className="counters4">
             {[
-              [opsCount.toLocaleString("es-MX"), "OPERACIONES HOY", false],
-              [fmtMx(48731500), "MONTO DISPERSADO HOY", true],
-              ["99.9%", "UPTIME 90 DÍAS — medido", false],
-              ["< 5 s", "ORDEN → LIQUIDACIÓN", false],
+              [opsCount.toLocaleString("es-MX"), "OPERACIONES · DEMO", false],
+              [fmtMx(48731500), "DISPERSADO · DEMO", true],
+              ["99.9%", "DISPONIBILIDAD OBJETIVO", false],
+              ["24/7/365", "OPERACIÓN SPEI", false],
             ].map(([v, l, money]) => (
               <div className="cnt" key={l as string}>
                 <div className="cv" style={money ? { color: "var(--verde)" } : undefined}>{v as string}</div>
@@ -230,7 +226,7 @@ export default function ActoEnVivo() {
 
           <div className="feed-panel" role="img" aria-label="Feed ilustrativo de operaciones en vivo">
             <div className="feed-head">
-              <span>OPERACIONES EN VIVO</span>
+              <span>DEMO EN VIVO · CORE MASMOVIL</span>
               <span className="hint">Cada fila es auditable. Haz click en cualquiera.</span>
             </div>
             <AnimatePresence initial={false} mode="popLayout">

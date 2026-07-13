@@ -9,8 +9,8 @@ const CAPAS = [
   {
     num: "CAPA 01 · FÍSICA",
     title: "Telecomunicaciones",
-    body: "La red que transporta. Conectividad y enlaces operados por nosotros, no rentados a ciegas.",
-    caps: ["Enlaces dedicados", "Redundancia de red", "Operación propia"],
+    body: "La red que transporta. Conectividad, enlaces y equipamiento tecnológico: operamos y también comercializamos el hardware.",
+    caps: ["Enlaces dedicados", "Redundancia de red", "Venta de equipos de cómputo y telefonía"],
   },
   {
     num: "CAPA 02 · LÓGICA",
@@ -21,7 +21,7 @@ const CAPAS = [
   {
     num: "CAPA 03 · VALOR — PRODUCTO ESTRELLA",
     title: "Infraestructura de pagos SPEI",
-    body: "El riel del dinero. Emisión de CLABEs, dispersión, conciliación y trazabilidad de nivel bancario, conectados a Banxico vía STP.",
+    body: "El riel del dinero. Emisión de CLABEs, dispersión, conciliación y trazabilidad de nivel bancario, conectados a la red SPEI de Banxico a través de participantes autorizados.",
     caps: ["CLABEs ilimitadas", "SPEI in/out 24/7/365", "Multi-empresa", "CEP en cada operación"],
     estrella: true,
   },

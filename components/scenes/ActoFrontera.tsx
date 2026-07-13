@@ -35,7 +35,7 @@ export default function ActoFrontera() {
           transition={spring}
         >
           <p className="kicker azul" style={{ justifyContent: "center" }}>ACTO III · T=00.620</p>
-          <span className="rotulo">SPEI · BANCO DE MÉXICO · CONEXIÓN VÍA STP</span>
+          <span className="rotulo">SPEI · BANCO DE MÉXICO · VÍA PARTICIPANTES AUTORIZADOS</span>
           <h2 className="h2">
             Del lado de acá, nuestra plataforma.
             <br />

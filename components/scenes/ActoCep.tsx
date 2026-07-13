@@ -8,7 +8,7 @@ import SelloNotarial from "../SelloNotarial";
 import ActFlow from "../ui/ActFlow";
 
 const CAMPOS = [
-  ["EMISOR", "MASMOVIL, S.A. DE C.V. (vía STP)", 0.16],
+  ["EMISOR", "MASMOVIL, S.A. DE C.V. (vía participante autorizado)", 0.16],
   ["RECEPTOR", "BANCO DESTINO, S.A.", 0.24],
   ["CLAVE DE RASTREO", "MM8459201HJK220716", 0.32],
   ["FOLIO", "0074512", 0.4],

@@ -14,6 +14,8 @@ export default function ActFlow({
   className,
   enter = [0, 0.07],
   exit = [0.94, 1],
+  enterFrom = 0, // opacidad inicial: >0 = llega visible mientras la escena sube al pin
+  exitTo = 0, // opacidad final: >0 = sigue visible al despinnear y sale con el scroll
   drift = 60,
   blur = true,
   style,
@@ -23,6 +25,8 @@ export default function ActFlow({
   className?: string;
   enter?: [number, number];
   exit?: [number, number];
+  enterFrom?: number;
+  exitTo?: number;
   drift?: number;
   blur?: boolean;
   style?: CSSProperties;
@@ -32,12 +36,16 @@ export default function ActFlow({
   const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches;
   const d = isMobile ? Math.min(drift, 30) : drift;
   const useBlur = blur && !isMobile;
-  const opacity = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [0, 1, 1, 0]);
-  const y = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [d, 0, 0, -d * 0.8]);
+  const opacity = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [enterFrom, 1, 1, exitTo]);
+  const y = useTransform(
+    progress,
+    [enter[0], enter[1], exit[0], exit[1]],
+    [d * (1 - enterFrom), 0, 0, -d * 0.8 * (1 - exitTo)]
+  );
   const filter = useTransform(
     progress,
     [enter[0], enter[1], exit[0], exit[1]],
-    ["blur(8px)", "blur(0px)", "blur(0px)", "blur(6px)"]
+    [enterFrom > 0 ? "blur(3px)" : "blur(8px)", "blur(0px)", "blur(0px)", exitTo > 0 ? "blur(2px)" : "blur(6px)"]
   );
 
   if (reduce) {

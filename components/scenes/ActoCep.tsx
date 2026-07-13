@@ -39,7 +39,7 @@ export default function ActoCep() {
     <section className="scene trk-cep" id="cep" ref={ref}>
       <div className="stick">
         <div className="acto">
-          <ActFlow progress={progress} enter={[0.01, 0.08]} exit={[0.78, 0.85]} drift={60}>
+          <ActFlow progress={progress} enter={[0, 0.08]} enterFrom={0.4} exit={[0.78, 0.85]} drift={60}>
             <TiltCard className="cep-card">
               <div className="cep-head">COMPROBANTE ELECTRÓNICO DE PAGO · BANCO DE MÉXICO</div>
               {CAMPOS.map(([k, v], i) => (
@@ -69,7 +69,7 @@ export default function ActoCep() {
             </TiltCard>
           </ActFlow>
 
-          <ActFlow progress={progress} className="narr" enter={[0.02, 0.09]} exit={[0.8, 0.86]}>
+          <ActFlow progress={progress} className="narr" enter={[0, 0.09]} enterFrom={0.4} exit={[0.8, 0.86]}>
             <p className="kicker azul">ACTO IV · T=00.870</p>
             <h2 className="h2">La prueba no se solicita. Se genera sola.</h2>
             <p className="lead" style={{ marginBottom: 6 }}>

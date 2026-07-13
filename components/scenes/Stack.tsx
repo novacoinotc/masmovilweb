@@ -39,7 +39,7 @@ export default function Stack() {
   return (
     <section className="scene trk-stack" id="stack" ref={ref}>
       <div className="stick" style={{ display: "flex", alignItems: "center" }}>
-        <ActFlow progress={progress} className="container" enter={[0, 0.06]} exit={[0.94, 1]}>
+        <ActFlow progress={progress} className="container" enter={[0, 0.06]} enterFrom={0.4} exit={[0.9, 1]} exitTo={0.85}>
           <p className="kicker">ANTES DE SOLTAR EL PULSO</p>
           <h2 className="h2">Tres capas sostienen este segundo.</h2>
           <p className="lead">

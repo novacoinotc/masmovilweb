@@ -606,3 +606,30 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   }
   .net-canvas { opacity: 0.35; }
 }
+
+/* ── Página crédito ─────────────────────────── */
+.navlinks { display: flex; gap: 26px; font-size: 12px; letter-spacing: 0.1em; }
+.navlinks a { color: var(--text-secundario); transition: color 0.2s ease; }
+.navlinks a:hover { color: var(--text-primario); }
+@media (max-width: 720px) { .navlinks { display: none; } }
+
+.pasos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+.paso {
+  border: 1px solid var(--border-sutil); border-radius: var(--radius);
+  background: var(--surface-1); padding: 24px 22px;
+  transition: border-color 0.2s ease;
+}
+.paso:hover { border-color: var(--border-activo); }
+.paso-n { font-size: 12px; letter-spacing: 0.2em; color: var(--verde); }
+.paso h3 { font-size: 16.5px; margin: 12px 0 8px; }
+.paso p { font-size: 13.5px; color: var(--text-secundario); }
+@media (max-width: 1024px) { .pasos { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px) { .pasos { grid-template-columns: 1fr; } }
+
+.sel-credito {
+  font-family: var(--font-mono); font-size: 14px; color: var(--text-primario);
+  background: transparent; border: none; border-bottom: 1px solid var(--border-sutil);
+  padding: 8px 2px; outline: none; width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+.sel-credito option { background: var(--surface-1); }

@@ -17,13 +17,13 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MASMOVIL — Infraestructura de pagos SPEI para México",
+  title: "MASMOVIL — Crédito y tecnología para el ecosistema digital",
   description:
-    "CLABEs ilimitadas, SPEI 24/7, dispersión masiva y CEP de Banxico en cada operación. API firmada con HMAC, PLD/AML integrado y kill switch. Guadalajara, desde 2019.",
+    "Líneas de crédito para proveedores de telefonía, tecnología y microempresas: hardware, software y asesorías. Cursos de marketing digital y desarrollo de software financiero. Guadalajara, desde 2019.",
   openGraph: {
-    title: "MASMOVIL — Una transferencia SPEI tarda un segundo. Vamos a estirarlo.",
+    title: "MASMOVIL — Crédito y tecnología para quienes construyen lo digital",
     description:
-      "Infraestructura de pagos SPEI: CLABEs ilimitadas, dispersión masiva, CEP de Banxico en cada operación. Guadalajara, desde 2019.",
+      "Financiamos hardware, software y asesorías para el ecosistema tecnológico mexicano. Formación empresarial y software financiero a la medida.",
     type: "website",
     locale: "es_MX",
   },

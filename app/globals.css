@@ -581,3 +581,135 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   }
   html { scroll-behavior: auto; }
 }
+
+/* ═══ CINE · «La carretera invisible» ═══════════ */
+.cine-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; background: #05070c; }
+.cine-tint {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(120% 100% at 50% 50%, transparent 45%, rgba(2, 4, 8, 0.55) 100%),
+    linear-gradient(180deg, rgba(2, 4, 8, 0.35), transparent 22%, transparent 78%, rgba(2, 4, 8, 0.4));
+}
+.cine-line {
+  position: fixed; top: 0; left: 0; right: 0; height: 1.5px; z-index: 200;
+  background: linear-gradient(90deg, #c9a961, #f2f0e9);
+  transform-origin: left;
+}
+.cine-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 4vw;
+}
+.cine-cta {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em;
+  border: 1px solid rgba(242, 240, 233, 0.35); border-radius: 4px;
+  padding: 10px 20px; color: var(--text-primario);
+  background: rgba(4, 6, 14, 0.4); backdrop-filter: blur(8px);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.cine-cta:hover { background: rgba(242, 240, 233, 0.12); border-color: rgba(242, 240, 233, 0.7); }
+
+.station { position: relative; z-index: 5; display: flex; align-items: center; }
+.station-in { width: min(1180px, 90vw); margin: 0 auto; }
+.st-left .station-in { text-align: left; }
+.st-right .station-in { text-align: right; }
+.st-center .station-in, .st-hero .station-in { text-align: center; }
+
+.cine-kicker { font-size: 11.5px; letter-spacing: 0.3em; color: rgba(242, 240, 233, 0.65); margin-bottom: 22px; }
+.cine-h1 {
+  font-size: clamp(44px, 7.4vw, 108px);
+  line-height: 1.0; letter-spacing: -0.03em; font-weight: 700;
+  text-shadow: 0 2px 60px rgba(0, 0, 0, 0.8);
+}
+.cine-h1b {
+  font-size: clamp(24px, 3.4vw, 46px); font-weight: 600;
+  color: rgba(242, 240, 233, 0.75); margin-top: 18px; letter-spacing: -0.02em;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.8);
+}
+.cine-hint { margin-top: 54px; font-size: 11px; letter-spacing: 0.3em; color: rgba(242, 240, 233, 0.5); }
+.cine-h2 {
+  font-size: clamp(32px, 4.8vw, 64px);
+  line-height: 1.06; letter-spacing: -0.025em; font-weight: 700;
+  max-width: 16em;
+  text-shadow: 0 2px 50px rgba(0, 0, 0, 0.85);
+}
+.st-right .cine-h2 { margin-left: auto; }
+.st-center .cine-h2 { margin-inline: auto; }
+.cine-h2 em { font-style: normal; color: #6ee7b7; }
+
+.cine-datos { display: flex; flex-direction: column; gap: 10px; margin-top: 34px; font-size: 13px; letter-spacing: 0.18em; color: rgba(242, 240, 233, 0.85); }
+.cine-datos span { text-shadow: 0 1px 24px rgba(0,0,0,0.9); }
+
+.cine-chips { display: flex; flex-direction: column; gap: 12px; margin-top: 34px; align-items: flex-end; }
+.st-center .cine-chips { align-items: center; }
+.cine-chip {
+  display: flex; gap: 14px; align-items: baseline;
+  border: 1px solid rgba(242, 240, 233, 0.18); border-radius: 6px;
+  background: rgba(3, 5, 10, 0.55); backdrop-filter: blur(6px);
+  padding: 12px 18px;
+}
+.cine-chip b { font-size: 15px; }
+.cine-chip span { font-size: 12.5px; color: rgba(242, 240, 233, 0.6); }
+
+.cine-trust { display: flex; flex-direction: column; gap: 18px; margin-top: 36px; }
+.cine-trust div { display: flex; flex-direction: column; gap: 4px; }
+.cine-trust b { font-size: 15px; letter-spacing: 0.12em; color: #f2f0e9; text-shadow: 0 1px 24px rgba(0,0,0,0.9); }
+.cine-trust span { font-size: 12.5px; color: rgba(242, 240, 233, 0.6); }
+
+.cine-stats { display: flex; gap: clamp(30px, 6vw, 90px); justify-content: center; margin-top: 40px; }
+.cine-stats div { display: flex; flex-direction: column; gap: 6px; }
+.cine-stats b { font-size: clamp(30px, 4.4vw, 54px); font-weight: 500; text-shadow: 0 2px 40px rgba(0,0,0,0.9); }
+.cine-stats span { font-size: 10.5px; letter-spacing: 0.24em; color: rgba(242, 240, 233, 0.55); }
+
+.cine-access-wrap {
+  width: min(560px, 92vw); margin: 0 auto;
+  border: 1px solid rgba(242, 240, 233, 0.16); border-radius: 14px;
+  background: rgba(3, 5, 10, 0.72); backdrop-filter: blur(14px);
+  padding: clamp(28px, 4vw, 46px);
+}
+.access { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
+.access-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.access input, .access textarea {
+  font-family: var(--font-sans); font-size: 14.5px; color: var(--text-primario);
+  background: rgba(242, 240, 233, 0.05);
+  border: 1px solid rgba(242, 240, 233, 0.16); border-radius: 8px;
+  padding: 13px 14px; outline: none; width: 100%;
+  transition: border-color 0.2s ease;
+}
+.access input:focus, .access textarea:focus { border-color: rgba(110, 231, 183, 0.6); box-shadow: none; }
+.access input.bad { border-color: var(--ambar); }
+.access input::placeholder, .access textarea::placeholder { color: rgba(242, 240, 233, 0.4); }
+.access textarea { resize: vertical; }
+.access-btn {
+  font-weight: 600; font-size: 15px;
+  background: #f2f0e9; color: #04060e;
+  border-radius: 8px; padding: 14px;
+  transition: background 0.2s ease;
+}
+.access-btn:hover { background: #fff; }
+.access-status { font-size: 11.5px; color: rgba(242, 240, 233, 0.55); min-height: 1.5em; }
+
+.cine-footer {
+  position: relative; z-index: 5; text-align: center;
+  padding: 70px 4vw 46px;
+  background: linear-gradient(180deg, transparent, rgba(2, 4, 8, 0.9) 40%);
+  display: flex; flex-direction: column; gap: 22px; align-items: center;
+}
+.cine-placa {
+  font-size: 12px; line-height: 2; letter-spacing: 0.06em;
+  color: rgba(242, 240, 233, 0.7);
+  border: 1px solid rgba(242, 240, 233, 0.14); border-radius: 10px;
+  padding: 20px 34px;
+  background: rgba(3, 5, 10, 0.6);
+}
+.cine-placa a { color: #6ee7b7; }
+.cine-footer > p { font-size: 11px; color: rgba(242, 240, 233, 0.4); }
+
+@media (max-width: 720px) {
+  .cine-chips { align-items: stretch; }
+  .cine-chip { flex-direction: column; gap: 3px; }
+  .st-right .station-in, .st-left .station-in { text-align: left; }
+  .st-right .cine-h2 { margin-left: 0; }
+  .cine-stats { flex-direction: column; gap: 22px; }
+  .access-row { grid-template-columns: 1fr; }
+}

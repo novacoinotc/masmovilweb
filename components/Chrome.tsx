@@ -8,9 +8,9 @@ import Logo from "./ui/Logo";
 const MARKS = [
   ["hero", "00.000", "ORIGEN"],
   ["firma", "00.045", "FIRMA"],
-  ["escrutinio", "00.290", "ESCRUTINIO"],
+  ["escrutinio", "00.290", "SEGURIDAD"],
   ["frontera", "00.620", "BANXICO"],
-  ["cep", "00.870", "CEP"],
+  ["cep", "00.870", "COMPROBANTE"],
   ["envivo", "01.000", "EN VIVO"],
   ["acceso", "—", "ACCESO"],
 ] as const;

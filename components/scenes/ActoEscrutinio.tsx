@@ -6,10 +6,10 @@ import { useSceneMs, useTime } from "@/lib/time";
 import ActFlow from "../ui/ActFlow";
 
 const CHECKS = [
-  ["screening listas negras", "sin coincidencias", "00.291.220", 0.18],
-  ["scoring de riesgo", "12/100 · bajo", "00.293.480", 0.28],
-  ["patrón conductual IA", "dentro de perfil", "00.296.011", 0.38],
-  ["límites y umbrales PLD", "dentro de norma", "00.298.735", 0.48],
+  ["revisión en listas negras", "sin coincidencias", "00.291.220", 0.18],
+  ["nivel de riesgo", "bajo", "00.293.480", 0.28],
+  ["comportamiento habitual", "normal", "00.296.011", 0.38],
+  ["límites que marca la ley", "en regla", "00.298.735", 0.48],
 ] as const;
 
 export default function ActoEscrutinio() {
@@ -56,8 +56,8 @@ export default function ActoEscrutinio() {
               <circle cx="200" cy="200" r="6" fill="var(--verde-nucleo)" className="pulso-svg" />
               <circle cx="200" cy="200" r="14" fill="none" stroke="var(--verde)" strokeWidth="2" opacity="0.35" />
               {/* etiquetas */}
-              <text x="200" y="102" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">PLD / AML</text>
-              <text x="200" y="62" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">SCREENING DE LISTAS</text>
+              <text x="200" y="102" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">PREVENCIÓN DE LAVADO</text>
+              <text x="200" y="62" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">LISTAS NEGRAS</text>
               <text x="200" y="22" textAnchor="middle" fill="var(--text-muted)" fontSize="9" letterSpacing="3" fontFamily="var(--font-mono)">VIGILANCIA IA</text>
             </svg>
           </ActFlow>

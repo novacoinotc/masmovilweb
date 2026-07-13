@@ -12,11 +12,11 @@ const item = {
 };
 
 const PAYLOAD: Array<[string, string, boolean?]> = [
-  ["monto", '$84,500.00 MXN', true],
-  ["clabe_origen", "6461 8000 1234 5678 90"],
-  ["clabe_destino", "0123 4567 8901 2345 67"],
-  ["concepto", '"Nómina · 2a quincena"'],
-  ["estado", "EN ESPERA · T=00.000"],
+  ["Monto", "$84,500.00 MXN", true],
+  ["Desde", "CLABE ···· 5678 90"],
+  ["Para", "CLABE ···· 2345 67"],
+  ["Concepto", "Nómina · 2a quincena"],
+  ["Estado", "EN ESPERA · T=00.000"],
 ];
 
 export default function Hero2() {
@@ -65,11 +65,11 @@ export default function Hero2() {
 
         <motion.div variants={item}>
           <TiltCard className="payload">
-            <div className="cmt">{"// la operación protagonista"}</div>
+            <div className="cmt">{"// la transferencia que vamos a seguir"}</div>
             {PAYLOAD.map(([k, v, money]) => (
               <div className="row" key={k}>
                 <span className="k">{k}</span>
-                <span className="v">: </span>
+                <span className="v">  </span>
                 <span className={money ? "money" : "v"}>{v}</span>
               </div>
             ))}

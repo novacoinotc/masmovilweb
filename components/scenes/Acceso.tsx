@@ -96,7 +96,7 @@ export default function Acceso() {
           <p className="kicker">ACCESO</p>
           <h2 className="h2">Solicita tu credencial de prueba.</h2>
           <p className="lead" style={{ marginBottom: 26 }}>
-            Cuatro datos. Nosotros hacemos el resto: sandbox, documentación y una llamada con
+            Cuatro datos. Nosotros hacemos el resto: ambiente de pruebas, documentación y una llamada con
             ingeniería — no con un vendedor.
           </p>
           <div className="term2">
@@ -148,7 +148,7 @@ export default function Acceso() {
               <p className="pstatus" aria-live="polite">
                 {status === "ok"
                   ? "Tu folio acaba de entrar al feed. Ya estás en el sistema que viste operar. Respuesta en el siguiente horario hábil."
-                  : "Respondemos en horario hábil de Guadalajara. Sin spam. 2FA desde el primer acceso."}
+                  : "Respondemos en horario hábil de Guadalajara. Sin spam. Doble verificación desde el primer acceso."}
               </p>
             </form>
           </div>

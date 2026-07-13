@@ -8,21 +8,20 @@ import ActFlow from "../ui/ActFlow";
 
 type Tok = { t: string; c?: "c" | "k" | "s" | "n" };
 const TOKENS: Tok[] = [
-  { t: "POST /v1/transfers\n", c: "k" },
-  { t: "// firmando request…\n\n", c: "c" },
-  { t: "{\n  " },
-  { t: '"monto"', c: "k" }, { t: ": " }, { t: '"84500.00"', c: "n" }, { t: ",\n  " },
-  { t: '"clabe_destino"', c: "k" }, { t: ": " }, { t: '"012345678901234567"', c: "s" }, { t: ",\n  " },
-  { t: '"concepto"', c: "k" }, { t: ": " }, { t: '"Nómina · 2a quincena"', c: "s" }, { t: ",\n  " },
-  { t: '"idempotency_key"', c: "k" }, { t: ": " }, { t: '"8f3a-…-91d2"', c: "s" }, { t: "\n}\n\n" },
-  { t: "headers:\n", c: "c" },
-  { t: "  X-Api-Key", c: "k" }, { t: ":     mm_live_…\n" },
-  { t: "  X-Timestamp", c: "k" }, { t: ":   1767912045 " }, { t: "// anti-replay\n", c: "c" },
-  { t: "  X-Signature", c: "k" }, { t: ":   hmac-sha256(payload)\n" },
+  { t: "ORDEN DE PAGO · SPEI\n", c: "k" },
+  { t: "// preparando la operación…\n\n", c: "c" },
+  { t: "  Monto      " }, { t: "$84,500.00 MXN\n", c: "n" },
+  { t: "  Desde      " }, { t: "CLABE ···· 5678 90\n", c: "s" },
+  { t: "  Para       " }, { t: "CLABE ···· 2345 67\n", c: "s" },
+  { t: "  Concepto   " }, { t: "Nómina · 2a quincena\n", c: "s" },
+  { t: "\n// verificando antes de mover un peso…\n\n", c: "c" },
+  { t: "  Identidad del emisor", c: "k" }, { t: "     ✓ confirmada\n" },
+  { t: "  Firma digital", c: "k" }, { t: "            ✓ auténtica\n" },
+  { t: "  Pago único, sin copias", c: "k" }, { t: "   ✓ garantizado\n" },
 ];
 const TOTAL = TOKENS.reduce((n, t) => n + t.t.length, 0);
 
-const TAGS = ["firma HMAC ✓", "anti-replay ✓", "idempotency-key ✓", "2FA obligatorio ✓"];
+const TAGS = ["Firma digital ✓", "Imposible de duplicar ✓", "Imposible de repetir ✓", "Doble verificación ✓"];
 
 export default function ActoFirma() {
   const ref = useRef<HTMLElement>(null);
@@ -65,7 +64,7 @@ export default function ActoFirma() {
             <div className="term2">
               <div className="term2-top">
                 <div className="term2-dots"><i /><i /><i /></div>
-                <span>POST /v1/transfers</span>
+                <span>orden-de-pago — masmovil</span>
               </div>
               <div className="term2-body">
                 {TOKENS.map((tok, i) => {
@@ -82,7 +81,7 @@ export default function ActoFirma() {
                 {chars < TOTAL && <span className="tcaret" />}
                 {fase === 1 && (
                   <div style={{ marginTop: 14 }}>
-                    <SelloNotarial text="HMAC-SHA256 · VERIFICADA" active sheen />
+                    <SelloNotarial text="FIRMA DIGITAL · VERIFICADA" active sheen />
                   </div>
                 )}
               </div>

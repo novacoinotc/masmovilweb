@@ -16,7 +16,7 @@ const CAPAS = [
     num: "CAPA 02 · LÓGICA",
     title: "Software a la medida",
     body: "Los sistemas que orquestan. Ingeniería propia para casos que el software de catálogo no cubre.",
-    caps: ["Desarrollo a la medida", "Integraciones core", "Equipo en México"],
+    caps: ["Desarrollo a la medida", "Conectamos tus sistemas entre sí", "Equipo en México"],
   },
   {
     num: "CAPA 03 · VALOR — PRODUCTO ESTRELLA",

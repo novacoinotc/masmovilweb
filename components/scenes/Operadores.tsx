@@ -6,7 +6,7 @@ const OPS = [
   {
     t: "Fintechs",
     p: "Emite una CLABE por usuario, mueve fondos por API y entrega comprobante de Banxico en cada abono. Tu producto por delante; el riel, resuelto.",
-    caps: ["Emisión de CLABEs por API", "SPEI in/out 24/7", "Webhooks por evento"],
+    caps: ["Una CLABE por cada usuario", "Envía y recibe SPEI 24/7", "Avisos automáticos a tu sistema"],
     req: "integración por API · ambiente de pruebas · doble verificación de identidad",
     feed: [["14:31", "SPEI OUT · API", "$4,120.00"], ["14:29", "SPEI IN · CLABE", "$890.00"], ["14:28", "SPEI OUT · API", "$12,300.00"]],
   },
@@ -20,7 +20,7 @@ const OPS = [
   {
     t: "Plataformas y marketplaces",
     p: "Opera varias razones sociales, separa fondos por vertical y notifica a cada sistema con webhooks firmados. Libros limpios sin integración duplicada.",
-    caps: ["Multi-empresa", "Separación de fondos", "Webhooks firmados"],
+    caps: ["Varias empresas, un panel", "Fondos separados por negocio", "Avisos seguros a tu sistema"],
     req: "integración por API · varias empresas en un panel · doble verificación",
     feed: [["14:32", "SPEI IN · vertical A", "$23,800.00"], ["14:31", "SPEI OUT · vertical B", "$7,150.00"], ["14:27", "SPEI IN · vertical A", "$54,000.00"]],
   },

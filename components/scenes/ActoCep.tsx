@@ -89,10 +89,10 @@ export default function ActoCep() {
                   exit={{ opacity: 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 32 }}
                 >
-                  <span className="tok-c">{"// mientras tanto, en tu backend"}</span>
-                  {"\n"}POST /webhooks/transfer.settled → <span className="ok">200 OK</span> · 00.874.502
+                  <span className="tok-c">{"// mientras tanto, en tu sistema"}</span>
+                  {"\n"}aviso automático: <span className="ok">pago liquidado ✓</span> · 00.874.502
                   {"\n"}
-                  <span className="tok-c">Tu sistema ya lo sabe. Antes de que terminaras de leer este párrafo.</span>
+                  <span className="tok-c">Tu plataforma ya lo sabe. Antes de que terminaras de leer este párrafo.</span>
                 </motion.div>
               )}
             </AnimatePresence>

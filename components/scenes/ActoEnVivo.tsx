@@ -287,11 +287,11 @@ export default function ActoEnVivo() {
                 <div className="dv money">{sel.monto}</div>
               </div>
               <div className="dfield">
-                <div className="dk">FIRMA HMAC</div>
-                <div className="dv">hmac-sha256 · a3f8…c91d ✓</div>
+                <div className="dk">FIRMA DIGITAL</div>
+                <div className="dv">verificada · a3f8…c91d ✓</div>
               </div>
               <div className="dfield">
-                <div className="dk">FOLIO CEP</div>
+                <div className="dk">COMPROBANTE BANXICO (CEP)</div>
                 <div className="dv azul">0074512 · BANXICO</div>
               </div>
               <div className="dfield">
@@ -307,8 +307,8 @@ export default function ActoEnVivo() {
                 >
                   {[
                     ["recibida", "request firmado y aceptado"],
-                    ["validada PLD", "umbrales y perfil en norma"],
-                    ["screening", "listas negras sin coincidencias"],
+                    ["seguridad validada", "límites y perfil en regla"],
+                    ["listas negras", "sin coincidencias"],
                     ["liquidada", "abonada en destino · CEP emitido"],
                   ].map(([tn, td]) => (
                     <motion.div

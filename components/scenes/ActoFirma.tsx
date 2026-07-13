@@ -41,10 +41,10 @@ export default function ActoFirma() {
 
   let acc = 0;
   return (
-    <section className="scene" id="firma" ref={ref} style={{ height: "300vh" }}>
+    <section className="scene trk-firma" id="firma" ref={ref}>
       <div className="stick">
         <div className="acto">
-          <ActFlow progress={progress} className="narr" enter={[0.02, 0.11]} exit={[0.86, 0.96]}>
+          <ActFlow progress={progress} className="narr" enter={[0, 0.06]} exit={[0.93, 1]}>
             <p className="kicker">ACTO I · T=00.045</p>
             <h2 className="h2">Cada operación entra firmada. O no entra.</h2>
             <p className="lead">
@@ -59,7 +59,7 @@ export default function ActoFirma() {
             <p className="ts mono">firmada · T=00.045.310</p>
           </ActFlow>
 
-          <ActFlow progress={progress} enter={[0.05, 0.15]} exit={[0.83, 0.94]} drift={80}>
+          <ActFlow progress={progress} enter={[0.01, 0.08]} exit={[0.91, 0.99]} drift={70}>
           <motion.div style={reduce ? undefined : { scale: zoom }}>
             <div className="term2">
               <div className="term2-top">

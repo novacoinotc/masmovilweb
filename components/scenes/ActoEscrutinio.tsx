@@ -23,10 +23,10 @@ export default function ActoEscrutinio() {
   });
 
   return (
-    <section className="scene" id="escrutinio" ref={ref} style={{ height: "330vh" }}>
+    <section className="scene trk-escrutinio" id="escrutinio" ref={ref}>
       <div className="stick">
         <div className="theatre">
-          <ActFlow progress={progress} className="rings-wrap" enter={[0.02, 0.1]} exit={[0.9, 0.99]} drift={40} blur={false}>
+          <ActFlow progress={progress} className="rings-wrap" enter={[0, 0.05]} exit={[0.95, 1]} drift={30} blur={false}>
             <svg className="rings" viewBox="0 0 400 400" aria-hidden="true">
               {/* retícula polar estática: la regla de medición */}
               {Array.from({ length: 12 }, (_, i) => {
@@ -62,7 +62,7 @@ export default function ActoEscrutinio() {
             </svg>
           </ActFlow>
 
-          <ActFlow progress={progress} enter={[0.04, 0.13]} exit={[0.88, 0.98]}>
+          <ActFlow progress={progress} enter={[0.01, 0.07]} exit={[0.94, 1]}>
             <p className="kicker hueso">ACTO II · T=00.290</p>
             <h2 className="h2" style={{ fontSize: "clamp(24px, 3vw, 34px)" }}>
               245 milisegundos de escrutinio. Cero excepciones.

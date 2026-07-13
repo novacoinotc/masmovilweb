@@ -12,8 +12,8 @@ export default function ActFlow({
   progress,
   children,
   className,
-  enter = [0.02, 0.12],
-  exit = [0.86, 0.97],
+  enter = [0, 0.07],
+  exit = [0.94, 1],
   drift = 60,
   blur = true,
   style,
@@ -28,8 +28,12 @@ export default function ActFlow({
   style?: CSSProperties;
 }) {
   const reduce = useReducedMotion();
+  // móvil: sin blur scrubbed (caro en iOS) y deriva corta
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches;
+  const d = isMobile ? Math.min(drift, 30) : drift;
+  const useBlur = blur && !isMobile;
   const opacity = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [0, 1, 1, 0]);
-  const y = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [drift, 0, 0, -drift * 0.8]);
+  const y = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [d, 0, 0, -d * 0.8]);
   const filter = useTransform(
     progress,
     [enter[0], enter[1], exit[0], exit[1]],
@@ -46,7 +50,7 @@ export default function ActFlow({
   return (
     <motion.div
       className={className}
-      style={{ ...style, opacity, y, ...(blur ? { filter } : {}), willChange: "transform, opacity" }}
+      style={{ ...style, opacity, y, ...(useBlur ? { filter } : {}), willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>

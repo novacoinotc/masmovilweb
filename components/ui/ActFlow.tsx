@@ -32,20 +32,26 @@ export default function ActFlow({
   style?: CSSProperties;
 }) {
   const reduce = useReducedMotion();
-  // móvil: sin blur scrubbed (caro en iOS) y deriva corta
+  // móvil: pisos de opacidad más altos, deriva corta y CERO blur —
+  // pero el filtro SIEMPRE lo gestiona framer (si se excluye, el blur
+  // del HTML del servidor se queda pegado y todo se ve borroso/oscuro)
   const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches;
-  const d = isMobile ? Math.min(drift, 30) : drift;
-  const useBlur = blur && !isMobile;
-  const opacity = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [enterFrom, 1, 1, exitTo]);
+  const d = isMobile ? Math.min(drift, 24) : drift;
+  const ef = isMobile && enterFrom > 0 ? Math.max(enterFrom, 0.6) : enterFrom;
+  const xt = isMobile && exitTo > 0 ? Math.max(exitTo, 0.92) : exitTo;
+  const opacity = useTransform(progress, [enter[0], enter[1], exit[0], exit[1]], [ef, 1, 1, xt]);
   const y = useTransform(
     progress,
     [enter[0], enter[1], exit[0], exit[1]],
-    [d * (1 - enterFrom), 0, 0, -d * 0.8 * (1 - exitTo)]
+    [d * (1 - ef), 0, 0, -d * 0.8 * (1 - xt)]
   );
+  const cero = "blur(0px)";
   const filter = useTransform(
     progress,
     [enter[0], enter[1], exit[0], exit[1]],
-    [enterFrom > 0 ? "blur(3px)" : "blur(8px)", "blur(0px)", "blur(0px)", exitTo > 0 ? "blur(2px)" : "blur(6px)"]
+    isMobile
+      ? [cero, cero, cero, cero]
+      : [ef > 0 ? "blur(3px)" : "blur(8px)", cero, cero, xt > 0 ? "blur(2px)" : "blur(6px)"]
   );
 
   if (reduce) {
@@ -58,7 +64,7 @@ export default function ActFlow({
   return (
     <motion.div
       className={className}
-      style={{ ...style, opacity, y, ...(useBlur ? { filter } : {}), willChange: "transform, opacity" }}
+      style={{ ...style, opacity, y, ...(blur ? { filter } : {}), willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>

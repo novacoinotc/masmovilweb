@@ -593,3 +593,16 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   .trk-escrutinio { height: 215vh; }
   .trk-cep { height: 185vh; }
 }
+
+/* ── Optimización móvil: menos viñeta, más contraste ── */
+@media (max-width: 720px) {
+  :root {
+    --text-secundario: #b3bac9;
+    --text-muted: #929aac;
+  }
+  .vignette {
+    background: radial-gradient(150% 130% at 50% 42%, transparent 62%, rgba(0, 0, 0, 0.26) 100%);
+    opacity: 0.5;
+  }
+  .net-canvas { opacity: 0.35; }
+}
